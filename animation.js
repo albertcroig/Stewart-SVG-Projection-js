@@ -6,501 +6,657 @@
  * Dual licensed under the MIT or GPL Version 2 licenses.
  **/
 
-(function(root) {
+// Constructor function for the Animation object that has a platform object as argument. Constructors are used to
+// create and initialize an object instance of a class. 
+// https://rollbar.com/blog/javascript-constructors/#:~:text=A%20constructor%20is%20a%20special,for%20any%20existing%20object%20properties.
+function Animation(platform) {
 
-  function Animation(platform) {
-    this.platform = platform;
-    this.orientation = Quaternion.ONE;
-    this.translation = [0, 0, 0];
+  // 'this.platform' holds the Stewart Platform object associated with the animation
+  this.platform = platform;
 
-    this.start('wobble');
+  // 'this.orientation' represents the orientation of the animation using a Quaternion
+  // Quaternion.ONE is an identity quaternion, indicating no rotation
+  this.orientation = Quaternion.ONE;
+
+  // 'this.translation' is a 3D array representing the translation of the animation in x, y, and z directions
+  this.translation = [0, 0, 0, 0];
+
+  this.servoAngles = []
+  this.getServos = false
+  this.servoAnglesToPrint = []
+
+  // The 'start' method is called with the argument 'wobble' to initiate a specific type of animation
+  this.start('wobble');
+}
+
+// This function is called when clicking at an SVG image displayed on screen, through the onclick event located in the
+// createSVGImage function in the main html script.
+// The purpose of this function is to take an SVG path string and convert it into a series of 3D animation
+// steps. The animation steps are then returned for further use. Check parseSVGPath() at line 44 for parsing SVG path to individual
+// segments for animation. 
+Animation.SVG = function(svg, box) {
+
+  const PERSEC = 0.014;  // Speed of animation (5units per sec)
+  const L = 0;         // Lower value for the z-coordinate
+  const H = 10;    // Higher value for the z-coordinate
+
+  const SCREEN_SIZE = 150; // 80x80
+
+  var cur = {x: L, y: box.width / 2, z: box.height / 2};  // Current position in the SVG path, initialized to the center of the provided bounding box (box)
+  var ret = [];        // Array to store animation steps
+
+  // This function calculates the relative position of the given coordinates within the bounding box and adds an animation step to the ret array.
+  // It calculates the relative position of the current position (cur) and updates it with the given coordinates (x, y, z).
+  function move(x, y, z) {
+    
+    // Desired position relative to the bounding box, and scaling it to the screen size, then centering it in screen.
+    var relY = (y - box.y) / box.width * SCREEN_SIZE - SCREEN_SIZE / 2;
+    var relZ = (z - box.x) / box.height * SCREEN_SIZE - SCREEN_SIZE / 2;
+
+    // Current position relative to the bounding box, and scaling it to the screen size, then centering it in screen.
+    var relCurY = (cur.y - box.y) / box.width * SCREEN_SIZE - SCREEN_SIZE / 2;
+    var relCurZ = (cur.z - box.x) / box.height * SCREEN_SIZE - SCREEN_SIZE / 2;
+
+    // Push desired position to array, as well as origin command and animation time. Time is calculated subtracting
+    // desired position by current position, then dividing by speed. (distance / distance/time = time)
+    ret.push({orig: s.cmd, x: x, y: relY, z: -relZ, t: Math.hypot(x - cur.x, relY - relCurY, relZ - relCurZ) / PERSEC});
+
+    // Convert current position to desired position to continue with following movements and keep the loop going.
+    cur.x = x;
+    cur.y = y;
+    cur.z = z;
   }
 
-  Animation.SVG = function(svg, box) {
+  // Assign the returned steps from parseSVGPath to variable seg
+  var seg = parseSVGPath(svg);
 
-    var PERSEC = 0.05; // 5units per sec
-    var L = 0;
-    var H = 0 - 10;
+  // Loop through every step of seg
+  for (var i = 0; i < seg.length; i++) {
 
-    var SCREEN_SIZE = 80; // 80x80
+    // Assign current step to variable s
+    var s = seg[i];
 
-    var cur = {x: box.width / 2, y: box.height / 2, z: L};
-    var ret = [];
+    // Switch statement to perform certain actions based on command name
+    switch (s.cmd) {
+      case 'move':
+        //console.log(cur.z)
+        move(H, cur.y, cur.z);
+        move(H, s.y, s.z);
+        move(L, s.y, s.z);
+        break;
+      case 'line':
+        move(L, s.y2, s.z2);
+        break;
+      case 'quadratic':
+      case 'cubic':
+        var b = s.bezier.getLUT();
 
-    function move(x, y, z) {
+        for (var j = 0; j < b.length; j++) {
+          move(L, b[j].x, b[j].y);
+        }
+        break;
+      case 'arc':
+        // https://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
+        var y1 = cur.y;
+        var z1 = cur.z;
 
-      var relX = (x - box.x) / box.width * SCREEN_SIZE - SCREEN_SIZE / 2;
-      var relY = (y - box.y) / box.height * SCREEN_SIZE - SCREEN_SIZE / 2;
+        var y2 = s.y;
+        var z2 = s.z;
 
-      var relCurX = (cur.x - box.x) / box.width * SCREEN_SIZE - SCREEN_SIZE / 2;
-      var relCurY = (cur.y - box.y) / box.height * SCREEN_SIZE - SCREEN_SIZE / 2;
+        var axisRotation = s.axisRotation;
+        var largeArcFlag = s.largeArcFlag;
+        var sweepFlag = s.sweepFlag;
 
-      ret.push({orig: s.cmd, x: relX, y: relY, z: z, t: Math.hypot(relX - relCurX, relY - relCurY, z - cur.z) / PERSEC});
+        var ry = s.ry;
+        var rz = s.rz;
 
-      cur.x = x;
-      cur.y = y;
-      cur.z = z;
+        // Step 1: y1', z1'
+        var y1_ = Math.cos(axisRotation) * (y1 - y2) / 2.0 + Math.sin(axisRotation) * (z1 - z2) / 2.0;
+        var z1_ = -Math.sin(axisRotation) * (y1 - y2) / 2.0 + Math.cos(axisRotation) * (z1 - z2) / 2.0;
+
+        // Step 2: cy', cz'
+        var s = (largeArcFlag === sweepFlag ? -1 : 1) * Math.sqrt((ry * ry * rz * rz - ry * ry * z1_ * z1_ - rz * rz * y1_ * y1_) / (ry * ry * z1_ * z1_ + rz * rz * y1_ * y1_));
+
+        var cy_ = s * ry * z1_ / rz;
+        var cz_ = s * -rz * y1_ / ry;
+
+        // Step 3: cy, cz
+        var cy = (y1 + y2) / 2.0 + Math.cos(axisRotation) * cy_ - Math.sin(axisRotation) * cz_;
+        var cz = (z1 + z2) / 2.0 + Math.sin(axisRotation) * cy_ + Math.cos(axisRotation) * cz_;
+
+
+        // Step 4:
+
+        var angleBetween = function(uy, uz, vy, vz) {
+
+          var cosPhi = (uy * vy + uz * vz) / Math.sqrt((uy * uy + uz * uz) * (vy * vy + vz * vz));
+
+          return (uy * vz < uz * vy ? -1 : 1) * Math.acos(cosPhi);
+        };
+
+        // initial angle
+        var theta1 = angleBetween(
+                1, 0,
+                (y1_ - cy_) / ry, (z1_ - cz_) / rz);
+
+        // angle delta
+        var thetad = angleBetween(
+                (y1_ - cy_) / ry, (z1_ - cz_) / rz,
+                (-y1_ - cy_) / ry, (-z1_ - cz_) / rz);
+
+        if (sweepFlag === 0 && thetad > 0) {
+          thetad -= 2 * Math.PI;
+        } else if (sweepFlag === 1 && thetad < 0) {
+          thetad += 2 * Math.PI;
+        }
+
+        var steps = Math.ceil(Math.abs(thetad * Math.max(ry, rz)) / 2); // every two degree
+        for (var j = 0; j <= steps; j++) {
+          var phi = theta1 + thetad * (j / steps);
+
+          var y = ry * Math.cos(phi);
+          var z = rz * Math.sin(phi);
+
+          var y_ = y * Math.cos(axisRotation) - z * Math.sin(axisRotation);
+          var z_ = y * Math.sin(axisRotation) + z * Math.cos(axisRotation);
+
+          move(L, cy + y_, cz + z_);
+        }
     }
+  }
+  //console.log(Animation.Interpolate(ret))
+  //console.log(ret)
+  return Animation.Interpolate(ret);
+};
 
-    var seg = parseSVGPath(svg);
+// This function is called by Animation.SVG function.
+// It creates the "normalized" animation type object that needs to be passed as argument to the _start function. This
+// takes as argument the array that stores the animation steps, created by the Animation.SVG function.
+Animation.Interpolate = function(data) {
 
-    for (var i = 0; i < seg.length; i++) {
+  var duration = 0; // Initialize duration variable to 0
+  for (var i = 1; i < data.length; i++) {  // Add all the durations of the whole animation steps together
+    duration += data[i].t;
+  }
 
-      var s = seg[i];
+  function calculateMovements(x, y, z) {
+    let rotationAxisOffset = platform.rotationAxisOffset
+    let wallDistance = platform.wallDistance
 
-      switch (s.cmd) {
-        case 'move':
-          move(cur.x, cur.y, H);
-          move(s.x, s.y, H);
-          move(s.x, s.y, L);
-          break;
-        case 'line':
-          move(s.x2, s.y2, L);
-          break;
-        case 'quadratic':
-        case 'cubic':
-          var b = s.bezier.getLUT();
+    let movements = {}
+    let theta, beta
+    let xTrans, yTrans, zTrans
 
-          for (var j = 0; j < b.length; j++) {
-            move(b[j].x, b[j].y, L);
-          }
-          break;
-        case 'arc':
+    theta = -Math.asin(z/(rotationAxisOffset + wallDistance))
+    beta = Math.asin(y/(rotationAxisOffset + wallDistance))
 
-          // https://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
-          var x1 = cur.x;
-          var y1 = cur.y;
+    let rotY = theta === 0 ? 0 : 1
+    let rotZ = beta === 0 ? 0 : 1
+    let laserState = x !== 0 ? 0 : 1
 
-          var x2 = s.x;
-          var y2 = s.y;
+    xTrans = 2 * rotationAxisOffset - rotationAxisOffset * Math.cos(theta) - rotationAxisOffset * Math.cos(beta)
+    //console.log(theta)
+    yTrans = rotationAxisOffset * Math.sin(beta)
+    zTrans = -rotationAxisOffset * Math.sin(theta)
 
-          var axisRotation = s.axisRotation;
-          var largeArcFlag = s.largeArcFlag;
-          var sweepFlag = s.sweepFlag;
+    movements = {
+      x: xTrans,
+      y: yTrans,
+      z: zTrans,
+      rotY: rotY,
+      rotZ: rotZ,
+      theta: theta,
+      beta: beta,
+      laserState: laserState
+    }
+    return movements
+  }
 
-          var rx = s.rx;
-          var ry = s.ry;
+  return {   // Return the normalized object for animation.
+    duration: duration,
+    pathVisible: true,
+    next: null,
+    fn: function(pct) {
 
-          // Step 1: x1', y1'
-          var x1_ = Math.cos(axisRotation) * (x1 - x2) / 2.0 + Math.sin(axisRotation) * (y1 - y2) / 2.0;
-          var y1_ = -Math.sin(axisRotation) * (x1 - x2) / 2.0 + Math.cos(axisRotation) * (y1 - y2) / 2.0;
+      var pctStart = 0;  // Variable for starting progress of animation (initialize to 0%)
+      
+      for (var i = 1; i < data.length; i++) {  // For every step of the animation
 
-          // Step 2: cx', cy'
-          var s = (largeArcFlag === sweepFlag ? -1 : 1) * Math.sqrt((rx * rx * ry * ry - rx * rx * y1_ * y1_ - ry * ry * x1_ * x1_) / (rx * rx * y1_ * y1_ + ry * ry * x1_ * x1_));
+        var p = data[i];  // from now on p = current step of animation
+        var pctEnd = pctStart + p.t / duration; // calculate the percentage of animation transcurred up until this step
 
-          var cx_ = s * rx * y1_ / ry;
-          var cy_ = s * -ry * x1_ / rx;
+        if (pctStart <= pct && pct < pctEnd) {  // Execute code below only for step in selected pct (percentage) range.
+          //console.log(pctStart)
+          var scale = (pct - pctStart) / (pctEnd - pctStart); // Variable scale to calculate how far the animation is in selected step. (0 to 1)
+          var prev = i === 0 ? data[0] : data[i - 1];  // Previous step, if i = 0 (meaning first step of animation), previous step is same step, otherwise its i-1
 
-          // Step 3: cx, cy
-          var cx = (x1 + x2) / 2.0 + Math.cos(axisRotation) * cx_ - Math.sin(axisRotation) * cy_;
-          var cy = (y1 + y2) / 2.0 + Math.sin(axisRotation) * cx_ + Math.cos(axisRotation) * cy_;
+          var movements = calculateMovements(p.x, p.y, p.z)
+          var prevMovements = calculateMovements(prev.x, prev.y, prev.z)
 
-
-          // Step 4:
-
-          var angleBetween = function(ux, uy, vx, vy) {
-
-            var cosPhi = (ux * vx + uy * vy) / Math.sqrt((ux * ux + uy * uy) * (vx * vx + vy * vy));
-
-            return (ux * vy < uy * vx ? -1 : 1) * Math.acos(cosPhi);
-          };
-
-          // initial angle
-          var theta1 = angleBetween(
-                  1, 0,
-                  (x1_ - cx_) / rx, (y1_ - cy_) / ry);
-
-          // angle delta
-          var thetad = angleBetween(
-                  (x1_ - cx_) / rx, (y1_ - cy_) / ry,
-                  (-x1_ - cx_) / rx, (-y1_ - cy_) / ry);
-
-          if (sweepFlag === 0 && thetad > 0) {
-            thetad -= 2 * Math.PI;
-          } else if (sweepFlag === 1 && thetad < 0) {
-            thetad += 2 * Math.PI;
-          }
-
-          var steps = Math.ceil(Math.abs(thetad * Math.max(rx, ry)) / 2); // every two degree
-          for (var j = 0; j <= steps; j++) {
-            var phi = theta1 + thetad * (j / steps);
-
-            var x = rx * Math.cos(phi);
-            var y = ry * Math.sin(phi);
-
-            var x_ = x * Math.cos(axisRotation) - y * Math.sin(axisRotation);
-            var y_ = x * Math.sin(axisRotation) + y * Math.cos(axisRotation);
-
-            move(cx + x_, cy + y_, L);
-          }
+          // Set the new location with previous' step location + its difference multiplied by completion progress of step.
+          this.translation[0] = prevMovements.x + (movements.x - prevMovements.x) * scale; 
+          this.translation[1] = prevMovements.y + (movements.y - prevMovements.y) * scale;
+          this.translation[2] = prevMovements.z + (movements.z - prevMovements.z) * scale;
+          this.translation[3] = movements.laserState;
+          this.orientation = Quaternion.fromAxisAngle([0, movements.rotY, 0], prevMovements.theta + (movements.theta - prevMovements.theta) * scale).mul(Quaternion.fromAxisAngle([0, 0, movements.rotZ], prevMovements.beta + (movements.beta - prevMovements.beta) * scale))
+          //console.log(movements.beta)
+          return; // Once the if condition is true, there is no need to continue with the loop, so return.
+        }
+        pctStart = pctEnd; // Assign the start pct to the end pct for continuing the loop.
       }
-    }
-    return Animation.Interpolate(ret);
+
+      // Set to last element in chain, that isn't considered on the for loop.
+      var lastMovements = calculateMovements(data[data.length-1].x, data[data.length-1].y, data[data.length-1].z)
+      this.translation[0] = lastMovements.x;
+      this.translation[1] = lastMovements.y;
+      this.translation[2] = lastMovements.z;
+      this.translation[3] = lastMovements.laserState;
+      this.orientation = Quaternion.fromAxisAngle([0, lastMovements.rotY, 0], lastMovements.theta).mul(Quaternion.fromAxisAngle([0, 0, lastMovements.rotZ], lastMovements.beta))
+    },
+
   };
+};
 
-  Animation.Interpolate = function(data) {
+// We use prototype in order to add methods that intrinsically belong to an object.
+// We define this methods ONCE inside the prototype, and every instance of an object will check the prototype
+// to run the method. If we hardcoded it inside the Animation constructor, then the same method would be defined
+// for every instance of object, wasting memory.
+// https://www.youtube.com/watch?v=4jb4AYEyhRc
+Animation.prototype = {
+  cur: null,          // Current animation step
+  next: null,         // Next animation step
+  startTime: 0,
+  platform: null,
+  translation: null,
+  orientation: null,
+  pathVisible: true,  // Initialize visible path to true, then it can change depending on the type of animation or user's interaction.
+  
+  downloadServoAngles: function(data, originalValues) {
 
-    var duration = 0;
-    for (var i = 1; i < data.length; i++) {
-      duration += data[i].t;
+    function adaptDataArduino(rawData) {
+
+      // Remove first steps (where the pointer moves to starting shape position)
+      let indexToCut = 0
+      for (let i = 0; i < rawData.length; i++) {
+        if (rawData[i][6] === 0) {
+          if (rawData[i+1][6] === 1) {
+            indexToCut = i
+            break;
+          }
+        }
+      }
+      rawData.splice(0, indexToCut + 1)
+
+      // Apply mathematical operations to map servo angles into real-life servo arduino angles    
+      let operation
+      const modifiedData = []
+      
+      for (let i = 0; i < rawData.length; i++) {
+        const modifiedColumn = []
+        for (let j = 0; j < rawData[i].length; j++) {
+          // Operations depending on servo number. The left part servos (0, 2, 4) will round down and the right part ones (1, 3, 5) will round up
+          // so that all tend to go down in the end and are a bit more synchronized.
+          switch (j) {
+            case 0:
+              operation = (x) => Math.floor(308.5 + x * 187.5 * 2 / Math.PI);
+              break;
+            case 1:
+              operation = (x) => Math.ceil(313.5 - 1 * x * 185.5 * 2 / Math.PI);
+              break;
+            case 2:
+              operation = (x) => Math.floor(303.5 + x * 190.5 * 2 / Math.PI);
+              break;
+            case 3:
+              operation = (x) => Math.ceil(319.0 - 1 * x * 185.0 * 2 / Math.PI);
+              break;
+            case 4:
+              operation = (x) => Math.floor(304.5 + x * 185.5 * 2 / Math.PI);
+              break;
+            case 5:
+              operation = (x) => Math.ceil(325.0 - 1 * x * 186.0 * 2 / Math.PI);
+              break;
+            // For the laser on/off, we offset the value one step so that it gets turned off later.
+            case 6:
+              operation = () => i===0 ? rawData[i][j] : rawData[i-1][j];
+              break;
+          }
+          modifiedColumn.push(operation(rawData[i][j]))
+        }
+        modifiedData.push(modifiedColumn)
+      }
+
+      // Copy last row and set laser value to 0 (off)
+      const lastRow = [...modifiedData[modifiedData.length-1]]
+      const newRow = []
+      for (let i = 0; i < lastRow.length; i++) {
+        const colValue = lastRow[i]
+        if (i === 6) {
+          newRow.push(0)
+        }
+        else {
+          newRow.push(colValue)
+        }
+      }
+      modifiedData.push(newRow)
+      return modifiedData
     }
 
-    return {
-      duration: duration,
-      pathVisible: true,
-      next: null,
+    function addHeaderAndSteps(myData, isAdapted) {
+      let header = []
+
+      if (isAdapted) {
+        header = ['Step', 'DigitalIn','Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5']
+
+        // Put last column into first position
+        for (let i = 0; i < myData.length; i++) {
+          const subarray = myData[i];
+          subarray.unshift(subarray.pop())
+        }
+
+        // Create index column starting from 1
+        myData.forEach((row, index) => row.unshift(index+1));
+      }
+      else {
+        header = ['Step', 'Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Laser on/off'];
+        // Create index column starting from 0
+        myData.forEach((row, index) => row.unshift(index));
+      }
+
+      // Add header to the data
+      myData.unshift(header);
+    }
+
+    function performDownload(tableToDownload, isAdapted) {
+      // Convert data to text
+      let text
+      if (isAdapted) {
+        const headerText = tableToDownload.shift().join('\t,\t')
+        const bodyText = tableToDownload.map(row => row.join('\t,\t')).join('},\n{')
+        text = headerText + '\n' + '{' + bodyText + '}'
+      }
+      else {
+        text = tableToDownload.map(row => row.join('\t')).join('\n');
+      }
+
+      // Create a Blob containing the array data as text
+      const blob = new Blob([text], { type: 'text/plain' });
+
+      // Create a temporary anchor element
+      const anchor = document.createElement('a');
+      anchor.href = URL.createObjectURL(blob);
+
+      // Set the file name
+      anchor.download = isAdapted ? 'adaptedServoAngles.txt' : 'servoAngles.txt';
+
+      // Append the anchor element to the document body
+      document.body.appendChild(anchor);
+
+      // Trigger a click event on the anchor element
+      anchor.click();
+
+      // Remove the anchor element from the document body
+      document.body.removeChild(anchor);
+    }
+
+    if (!originalValues) {
+      data = adaptDataArduino(data)
+    }
+    addHeaderAndSteps(data, !originalValues);
+    performDownload(data, !originalValues)
+  },
+
+  // Toggles visibility of the path
+  toggleVisiblePath: function() {
+    this.pathVisible = !this.pathVisible;
+  },
+
+  // Draws a red line from the origin of the platform throughout the animation path. 
+  drawPath: function(p) {
+
+    // If path visibility is off, then end the function here (don't draw path)
+    if (!this.pathVisible || !this.cur.pathVisible)
+      return;
+
+    // Draw path shape with p.beginShape()
+    p.beginShape();         // Tell the program I want to draw a shape with some vertices
+    p.noFill();             // Background of shape transparent
+    p.stroke(255, 0, 0);    // Contour of shape color red
+    var steps = 500;       // Number of vertices of the shape
+    for (var i = 0; i <= steps; i++) {  // For every vertex, define its position
+      // Calls the fn function inside the current animation object and passes as argument i/steps, which represents the progress
+      // ratio of the animation (0 to 1). This sets a value for this.translation
+      this.cur.fn.call(this, i / steps, p); 
+
+      // Once defined the position and rotaton of the vertex of "this", create a vertex.
+      p.vertex(this.translation[0], this.translation[1], this.translation[2] + this.platform.T0[2]);
+    }
+    p.endShape();
+  },
+
+  // This function is called when creating the animation object, passing 'wobble' (default) as argument. It's also called
+  // when pressing a key using the document.onkeydown(e) function of the html file script.
+  // It takes as parameter t the type of animation: could be 'wobble','tilt', etc.
+  // Its purpose is to initialize the animation, only for the predefined animations.
+  // This function executes to initialize all predefined animations. SVG's animations directly use the _start function.
+  start: function(t) {      
+
+    // This if statement checks if the passed parameter is inside the object "map", defined at the end of this prototype.
+    // Then, if you pass the argument as 'w', this converts it to 'wobble'. If you pass it as 'wobble', it stays like this.
+    if (this.map[t]) { 
+      t = this.map[t]; 
+    }
+
+    // Here it checks if the t parameter is within the defined animations, with the fn object, that contains all the defined
+    // animations. If the passed parameter is not in it, then it console logs "Failed" and ends the function, as the passed parameter is wrong.
+    // If the t parameter is within the fn object (defined animation), then it executes the _start function to start with the animation.
+    // The _start function executed here passes as parameters the object related to the corresponding animation, and the name of the next animation.
+    if (!this.fn[t]) {
+      console.log("Failed ", t);
+      return;
+    } else {
+      if (this.getServos != false) {
+        //console.log('Animation started!')
+        this.servoAnglesToPrint = this.servoAngles
+        this.servoAngles = []
+      }
+      this.getServos = true
+      this._start(this.fn[t], this.fn[t].next); 
+    }
+  },
+  // This function is called by the "start" function and when clicking an svg image in the webpage, executed with the html code.
+  // This function is responsible for setting the necessary parameters for the execution of the animation.
+  // It takes in two parameters: the object containing the info about the animation to start, and the name
+  // (as string) of the next animation.
+  _start: function(play, next) {
+    // Checks if the play object has a start method in it. if it does, it calls the method passing current animation
+    // as argument (this)
+    if (play.start) {
+      play.start.call(this);
+    }
+    this.cur = play;              // Sets current animation to passed play object.
+    this.next = next;             // Sets next animation to passed next string.
+    this.startTime = Date.now();  // Sets start time of animation to right now.
+  },
+
+  // This function updates the platform position and rotation of current animation. Calculating the elapsed time
+  // and applying necessary changes depending on it.
+  // Called by: p.draw function on main HTML script.
+  update: function(p) {
+
+    // Set now variable to current date and time
+    var now = Date.now();
+
+    // Elapsed variable represents percentage of completion of the animation: 0 to 1, being 1 100% completed.
+    var elapsed = (now - this.startTime) / this.cur.duration;
+
+    // As the update function is called 60 times per second, whenever the elapsed time goes over 1, it will not be
+    // by much of a difference. So adjust it to 1 and then make corresponding adjustments.
+    if (elapsed > 1) {
+      elapsed = 1
+    }
+
+    // Call fn function inside animation object to update this.translation and this.orientation, passing
+    // as argument the elapsed variable.
+    // Info on call() method: https://www.w3schools.com/js/js_function_call.asp
+    this.cur.fn.call(this, elapsed, p);
+
+    // If the animation is completed and there is a next animation, then start the next animation.
+    if (elapsed === 1 && this.cur.duration !== 0 && this.next !== null) {
+      this.start(this.next);
+    }
+
+    if (elapsed !== 1) {
+      this.servoAngles.push(platform.getServoAngles(this.translation));
+    }
+    
+    // Update platform position calling update function and passing on new position and orientation.
+    this.platform.update(this.translation, this.orientation);
+    
+  },
+
+  // This fn object contains all the predefined animations. Each animation inside this object is another object, with the needed
+  // parameters to run the other functions: duration of the animation, visibility of the path, and next animation (same animation,
+  // so that it executes in a loop). The last parameter of the animation object is, for most cases, a function (also called fn, do not confuse)
+  // containing the data of the movements. Its argument is pct, which stands for percentage of animation completion (0 to 1).
+  fn: {
+    rotate: {
+      duration: 4000,  // 4 seconds
+      pathVisible: false,
+      next: 'rotate',
       fn: function(pct) {
 
-        this.orientation = Quaternion.ONE;
+        // Calculate angle that platform needs to rotate depending on completion percentage
+        // Math.pow() function: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/pow
+        // Visualize angles in geogebra: https://www.geogebra.org/graphing; f(x)=((sen^(5)(x*2 π-8 π))/(2))
+        var b = Math.pow(Math.sin(pct * Math.PI * 2 - Math.PI * 8), 5) / 2;
+        // console.log('Platform is rotating by '+ Math.round(b*180/Math.PI*1000)/1000 + ' degrees.')
+        // Set movement = 0 since the platform only rotates
+        this.translation[0] = 0; // Set x movement = 0
+        this.translation[1] = 0; // Set y movement = 0
+        this.translation[2] = 0; // Set z movement = 0
 
-        var pctStart = 0;
-
-        for (var i = 1; i < data.length; i++) {
-
-          var p = data[i];
-
-          var pctEnd = pctStart + p.t / duration;
-
-          if (pctStart <= pct && pct < pctEnd) {
-
-            var scale = (pct - pctStart) / (pctEnd - pctStart);
-
-            var prev = i === 0 ? data[0] : data[i - 1];
-
-            this.translation[0] = prev.x + (p.x - prev.x) * scale;
-            this.translation[1] = prev.y + (p.y - prev.y) * scale;
-            this.translation[2] = prev.z + (p.z - prev.z) * scale;
-
-            return;
-          }
-          pctStart = pctEnd;
-        }
-
-        // Set to last element in chain
-        this.translation[0] = data[data.length - 1].x;
-        this.translation[1] = data[data.length - 1].y;
-        this.translation[2] = data[data.length - 1].z;
-      },
-
-    };
-  };
-
-  Animation.prototype = {
-    cur: null,
-    next: null,
-    startTime: 0,
-    platform: null,
-    translation: null,
-    orientation: null,
-    pathVisible: true,
-    toggleVisiblePath: function() {
-      this.pathVisible = !this.pathVisible;
-    },
-    drawPath: function(p) {
-
-      if (!this.pathVisible || !this.cur.pathVisible)
-        return;
-
-      p.beginShape();
-      p.noFill();
-      p.stroke(255, 0, 0);
-      var steps = 100;
-      for (var i = 0; i <= steps; i++) {
-        this.cur.fn.call(this, i / steps, p);
-        p.vertex(this.translation[0], this.translation[1], this.translation[2] + this.platform.T0[2]);
-      }
-      p.endShape();
-    },
-    start: function(t) {
-
-      if (this.map[t]) {
-        t = this.map[t];
-      }
-
-      if (!this.fn[t]) {
-        console.log("Failed ", t);
-        return;
-      } else {
-        this._start(this.fn[t], this.fn[t].next);
+        // Set orientation only to z axis and move by b angle.
+        this.orientation = Quaternion.fromAxisAngle([0, 0, 1], b); 
       }
     },
+    tilt: {
+      duration: 7000,
+      pathVisible: false,
+      next: 'tilt',
+      fn: function(pct) {
 
-    _start: function(play, next) {
-      if (play.start) {
-        play.start.call(this);
+        var a = 0; // Angle a, used to calculate rotation vector x and y.
+        var z = 0; // z component of rotation vector
+
+        // Separate animation in 4 parts. 
+        if (pct < 1 / 4) {           // If completion percentage is < 25%
+          pct = pct * 4;          
+          a = 0;                     // a = 0, z = 0, x = 0, y = -1
+        } else if (pct < 1 / 2) {    // If completion percentage is > 25% and < 50%
+          pct = (pct - 1 / 4) * 4;
+          a = 1 * Math.PI / 3;       // a = 60º, z = 0, x = 0.87, y = -1/2
+        } else if (pct < 3 / 4) {    // If completion percentage is > 50% and < 75%
+          pct = (pct - 1 / 2) * 4;
+          a = 2 * Math.PI / 3;       // a = 120º, z = 0, x = 0.87, y = 1/2
+        } else {                     // If completion percentage is > 75% and < 100%
+          pct = (pct - 3 / 4) * 4;
+          z = 1;                     // a = 0, z = 1, x = 0, y = -1
+        }
+
+        var x = 0;
+        var y = 0;
+
+        if (z === 0) {
+          x = Math.sin(a);
+          y = -Math.cos(a);
+        }
+
+        var b = Math.pow(Math.sin(pct * Math.PI * 2 - Math.PI * 8), 5) / 3;  // Angle taken from rotate animation
+        //console.log('Platform is rotating by '+ Math.round(b*180/Math.PI*1000)/1000 + ' degrees.')
+
+        // Set movement = 0 since the platform only rotates
+        this.translation[0] = 0; // Set x movement = 0
+        this.translation[1] = 0; // Set y movement = 0
+        this.translation[2] = 0; // Set z movement = 0
+
+        this.orientation = Quaternion.fromAxisAngle([x, y, z], b);
       }
-      this.cur = play;
-      this.next = next; // Loop
-      this.startTime = Date.now();
     },
+    circle: {
+      duration: 7000,
+      pathVisible: false,
+      next: 'circle',
+      fn: function(pct) {
 
-    moveTo: function(nt, no, time, next) {
+        let wallDistance = platform.wallDistance
+        let radius = 100 // 10 cm
+        let angleFromRadius = Math.atan(radius / wallDistance)
 
-      var ot = this.translation.slice();
-      var oo = this.orientation.clone();
-      var tw = oo.slerp(no);
+        let x = 0
+        let y = 0
+        let z = 1
 
-      this.cur = {
-        duration: time,
-        pathVisible: false,
-        fn: function(pct) {
-          this.orientation = tw(pct);
-          this.translation = [
-            ot[0] + pct * (nt[0] - ot[0]),
-            ot[1] + pct * (nt[1] - ot[1]),
-            ot[2] + pct * (nt[2] - ot[2])
-          ];
+        let b = angleFromRadius * Math.cos(2*Math.PI*pct)
+        //console.log("Platform's rotation is "+ Math.round(b*180/Math.PI*100)/100 + ' degrees.')
+
+        // Separate animation in 4 parts. 
+        if (pct < 1 / 4) {           // If completion percentage is < 25%         
+          z = 1;
+          x = 1;
+          y = 1;                   
+        } else if (pct < 1 / 2) {    // If completion percentage is > 25% and < 50%
+          z = 1
+          x = -1
+          y = -1     
+        } else if (pct < 3 / 4) {    // If completion percentage is > 50% and < 75%
+          z = 1 
+          x = 1
+          y = 1
+        } else {                     // If completion percentage is > 75% and < 100%
+          z = 1
+          x = 1
+          y = 1                     
         }
-      };
-      this.startTime = Date.now();
-      this.next = next;
-    },
+        // Set movement = 0 since the platform only rotates
+        this.translation[0] = 0; // Set x movement = 0
+        this.translation[1] = 0; // Set y movement = 0
+        this.translation[2] = 0; // Set z movement = 0
 
-    update: function(p) {
-
-      var now = Date.now();
-
-      var elapsed = (now - this.startTime) / this.cur.duration;
-
-      if (elapsed > 1)
-        elapsed = 1;
-
-      // Update actual orientation + position
-      this.cur.fn.call(this, elapsed, p);
-
-      if (elapsed === 1 && this.cur.duration !== 0 && this.next !== null) {
-        this.start(this.next);
+        this.orientation = Quaternion.fromAxisAngle([x, y, z], b);
       }
-
-      this.platform.update(this.translation, this.orientation);
     },
-    fn: {
-      rotate: {
-        duration: 4000,
-        pathVisible: false,
-        next: 'rotate',
-        fn: function(pct) {
-          var b = Math.pow(Math.sin(pct * Math.PI * 2 - Math.PI * 8), 5) / 2;
+    square: (function() {
+      var tmp = Animation.Interpolate([
+        {x: -30, y: -30, z: 0 + 10, t: 0},
+        {x: -30, y: 30, z: 0, t: 1000},
+        {x: 30, y: 30, z: +10, t: 1000},
+        {x: 30, y: -30, z: 0, t: 1000},
+        {x: -30, y: -30, z: 0 + 10, t: 1000},
+      ]);
+      tmp.next = "square";
+      return tmp;
+    })(),
+    wobble: {
+      duration: 3000,
+      pathVisible: false,
+      next: 'wobble',
+      fn: function(pct) {
 
-          this.translation[0] = 0;
-          this.translation[1] = 0;
-          this.translation[2] = 0;
-          this.orientation = Quaternion.fromAxisAngle([0, 0, 1], b);
-        }
-      },
-      tilt: {
-        duration: 7000,
-        pathVisible: false,
-        next: 'tilt',
-        fn: function(pct) {
+        var b = pct * 2 * Math.PI;
 
-          var a = 0;
-          var z = 0;
-
-          if (pct < 1 / 4) {
-            pct = pct * 4;
-            a = 0;
-          } else if (pct < 1 / 2) {
-            pct = (pct - 1 / 4) * 4;
-            a = 1 * Math.PI / 3;
-          } else if (pct < 3 / 4) {
-            pct = (pct - 1 / 2) * 4;
-            a = 2 * Math.PI / 3;
-          } else {
-            pct = (pct - 3 / 4) * 4;
-            z = 1;
-          }
-
-          var x = 0;
-          var y = 0;
-
-          if (z === 0) {
-            x = Math.sin(a);
-            y = -Math.cos(a);
-          }
-
-          var b = Math.pow(Math.sin(pct * Math.PI * 2 - Math.PI * 8), 5) / 3;
-
-          this.translation[0] = 0;
-          this.translation[1] = 0;
-          this.translation[2] = 0;
-          this.orientation = Quaternion.fromAxisAngle([x, y, z], b);
-        }
-      },
-      square: (function() {
-        var tmp = Animation.Interpolate([
-          {x: -30, y: -30, z: 0 + 10, t: 0},
-          {x: -30, y: 30, z: 0, t: 1000},
-          {x: 30, y: 30, z: +10, t: 1000},
-          {x: 30, y: -30, z: 0, t: 1000},
-          {x: -30, y: -30, z: 0 + 10, t: 1000},
-        ]);
-        tmp.next = "square";
-        return tmp;
-      })(),
-      wobble: {
-        duration: 3000,
-        pathVisible: false,
-        next: 'wobble',
-        fn: function(pct) {
-
-          var b = pct * 2 * Math.PI;
-
-          this.translation[0] = Math.cos(-b) * 13;
-          this.translation[1] = Math.sin(-b) * 13;
-          this.translation[2] = 0;
-          this.orientation = new Quaternion(-13, -Math.cos(b), Math.sin(b), 0).normalize();
-        }
-      },
-      breathe: {
-        duration: 5000,
-        pathVisible: false,
-        next: 'breathe',
-        fn: function(pct) {
-
-          var y = (Math.exp(Math.sin(2 * Math.PI * pct) - 1)) / (Math.E * Math.E - 1);
-
-          this.translation = [0, 0, y * 50];
-          this.orientation = Quaternion.ONE;
-        }
-      },
-      eight: {
-        duration: 3500,
-        pathVisible: true,
-        next: 'eight',
-        fn: function(pct) {
-          var t = (-0.5 + 2.0 * pct) * Math.PI;
-          this.translation = [Math.cos(t) * 30, Math.sin(t) * Math.cos(t) * 30, 0];
-          this.orientation = Quaternion.ONE;
-        }
-      },
-      lissajous: {
-        duration: 10000,
-        pathVisible: true,
-        next: 'lissajous',
-        fn: function(pct) {
-          this.translation = [(Math.sin(3 * pct * 2 * Math.PI) * 30), (Math.sin(pct * 2 * 2 * Math.PI) * 30), 0];
-          this.orientation = Quaternion.ONE;
-        }
-      },
-      helical: {
-        duration: 5000,
-        pathVisible: true,
-        next: null,
-        fn: function(pct) {
-          pct = 1 - pct;
-          this.translation = [(Math.cos(pct * Math.PI * 8) * 20), (Math.sin(pct * Math.PI * 8) * 20), pct * 20];
-          this.orientation = Quaternion.ONE;
-        }
-      },
-      mouse: {
-        duration: 0,
-        pathVisible: false,
-        next: null,
-        fn: function(pct, p) {
-          this.translation = [(p.mouseX - 512) / 10, (p.mouseY - 382) / 10, 0];
-          this.orientation = Quaternion.ONE;
-        }
-      }, /*
-       perlin: (function() {
-       
-       var xoff = 0;
-       var yoff = 0;
-       
-       
-       return {
-       duration: 0,
-       fn: function(none, p) {
-       
-       var b = p.noise(xoff, xoff) * 2 * Math.PI;
-       
-       this.translation[0] = Math.cos(-b) * 13;
-       this.translation[1] = Math.sin(-b) * 13;
-       this.translation[2] = 0;
-       this.orientation = new Quaternion(-13, -Math.cos(b), Math.sin(b), 0).normalize();
-       
-       
-       xoff += 0.0001;
-       yoff += 0.0001;
-       }
-       }
-       })(),*/
-      gamepad: (function() {
-
-        var gamepadActive = false;
-        if (root.addEventListener) {
-          root.addEventListener("gamepadconnected", function(e) {
-            gamepadActive = true;
-          });
-
-          root.addEventListener("gamepaddisconnected", function(e) {
-            gamepadActive = false;
-          });
-        }
-
-        return {
-          duration: 0,
-          pathVisible: false,
-          next: null,
-          start: function() {
-            this.orientation = Quaternion.ONE;
-            this.translation = [0, 0, 0];
-            if (gamepadActive) {
-              alert("Use the joysticks and L1 button");
-            } else {
-              alert("Plug in a Playstation or Xbox controller and use the joysticks");
-            }
-          },
-          fn: function() {
-
-            if (!gamepadActive) {
-              return;
-            }
-
-            var gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
-            var buttons = gamepads[0].buttons;
-            var axes = gamepads[0].axes;
-
-            if (buttons[6].value) { // Is L1 pressed?
-              // Rotate around Z axis with joystick 2 left-right
-              this.orientation = Quaternion.fromAxisAngle([0, 0, 1], -axes[3] * Math.PI / 6);
-              this.translation = [0, 0, 0];
-            } else {
-              // Control with both joysticks
-              var b = Math.atan2(-axes[3], -axes[2]);
-              this.translation = [axes[1] * 30, axes[0] * 30, 0];
-              this.orientation = new Quaternion(-13, -Math.cos(b), Math.sin(b), 0).normalize();
-            }
-          }
-        };
-      })()
-    },
-    map: {
-      q: "square",
-      w: "wobble",
-      e: "eight",
-      r: "rotate",
-      t: "tilt",
-      y: "lissajous",
-
-      m: "mouse",
-      g: "gamepad",
-      b: "breathe",
-      h: "helical",
-      p: "perlin"
+        this.translation[0] = Math.cos(-b) * 13;
+        this.translation[1] = Math.sin(-b) * 13;
+        this.translation[2] = 0;
+        this.orientation = new Quaternion(-13, -Math.cos(b), Math.sin(b), 0).normalize();
+      }
     }
-  };
+  },
 
-
-  if (typeof exports === "object") {
-    Object.defineProperty(exports, "__esModule", {'value': true});
-    Stewart['default'] = Stewart;
-    Stewart['Stewart'] = Stewart;
-    Stewart['Animation'] = Animation;
-    module['exports'] = Stewart;
-  } else {
-    root.Animation = Animation;
-    root.Stewart = Stewart;
+  // Object that simply binds the names of the predefined animations to their corresponding keys in the keyboard
+  map: {
+    q: "square",
+    w: "wobble",
+    r: "rotate",
+    t: "tilt",
   }
-
-})(this);
+};
