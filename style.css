@@ -1,0 +1,47 @@
+img {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1000;
+    border: 0px;
+}
+
+#images {
+  margin-top: 30px;
+}
+
+.bottomButton,
+#currentServoAngles {
+  display: block;
+    margin: auto;
+    margin-bottom: 10px;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+ul {
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.checkbox {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center horizontally */
+    margin-bottom: 10px; /* Add margin bottom for spacing */
+}
+
+.inner-checkbox {
+    display: flex;
+    flex-direction: row;
+    font-size: 15px;
+}
+
+.tweakParameter {
+  display: block;
+  margin: 5px;
+}
