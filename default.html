@@ -3,46 +3,7 @@
   <head>
       <meta charset="utf-8">
       <title>Stewart Platform</title>
-      <style>
-          img {
-              position: fixed;
-              right: 20px;
-              bottom: 20px;
-              z-index: 1000;
-              border: 0px;
-          }
-
-          button,
-          #currentServoAngles {
-            display: block;
-              margin: auto;
-              margin-bottom: 10px;
-          }
-
-          .container {
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              margin-bottom: 10px;
-          }
-
-          ul {
-              font-family: 'Courier New', Courier, monospace;
-          }
-
-          .checkbox {
-              display: flex;
-              flex-direction: column;
-              align-items: center; /* Center horizontally */
-              margin-bottom: 10px; /* Add margin bottom for spacing */
-          }
-
-          .inner-checkbox {
-              display: flex;
-              flex-direction: row;
-              font-size: 15px;
-          }
-      </style>
+      <link rel="stylesheet" type="text/css" href="style.css"> 
   </head>
   <body>
     <script src="/node_modules/bezier-js/bezier.js"></script>
@@ -55,7 +16,32 @@
 
     <div class="container">
         <div id="images" style="text-align: center;"></div>
-        <div id="currentServoAngles"></div>
+        <div id="currentServoAngles">
+          <h3>Current servo angles</h3>
+        </div>
+        <div id = "platformParameters">
+          <h3>Tweak parameters</h3>
+          <div class="tweakParameter">
+            <label for="distanceToWallInput">Distance to wall:</label>
+            <input type="number" id="distanceToWallInput" name="distanceToWallInput" min="1" max="100">
+            <button style="display: inline;" id="distanceToWallBtn">Change</button>
+          </div>
+          <div class="tweakParameter">
+            <label for="rotationAxisOffsetInput">Rotation axis offset:</label>
+            <input type="number" id="rotationAxisOffsetInput" name="rotationAxisOffsetInput" min="1" max="100">
+            <button style="display: inline;" id="distanceToWallBtn">Change</button>
+          </div>
+          <div class="tweakParameter">
+            <label for="drawingSizeInput">Drawing size:</label>
+            <input type="number" id="drawingSizeInput" name="drawingSizeInput" min="1" max="100">
+            <button style="display: inline;" id="distanceToWallBtn">Change</button>
+          </div>
+          <div class="tweakParameter">
+            <label for="drawingSpeedInput">Drawing speed:</label>
+            <input type="number" id="drawingSpeedInput" name="drawingSpeedInput" min="1" max="100">
+            <button style="display: inline;" id="distanceToWallBtn">Change</button>
+          </div>                    
+        </div>
     </div>
     <div id="canvas" style="text-align: center"></div>
 
@@ -65,9 +51,9 @@
         <label for="animationAnglesType">Original servo angles</label>
         <input type="checkbox" id="animationAnglesType" name="animationAnglesType">
       </div>
-      <button id="getAnimationAnglesBtn">Download servo angles of previous animation</button>
+      <button class="bottomButton" id="getAnimationAnglesBtn">Download servo angles of previous animation</button>
     </div>
-    <button id="getHighestServoValuesBtn">Print highest servo angles of previous animation</button>
+    <button class="bottomButton" id="getHighestServoValuesBtn">Print highest servo angles of previous animation</button>
 
   </body>
 </html>

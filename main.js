@@ -54,6 +54,7 @@ function setupPlatform() {
             // Draw the updated platform
             platform.draw(p);
             displayCurrentServoAngles();
+            displayPlatformParameters();
 
             p.pop(); // stop separating this transformations from other possible ones outside of the push-pop
         };
@@ -108,7 +109,7 @@ function setupPlatform() {
         // It passes two arguments,(play, next). The play argument is the object that contains the info about the animation to play.
         // It is created using the Animation.SVG function, as there is no next animation, the second argument is null.
         svg.onclick = function() {
-            animation._start(Animation.SVG(SVGS[id].path, SVGS[id].box), null);
+            animation._start(Animation.SVG(SVGS[id].path, SVGS[id].box, animation.drawingSize, animation.drawingSpeed), null);
             //console.log(platform.getServoAngles(platform.translation))
             animation.servoAnglesToPrint = animation.servoAngles
             animation.servoAngles = []
@@ -183,7 +184,7 @@ function setupPlatform() {
         })
         roundedNumbers.push(servoAngles[servoAngles.length - 1].toFixed(0))
         // Create a string with HTML containing titles and rounded numbers
-        var htmlString = "<ul>";
+        var htmlString = "<h3>Current servo angles</h3><ul>";
         for (var i = 0; i < roundedNumbers.length; i++) {
         if (i !== 6) {
             var title = "Servo " + (i) + ": ";
@@ -209,6 +210,23 @@ function setupPlatform() {
         document.getElementById("currentServoAngles").innerHTML = htmlString
         
     }
+
+    // Displays platform tweakable parameters onscreen.
+    function displayPlatformParameters() {
+        let distanceToWall = platform.wallDistance
+        let rotationAxisOffset = platform.rotationAxisOffset
+        let drawingSize = animation.drawingSize
+        let drawingSpeed = animation.drawingSpeed
+        document.querySelector('label[for="distanceToWallInput"]').textContent = 'Distance to wall (' + distanceToWall + '): ';
+        document.querySelector('label[for="rotationAxisOffsetInput"]').textContent = 'Rotation axis offset (' + rotationAxisOffset + '): ';
+        document.querySelector('label[for="drawingSizeInput"]').textContent = 'Drawing size (' + drawingSize + '): ';
+        document.querySelector('label[for="drawingSpeedInput"]').textContent = 'Drawing speed (' + drawingSpeed + '): ';
+    }
+
+    distanceToWallBtn.addEventListener('click', function() {
+        const value = getElementById('distanceToWallInput').value
+        console.log(value)
+    })
 
     // Function to clone an array (also works for multidimensional arrays) Used when pressing getAnimationAnglesBtn.
     function cloneArray(arr) {

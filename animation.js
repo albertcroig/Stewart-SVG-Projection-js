@@ -25,6 +25,9 @@ function Animation(platform) {
   this.getServos = false
   this.servoAnglesToPrint = []
 
+  this.drawingSize = 80
+  this.drawingSpeed = 0.3
+
   // The 'start' method is called with the argument 'wobble' to initiate a specific type of animation
   this.start('wobble');
 }
@@ -34,13 +37,13 @@ function Animation(platform) {
 // The purpose of this function is to take an SVG path string and convert it into a series of 3D animation
 // steps. The animation steps are then returned for further use. Check parseSVGPath() at line 44 for parsing SVG path to individual
 // segments for animation. 
-Animation.SVG = function(svg, box) {
+Animation.SVG = function(svg, box, size, speed) {
 
-  const PERSEC = 0.014;  // Speed of animation (5units per sec)
+  const PERSEC = speed;  // Speed of animation (5units per sec)
   const L = 0;         // Lower value for the z-coordinate
   const H = 10;    // Higher value for the z-coordinate
 
-  const SCREEN_SIZE = 150; // 80x80
+  const SCREEN_SIZE = size; // 80x80
 
   var cur = {x: L, y: box.width / 2, z: box.height / 2};  // Current position in the SVG path, initialized to the center of the provided bounding box (box)
   var ret = [];        // Array to store animation steps
