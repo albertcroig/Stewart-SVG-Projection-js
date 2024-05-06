@@ -128,9 +128,10 @@ Stewart.prototype = {
     var servoRangeVisible = opts.servoRangeVisible === undefined ? false : opts.servoRangeVisible;
     
     // Offset of rotation axis and wall distance (from center of platform).
-    var rotationAxisOffset = opts.rotationAxisOffset || 250
-    var wallDistance = opts.wallDistance || 820
-    var laserPlatformEdge = {}
+    var rotationAxisOffset = (opts.rotationAxisOffset !== undefined) ? opts.rotationAxisOffset : 250;
+    
+    var wallDistance = (opts.wallDistance !== undefined) ? opts.wallDistance : 820;
+    var laserPlatformEdge = {};
 
     // Find platform edge where laser's going to be pointing
     laserPlatformEdge.x = (platformInts[1].x)
@@ -244,11 +245,6 @@ Stewart.prototype = {
         p.translate(-rotationAxisOffset,0,this.T0[2])
         p.rotateY(p.PI/2)
         this.drawPartialSphere(p, rotationAxisOffset+wallDistance, 0, Math.PI/4)
-        p.pop()
-        p.push()
-        p.translate(wallDistance, 0);
-        p.rotateX(-Math.PI/2)
-        p.rotateY(-Math.PI/2)
         p.pop()
 
         // Drawing floor cube

@@ -110,7 +110,6 @@ function setupPlatform() {
         // It is created using the Animation.SVG function, as there is no next animation, the second argument is null.
         svg.onclick = function() {
             animation._start(Animation.SVG(SVGS[id].path, SVGS[id].box, animation.drawingSize, animation.drawingSpeed), null);
-            //console.log(platform.getServoAngles(platform.translation))
             animation.servoAnglesToPrint = animation.servoAngles
             animation.servoAngles = []
         };
@@ -223,10 +222,46 @@ function setupPlatform() {
         document.querySelector('label[for="drawingSpeedInput"]').textContent = 'Drawing speed (' + drawingSpeed + '): ';
     }
 
-    distanceToWallBtn.addEventListener('click', function() {
-        const value = getElementById('distanceToWallInput').value
-        console.log(value)
+    // When change parameters button is pressed execute this function to change parameters corresponding to inputs.
+    tweakParametersBtn.addEventListener('click', function() {
+        let inputMapping = {
+            wallDistance: document.getElementById('distanceToWallInput'),
+            rotationAxisOffset: document.getElementById('rotationAxisOffsetInput'),
+            drawingSize: document.getElementById('drawingSizeInput'),
+            drawingSpeed: document.getElementById('drawingSpeedInput'),
+        }
+
+        let platformValues = {
+            wallDistance: parseFloat(inputMapping.wallDistance.value),
+            rotationAxisOffset: parseFloat(inputMapping.rotationAxisOffset.value)
+        }
+
+        let animationValues = {
+            drawingSize: parseFloat(inputMapping.drawingSize.value),
+            drawingSpeed: parseFloat(inputMapping.drawingSpeed.value),
+        }
+
+        for (const key in platformValues) {
+            if (isNaN(platformValues[key])) {
+                platformValues[key] = platform[key]
+            }
+            else {
+                inputMapping[key].value = ""
+            }
+        }
+        platform.initHexagonal(platformValues)
+
+        for (const key in animationValues) {
+            if (isNaN(animationValues[key])) {
+                animationValues[key] = animation[key]
+            }
+            else {
+                animation[key] = animationValues[key]
+                inputMapping[key].value = ""
+            }
+        }
     })
+
 
     // Function to clone an array (also works for multidimensional arrays) Used when pressing getAnimationAnglesBtn.
     function cloneArray(arr) {

@@ -20,27 +20,24 @@
           <h3>Current servo angles</h3>
         </div>
         <div id = "platformParameters">
-          <h3>Tweak parameters</h3>
+          <h3>Tweak parameters (mm)</h3>
           <div class="tweakParameter">
             <label for="distanceToWallInput">Distance to wall:</label>
             <input type="number" id="distanceToWallInput" name="distanceToWallInput" min="1" max="100">
-            <button style="display: inline;" id="distanceToWallBtn">Change</button>
           </div>
           <div class="tweakParameter">
             <label for="rotationAxisOffsetInput">Rotation axis offset:</label>
             <input type="number" id="rotationAxisOffsetInput" name="rotationAxisOffsetInput" min="1" max="100">
-            <button style="display: inline;" id="distanceToWallBtn">Change</button>
           </div>
           <div class="tweakParameter">
             <label for="drawingSizeInput">Drawing size:</label>
             <input type="number" id="drawingSizeInput" name="drawingSizeInput" min="1" max="100">
-            <button style="display: inline;" id="distanceToWallBtn">Change</button>
           </div>
           <div class="tweakParameter">
             <label for="drawingSpeedInput">Drawing speed:</label>
             <input type="number" id="drawingSpeedInput" name="drawingSpeedInput" min="1" max="100">
-            <button style="display: inline;" id="distanceToWallBtn">Change</button>
-          </div>                    
+          </div>   
+          <button style="width:100%; margin-top: 10px;" id="tweakParametersBtn">Change Parameters</button>                 
         </div>
     </div>
     <div id="canvas" style="text-align: center"></div>

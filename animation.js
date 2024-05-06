@@ -453,8 +453,10 @@ Animation.prototype = {
     // animations. If the passed parameter is not in it, then it console logs "Failed" and ends the function, as the passed parameter is wrong.
     // If the t parameter is within the fn object (defined animation), then it executes the _start function to start with the animation.
     // The _start function executed here passes as parameters the object related to the corresponding animation, and the name of the next animation.
-    if (!this.fn[t]) {
-      console.log("Failed ", t);
+    if (!this.fn[t]){
+      if (isNaN(Number.parseFloat(t))) {
+        console.log("Failed ", t);
+      }
       return;
     } else {
       if (this.getServos != false) {
