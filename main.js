@@ -117,7 +117,8 @@ function setupPlatform() {
         // Creates the html element with its respective attributes to display the svg image onscreen.
         var path = document.createElementNS(xmlns, "path");
         path.setAttribute('stroke', "#000000");
-        path.setAttribute('stroke-width', .001);
+        path.setAttribute('fill', "none");
+        path.setAttribute('stroke-width', 10);
 
         path.setAttribute('d', d);
         svg.appendChild(path);

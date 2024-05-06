@@ -316,7 +316,7 @@ Animation.prototype = {
               operation = (x) => Math.floor(304.5 + x * 185.5 * 2 / Math.PI);
               break;
             case 5:
-              operation = (x) => Math.ceil(325.0 - 1 * x * 186.0 * 2 / Math.PI);
+              operation = (x) => Math.ceil(325.0 - 1 * x * 186.0 * 2 / Math.PI) + '}';
               break;
             // For the laser on/off, we offset the value one step so that it gets turned off later.
             case 6:
@@ -348,7 +348,7 @@ Animation.prototype = {
       let header = []
 
       if (isAdapted) {
-        header = ['Step', 'DigitalIn','Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5']
+        header = ['// DigitalIn','Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Step']
 
         // Put last column into first position
         for (let i = 0; i < myData.length; i++) {
@@ -357,7 +357,7 @@ Animation.prototype = {
         }
 
         // Create index column starting from 1
-        myData.forEach((row, index) => row.unshift(index+1));
+        myData.forEach((row, index) => row.push('// ' + (index+1)));
       }
       else {
         header = ['Step', 'Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Laser on/off'];
@@ -374,8 +374,10 @@ Animation.prototype = {
       let text
       if (isAdapted) {
         const headerText = tableToDownload.shift().join('\t,\t')
-        const bodyText = tableToDownload.map(row => row.join('\t,\t')).join('},\n{')
-        text = headerText + '\n' + '{' + bodyText + '}'
+        const bodyText = tableToDownload.map(row => row.join('\t,\t')).join('\n{')
+        text = headerText + '\n' + '{' + bodyText
+        const lastComma = text.lastIndexOf(",");
+        text = text.substring(0, lastComma) + text.substring(lastComma + 1)
       }
       else {
         text = tableToDownload.map(row => row.join('\t')).join('\n');

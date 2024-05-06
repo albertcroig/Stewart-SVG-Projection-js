@@ -6,10 +6,6 @@ img {
     border: 0px;
 }
 
-#images {
-  margin-top: 30px;
-}
-
 .bottomButton,
 #currentServoAngles {
   display: block;
@@ -19,7 +15,7 @@ img {
 
 .container {
     display: flex;
-    justify-content: center;
+    justify-content:center;
     align-items: flex-start;
     margin-bottom: 10px;
 }
