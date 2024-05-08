@@ -301,79 +301,35 @@ Animation.prototype = {
   
   downloadServoAngles: function(data, originalValues) {
 
+    const calibrationData = {
+      middlePos: [305, 313, 297, 313, 303, 317],
+      amplitude: [186, 186, 186, 186, 186, 186],
+      direction: [1, -1, 1, -1, 1, -1]
+    }  
+    
     function adaptDataArduino(rawData) {
 
-      // Remove first steps (where the pointer moves to starting shape position)
-      let indexToCut = 0
+      // Apply mathematical operations to map servo angles into real-life servo arduino angles  
       for (let i = 0; i < rawData.length; i++) {
-        if (rawData[i][6] === 0) {
-          if (rawData[i+1][6] === 1) {
-            indexToCut = i
-            break;
-          }
-        }
-      }
-      rawData.splice(0, indexToCut + 1)
-
-      // Apply mathematical operations to map servo angles into real-life servo arduino angles    
-      let operation
-      const modifiedData = []
-      
-      for (let i = 0; i < rawData.length; i++) {
-        const modifiedColumn = []
         for (let j = 0; j < rawData[i].length; j++) {
-          // Operations depending on servo number. The left part servos (0, 2, 4) will round down and the right part ones (1, 3, 5) will round up
-          // so that all tend to go down in the end and are a bit more synchronized.
-          switch (j) {
-            case 0:
-              operation = (x) => Math.floor(308.5 + x * 187.5 * 2 / Math.PI);
-              break;
-            case 1:
-              operation = (x) => Math.ceil(313.5 - 1 * x * 185.5 * 2 / Math.PI);
-              break;
-            case 2:
-              operation = (x) => Math.floor(303.5 + x * 190.5 * 2 / Math.PI);
-              break;
-            case 3:
-              operation = (x) => Math.ceil(319.0 - 1 * x * 185.0 * 2 / Math.PI);
-              break;
-            case 4:
-              operation = (x) => Math.floor(304.5 + x * 185.5 * 2 / Math.PI);
-              break;
-            case 5:
-              operation = (x) => Math.ceil(325.0 - 1 * x * 186.0 * 2 / Math.PI) + '}';
-              break;
-            // For the laser on/off, we offset the value *one step* so that it gets turned off later.
-            case 6:
-              operation = () => i===0 || i===1 ? rawData[i][j] : rawData[i-2][j];
-              break;
+          if (j !== 6) {
+            if (calibrationData.direction[j] === -1) {
+              rawData[i][j] = Math.floor(calibrationData.middlePos[j] -1 * rawData[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
+            }
+            else {
+              rawData[i][j] = Math.ceil(calibrationData.middlePos[j] + rawData[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
+            }
           }
-          modifiedColumn.push(operation(rawData[i][j]))
-        }
-        modifiedData.push(modifiedColumn)
-      }
-
-      // Copy last row and set laser value to 0 (off)
-      const lastRow = [...modifiedData[modifiedData.length-1]]
-      const newRow = []
-      for (let i = 0; i < lastRow.length; i++) {
-        const colValue = lastRow[i]
-        if (i === 6) {
-          newRow.push(0)
-        }
-        else {
-          newRow.push(colValue)
         }
       }
-      modifiedData.push(newRow)
-      return modifiedData
+      return rawData
     }
 
     function addHeaderAndSteps(myData, isAdapted) {
       let header = []
 
       if (isAdapted) {
-        header = ['// DigitalIn','Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Step']
+        header = ['DigitalIn','Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Step', 'Original Angles']
 
         // Put last column into first position
         for (let i = 0; i < myData.length; i++) {
@@ -381,8 +337,11 @@ Animation.prototype = {
           subarray.unshift(subarray.pop())
         }
 
+        for (let i =0; i<myData.length; i++) {
+          myData[i][6] += '\t}'
+        }
         // Add step number (commented)
-        myData.forEach((row, index) => row.push('// ' + (index+1)));
+        myData.forEach((row, index) => row.push('// ' + (index+1) + '\t\t' + originalAngles[index].join('\t')));
       }
       else {
         header = ['Step', 'Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Laser on/off'];
@@ -391,14 +350,19 @@ Animation.prototype = {
       }
 
       // Add header to the data
-      myData.unshift(header);
+      myData.unshift(calibrationData.middlePos, calibrationData.amplitude, calibrationData.direction, header);
     }
 
     function performDownload(tableToDownload, isAdapted) {
       // Convert data to text
       let text
+
       if (isAdapted) {
-        const headerText = tableToDownload.shift().join('\t,\t')
+        let order = [' Middle pos:', ' Amplitude:', ' Direction:', '\t']
+        let headerText = '//\t\tCalibration values'
+        for (i=0; i < 4; i++) {
+          headerText += '\n//'+ order[i] +'\t' + tableToDownload.shift().join('\t,\t')
+        }
         const bodyText = tableToDownload.map(row => row.join('\t,\t')).join('\n{')
         text = headerText + '\n' + '{' + bodyText
         const lastComma = text.lastIndexOf(",");
@@ -426,6 +390,54 @@ Animation.prototype = {
 
       // Remove the anchor element from the document body
       document.body.removeChild(anchor);
+    }
+
+    // Applying initial modifications to data (remove first steps and offset laser activation by 1 step), and set laser to 0 at last row
+
+    // Remove first steps (where the pointer moves to starting shape position)
+    let indexToCut = 0
+    for (let i = 0; i < data.length; i++) {
+      if (data[i][6] === 0) {
+        if (data[i+1][6] === 1) {
+          indexToCut = i
+          break;
+        }
+      }
+    }
+    data.splice(0, indexToCut + 1)
+
+    // For the laser on/off, we offset the value *one step* so that it gets turned off later.
+    let activationArr = []
+    for (let i = 0; i < data.length; i++) {
+      if (i === 0) {
+        activationArr.push(data[i][6])
+      }
+      else {
+        activationArr.push(data[i-1][6])
+      }
+    }
+    for (let i = 0; i < data.length; i++) {
+      data[i][6] = activationArr[i]
+    }
+
+    // Copy last row and set laser value to 0 (off)
+    const lastRow = [...data[data.length-1]]
+    const newRow = []
+    for (let i = 0; i < lastRow.length; i++) {
+      const colValue = lastRow[i]
+      if (i === 6) {
+        newRow.push(0)
+      }
+      else {
+        newRow.push(colValue)
+      }
+    }
+    data.push(newRow)
+    
+    // Store original angles in a variable for later use
+    let originalAngles = []
+    for (var i = 0; i < data.length; i++) {
+      originalAngles[i] = data[i].slice();
     }
 
     if (!originalValues) {

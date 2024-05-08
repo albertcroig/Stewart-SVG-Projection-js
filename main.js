@@ -161,6 +161,9 @@ function setupPlatform() {
         }, {//Square test
         path: "M 0,0 v 500 h 500 v -500 h -500 ",
         box: { x: 0, y: 0, width: 500, height: 500 }
+        }, {//Square test
+        path: "M 0,500 v -500 h 500 v 500 h -500 ",
+        box: { x: 0, y: 0, width: 500, height: 500 }
         }, {//Line test
         path: "M 250,0 v 500",
         box: { x: 0, y: 0, width: 500, height: 500 }
@@ -267,25 +270,9 @@ function setupPlatform() {
 
     // Function to clone an array (also works for multidimensional arrays) Used when pressing getAnimationAnglesBtn.
     function cloneArray(arr) {
-        // Check if input is an array
-        if (!Array.isArray(arr)) {
-            return null; // or throw an error, depending on your needs
-        }
-    
-        // Create a new array to hold the cloned data
-        let clonedArray = [];
-    
-        // Iterate over each element in the original array
-        arr.forEach(element => {
-            // If the element is an array, recursively clone it
-            if (Array.isArray(element)) {
-                clonedArray.push(cloneArray(element));
-            } else {
-                // If the element is not an array, directly add it to the cloned array
-                clonedArray.push(element);
-            }
-        });
-    
+        var clonedArray = [];
+        for (var i = 0; i < arr.length; i++)
+            clonedArray[i] = arr[i].slice();
         return clonedArray;
     }    
 
@@ -293,7 +280,6 @@ function setupPlatform() {
         // Get the checkbox element
         const checkbox = document.getElementById('animationAnglesType');
         let servoAngles = animation.servoAnglesToPrint
-        console.table(servoAngles)
         let servos = cloneArray(servoAngles)
 
         // Check if the checkbox is checked
