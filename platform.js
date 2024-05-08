@@ -63,9 +63,9 @@ Stewart.prototype = {
 
   },
 
-  drawPartialSphere: function(p, radius, startAngle, endAngle) {
-    p.strokeWeight(0.25)
-    p.fill(150)
+  drawPartialSphere: function(p, radius, startAngle, endAngle, color) {
+    p.strokeWeight(0.05)
+    p.fill(color)
     p.beginShape(p.TRIANGLE_STRIP);
     for (let phi = startAngle; phi <= endAngle; phi += 0.1) {
       for (let theta = 0; theta <= p.TWO_PI; theta += 0.1) {
@@ -231,11 +231,19 @@ Stewart.prototype = {
         }
         p.endShape(p.CLOSE);
 
+        // Draw laser pointer
         p.push()
-        p.stroke(0,255,0)
+        p.stroke(238,130,238)
         p.translate(laserPlatformEdge.x, 0);
         p.line(0, 0, wallDistance-laserPlatformEdge.x, 0);
         p.pop()
+
+        // Draw line to center of rotation
+        p.push()
+        p.stroke(255,0,0)
+        p.line(0, 0, -rotationAxisOffset, 0);
+        p.pop()        
+
 
       },
       drawWall: function(p) {
@@ -244,7 +252,8 @@ Stewart.prototype = {
         p.push()
         p.translate(-rotationAxisOffset,0,this.T0[2])
         p.rotateY(p.PI/2)
-        this.drawPartialSphere(p, rotationAxisOffset+wallDistance, 0, Math.PI/4)
+        p.sphere(2)
+        this.drawPartialSphere(p, (rotationAxisOffset+wallDistance + 1), 0, Math.PI/4, [221, 216, 187])
         p.pop()
 
         // Drawing floor cube

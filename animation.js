@@ -25,8 +25,10 @@ function Animation(platform) {
   this.getServos = false
   this.servoAnglesToPrint = []
 
-  this.drawingSize = 80
-  this.drawingSpeed = 0.3
+  this.drawingSize = 140
+  this.drawingSpeed = 0.1
+
+  this.path = [[],[],[],[]]
 
   // The 'start' method is called with the argument 'wobble' to initiate a specific type of animation
   this.start('wobble');
@@ -197,13 +199,12 @@ Animation.Interpolate = function(data) {
     let rotZ = beta === 0 ? 0 : 1
     let laserState = x !== 0 ? 0 : 1
 
-    xTrans = 2 * rotationAxisOffset - rotationAxisOffset * Math.cos(theta) - rotationAxisOffset * Math.cos(beta)
-    //console.log(theta)
+    xTrans = rotationAxisOffset - rotationAxisOffset * Math.cos(theta) * Math.cos(beta)
     yTrans = rotationAxisOffset * Math.sin(beta)
     zTrans = -rotationAxisOffset * Math.sin(theta)
 
     movements = {
-      x: xTrans,
+      x: -xTrans,
       y: yTrans,
       z: zTrans,
       rotY: rotY,
@@ -215,6 +216,10 @@ Animation.Interpolate = function(data) {
     return movements
   }
 
+  function interpolateWithPrevious(previous, current, scale) {
+    return previous + (current - previous) * scale
+  }
+
   return {   // Return the normalized object for animation.
     duration: duration,
     pathVisible: true,
@@ -222,6 +227,11 @@ Animation.Interpolate = function(data) {
     fn: function(pct) {
 
       var pctStart = 0;  // Variable for starting progress of animation (initialize to 0%)
+
+      const xValue = function(movement) {
+        //return (platform.wallDistance + platform.rotationAxisOffset) * Math.cos(movement.theta) * Math.cos(movement.beta) - 2 * platform.rotationAxisOffset
+        return (platform.rotationAxisOffset + platform.wallDistance) * (Math.cos(movement.theta) * Math.cos(movement.beta)) - platform.rotationAxisOffset
+      }
       
       for (var i = 1; i < data.length; i++) {  // For every step of the animation
 
@@ -233,13 +243,20 @@ Animation.Interpolate = function(data) {
           var scale = (pct - pctStart) / (pctEnd - pctStart); // Variable scale to calculate how far the animation is in selected step. (0 to 1)
           var prev = i === 0 ? data[0] : data[i - 1];  // Previous step, if i = 0 (meaning first step of animation), previous step is same step, otherwise its i-1
 
+
           var movements = calculateMovements(p.x, p.y, p.z)
           var prevMovements = calculateMovements(prev.x, prev.y, prev.z)
 
+          // For path drawing
+          this.path[0].push(interpolateWithPrevious(xValue(prevMovements), xValue(movements), scale))                    
+          this.path[1].push(interpolateWithPrevious(prev.y, p.y, scale))
+          this.path[2].push(interpolateWithPrevious(prev.z, p.z, scale))
+          this.path[3].push(movements.laserState)
+
           // Set the new location with previous' step location + its difference multiplied by completion progress of step.
-          this.translation[0] = prevMovements.x + (movements.x - prevMovements.x) * scale; 
-          this.translation[1] = prevMovements.y + (movements.y - prevMovements.y) * scale;
-          this.translation[2] = prevMovements.z + (movements.z - prevMovements.z) * scale;
+          this.translation[0] = interpolateWithPrevious(prevMovements.x, movements.x, scale)
+          this.translation[1] = interpolateWithPrevious(prevMovements.y, movements.y, scale)
+          this.translation[2] = interpolateWithPrevious(prevMovements.z, movements.z, scale)
           this.translation[3] = movements.laserState;
           this.orientation = Quaternion.fromAxisAngle([0, movements.rotY, 0], prevMovements.theta + (movements.theta - prevMovements.theta) * scale).mul(Quaternion.fromAxisAngle([0, 0, movements.rotZ], prevMovements.beta + (movements.beta - prevMovements.beta) * scale))
           //console.log(movements.beta)
@@ -250,6 +267,14 @@ Animation.Interpolate = function(data) {
 
       // Set to last element in chain, that isn't considered on the for loop.
       var lastMovements = calculateMovements(data[data.length-1].x, data[data.length-1].y, data[data.length-1].z)
+
+      // For path drawing
+      this.path[0].push(xValue(lastMovements))
+      this.path[1].push(data[data.length-1].y)
+      this.path[2].push(data[data.length-1].z)
+      this.path[3].push(lastMovements.laserState)
+
+      // For movements
       this.translation[0] = lastMovements.x;
       this.translation[1] = lastMovements.y;
       this.translation[2] = lastMovements.z;
@@ -318,9 +343,9 @@ Animation.prototype = {
             case 5:
               operation = (x) => Math.ceil(325.0 - 1 * x * 186.0 * 2 / Math.PI) + '}';
               break;
-            // For the laser on/off, we offset the value one step so that it gets turned off later.
+            // For the laser on/off, we offset the value *one step* so that it gets turned off later.
             case 6:
-              operation = () => i===0 ? rawData[i][j] : rawData[i-1][j];
+              operation = () => i===0 || i===1 ? rawData[i][j] : rawData[i-2][j];
               break;
           }
           modifiedColumn.push(operation(rawData[i][j]))
@@ -356,7 +381,7 @@ Animation.prototype = {
           subarray.unshift(subarray.pop())
         }
 
-        // Create index column starting from 1
+        // Add step number (commented)
         myData.forEach((row, index) => row.push('// ' + (index+1)));
       }
       else {
@@ -417,23 +442,27 @@ Animation.prototype = {
 
   // Draws a red line from the origin of the platform throughout the animation path. 
   drawPath: function(p) {
+    if (!this.pathVisible) {
+      return
+    }
 
-    // If path visibility is off, then end the function here (don't draw path)
-    if (!this.pathVisible || !this.cur.pathVisible)
-      return;
-
-    // Draw path shape with p.beginShape()
+    let isShapeBeginning = false
     p.beginShape();         // Tell the program I want to draw a shape with some vertices
     p.noFill();             // Background of shape transparent
     p.stroke(255, 0, 0);    // Contour of shape color red
-    var steps = 500;       // Number of vertices of the shape
-    for (var i = 0; i <= steps; i++) {  // For every vertex, define its position
-      // Calls the fn function inside the current animation object and passes as argument i/steps, which represents the progress
-      // ratio of the animation (0 to 1). This sets a value for this.translation
-      this.cur.fn.call(this, i / steps, p); 
-
-      // Once defined the position and rotaton of the vertex of "this", create a vertex.
-      p.vertex(this.translation[0], this.translation[1], this.translation[2] + this.platform.T0[2]);
+    
+    for (let i=0; i < this.path[0].length; i++) {
+      if (this.path[3][i-1] !== 0) {
+        if (isShapeBeginning) {
+          p.beginShape();
+        }
+        p.vertex(this.path[0][i], this.path[1][i], this.path[2][i] + platform.T0[2])
+        isShapeBeginning = false
+      }
+      else {
+        p.endShape();
+        isShapeBeginning = true
+      }
     }
     p.endShape();
   },

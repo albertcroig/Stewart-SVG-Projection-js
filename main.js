@@ -112,6 +112,7 @@ function setupPlatform() {
             animation._start(Animation.SVG(SVGS[id].path, SVGS[id].box, animation.drawingSize, animation.drawingSpeed), null);
             animation.servoAnglesToPrint = animation.servoAngles
             animation.servoAngles = []
+            animation.path= [[],[],[],[]]
         };
 
         // Creates the html element with its respective attributes to display the svg image onscreen.
@@ -184,7 +185,7 @@ function setupPlatform() {
         })
         roundedNumbers.push(servoAngles[servoAngles.length - 1].toFixed(0))
         // Create a string with HTML containing titles and rounded numbers
-        var htmlString = "<h3>Current servo angles</h3><ul>";
+        var htmlString = "<h3>Current servo angles and laser state</h3><ul>";
         for (var i = 0; i < roundedNumbers.length; i++) {
         if (i !== 6) {
             var title = "Servo " + (i) + ": ";
