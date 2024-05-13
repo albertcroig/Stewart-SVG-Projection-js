@@ -54,6 +54,9 @@ function setupPlatform() {
                 sphereView: 
                 [platform.wallDistance*0.7, 0, (platform.wallDistance + platform.rotationAxisOffset)*1.1, 
                 platform.wallDistance, 0, 0], 
+                platformView: 
+                [-platform.rotationAxisOffset*1.7, platform.rotationAxisOffset*2.2, platform.T0[2]+300, 
+                0, 0, platform.T0[2]/2], 
             }
 
             // Clear the background
