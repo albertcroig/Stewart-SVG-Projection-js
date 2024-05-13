@@ -83,6 +83,8 @@ hr {
 }
 
 body {
+    transform: scale(1.5);
+    transform-origin: 0 0;   
     font-family:Arial, Helvetica, sans-serif;
     font-size: 80%;
 }
