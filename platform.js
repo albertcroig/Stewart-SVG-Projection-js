@@ -244,6 +244,12 @@ Stewart.prototype = {
         p.line(0, 0, -rotationAxisOffset, 0);
         p.pop()        
 
+        // Draw little black sphere to represent rotation axis
+        p.push()
+        p.translate(-rotationAxisOffset,0,0)
+        p.sphere(2)
+        p.pop()
+
 
       },
       drawWall: function(p) {
@@ -252,7 +258,6 @@ Stewart.prototype = {
         p.push()
         p.translate(-rotationAxisOffset,0,this.T0[2])
         p.rotateY(p.PI/2)
-        p.sphere(2)
         this.drawPartialSphere(p, (rotationAxisOffset+wallDistance + 1), 0, Math.PI/8, [221, 216, 187])
         p.pop()
 
