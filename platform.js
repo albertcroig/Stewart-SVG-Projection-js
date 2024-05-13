@@ -253,7 +253,7 @@ Stewart.prototype = {
         p.translate(-rotationAxisOffset,0,this.T0[2])
         p.rotateY(p.PI/2)
         p.sphere(2)
-        this.drawPartialSphere(p, (rotationAxisOffset+wallDistance + 1), 0, Math.PI/4, [221, 216, 187])
+        this.drawPartialSphere(p, (rotationAxisOffset+wallDistance + 1), 0, Math.PI/8, [221, 216, 187])
         p.pop()
 
         // Drawing floor cube

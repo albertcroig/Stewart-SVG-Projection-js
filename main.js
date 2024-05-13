@@ -5,8 +5,9 @@ var platform;
 // Function to set up the platform and initialize the animation
 function setupPlatform() {
 
-    // Object to store rotation information for mouse interaction
-    var rotation = { active: false, x: 0, y: 0, cx: 0, cy: 0 };
+    var cameraView = []
+    var cameraAngles = {}
+    var currentView = 'defaultView'
 
     // p5.js sketch constructor function. helps organize and modularize code
     var sketch = function (p) {
@@ -18,12 +19,6 @@ function setupPlatform() {
             p.setup = function () {
             // Create a 3D canvas with specific size (600x600)
             p.createCanvas(600, 400, p.WEBGL);
-            //set the position and orientation of the camera
-            p.camera(
-                -800, -400, 300, // Position (x, y, z)
-                0, -150.0, 300,                // Look at point (center of the scene)
-                0, 1, 0                   // Up direction
-            );
 
             p.textFont(font)
 
@@ -31,19 +26,44 @@ function setupPlatform() {
             platform = new Stewart;                 // Create a new instance of a platform and assign it to previously defined variable
             animation = new Animation(platform);    // Create a new instance of animation and assign it to previously defined variable, as we create the object, the start() function is called for this object.
             platform.initHexagonal();               // Execute the initHexagonal function with default values (opts argument is blank)  
+
+            cameraAngles.defaultView = 
+            [-1000, 0, platform.T0[2]+300, 
+            platform.wallDistance/8, 0, platform.T0[2]]
+
+            cameraView = cameraAngles.defaultView
         };
 
         // Draw function is called continuously to update the canvas
         p.draw = function () {
-            
+
+            cameraAngles = {
+                defaultView: cameraAngles.defaultView, 
+                frontView: 
+                [-1000, 0, platform.T0[2]+100, 
+                platform.wallDistance, 0, platform.T0[2]],               
+                sideView: 
+                [-platform.rotationAxisOffset*1.5, platform.wallDistance*2.2, platform.T0[2]+100, 
+                platform.wallDistance/2, 0, platform.T0[2]], 
+                topView: 
+                [-1300 -platform.rotationAxisOffset*1.3, 0, platform.wallDistance*2, 
+                platform.wallDistance*0.5, 0, platform.T0[2]],
+                logoView: 
+                [platform.wallDistance*0.2, 0, platform.T0[2]+100, 
+                platform.wallDistance, 0, platform.T0[2]], 
+                sphereView: 
+                [platform.wallDistance*0.7, 0, (platform.wallDistance + platform.rotationAxisOffset)*1.1, 
+                platform.wallDistance, 0, 0], 
+            }
+
             // Clear the background
             p.background(255);
 
+            //set the position and orientation of the camera
+            p.camera(cameraAngles[currentView][0],cameraAngles[currentView][1],cameraAngles[currentView][2],cameraAngles[currentView][3],cameraAngles[currentView][4],cameraAngles[currentView][5], 0, 0, -1);
+
             // Apply transformations for user interaction
             p.push(); // separate this transformations from other possible ones outside
-            p.translate(50, -70, 200);
-            p.rotateX(Math.PI / 2 - rotation.y / 400);
-            p.rotateY(rotation.x / 400);
 
             // Draw motion path (if active)
             animation.drawPath(p);
@@ -62,22 +82,6 @@ function setupPlatform() {
 
     // Create a new p5.js instance with the sketch function and attach it to the 'canvas' element
     new p5(sketch, 'canvas');
-
-    // Event handling for mouse interaction
-    document.getElementById("canvas").onmousedown = function(ev) {
-        rotation.cx = ev.pageX - rotation.x;
-        rotation.cy = ev.pageY - rotation.y;
-        rotation.active = true;
-    };
-    document.onmouseup = function() {
-        rotation.active = false;
-    };
-    document.onmousemove = function(ev) {
-        if (rotation.active) {
-        rotation.y = +ev.pageX - rotation.cx;
-        rotation.x = -ev.pageY + rotation.cy;
-        }
-    };
 
     // Event listener that executes this function when clicking any key. The e argument gives information about
     // the clicked key. e.keyCode gives us the code of the clicked key, for example.
@@ -265,8 +269,16 @@ function setupPlatform() {
                 inputMapping[key].value = ""
             }
         }
+
     })
 
+    // Find the button with the specified class and add a click event listener
+    var cameraButtons = document.getElementsByClassName('camera-button');
+    for (var i = 0; i < cameraButtons.length; i++) {
+        cameraButtons[i].addEventListener('click', function(event) {
+            currentView = event.target.id
+        });
+    }
 
     // Function to clone an array (also works for multidimensional arrays) Used when pressing getAnimationAnglesBtn.
     function cloneArray(arr) {

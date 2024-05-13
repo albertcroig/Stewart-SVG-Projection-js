@@ -18,11 +18,11 @@ img {
     justify-content:center;
     align-items: flex-start;
     margin-bottom: 10px;
-    margin: 0px 2%;
 }
 
 ul {
     font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
 }
 
 .checkbox {
@@ -38,7 +38,38 @@ ul {
     font-size: 15px;
 }
 
+#tweak-values {
+    width: 20%;
+}
+
 .tweakParameter {
   display: block;
   margin: 5px;
+}
+
+#canvas {
+    margin-right: 2%;
+}
+
+h3 {
+    margin: 0px;
+    margin-bottom: 3.5%;
+}
+
+#camera-angles {
+    margin-top: 10%;
+}
+
+.camera-button {
+    margin: 2px;
+}
+
+body {
+    font-family:Arial, Helvetica, sans-serif;
+    font-size: 80%;
+}
+
+#camera-btn-container {
+    display: flex;
+    flex-wrap: wrap;
 }
