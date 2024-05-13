@@ -6,17 +6,19 @@ img {
     border: 0px;
 }
 
-.bottomButton,
+#images {
+    display: flex;
+    flex-wrap: wrap;
+}
+
 #currentServoAngles {
-  display: block;
-    margin: auto;
-    margin-bottom: 10px;
+    display: block;
+    width: 300px;
 }
 
 .container {
     display: flex;
-    justify-content:center;
-    align-items: flex-start;
+    justify-content: center;
     margin-bottom: 10px;
 }
 
@@ -29,35 +31,51 @@ ul {
     display: flex;
     flex-direction: column;
     align-items: center; /* Center horizontally */
-    margin-bottom: 10px; /* Add margin bottom for spacing */
 }
 
 .inner-checkbox {
     display: flex;
+    align-items: center;
+    margin-top: 4px;
     flex-direction: row;
     font-size: 15px;
 }
 
+#tweak-parameters-opts {
+    display: flex;
+}
+
 #tweak-values {
-    width: 20%;
+    width: 30%;
 }
 
 .tweakParameter {
   display: block;
+  width: 100%;
   margin: 5px;
 }
 
 #canvas {
-    margin-right: 2%;
+    margin-top: 10px;
+    margin-right: 20px;
+    margin-bottom: 0px;
+    padding: 0px;
+    border: 1px solid black;
 }
 
 h3 {
     margin: 0px;
-    margin-bottom: 3.5%;
+    margin-bottom: 3%;
 }
 
-#camera-angles {
-    margin-top: 10%;
+hr {
+    margin: 0px;
+    border-top: 1px solid black;
+}
+
+.tweaker {
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .camera-button {
@@ -71,5 +89,16 @@ body {
 
 #camera-btn-container {
     display: flex;
+    justify-content: center;
     flex-wrap: wrap;
+}
+
+.servo-angles-content {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.bottomButton {
+    height: 100%;
 }

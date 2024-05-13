@@ -14,39 +14,48 @@
     <script src="platform.js"></script>
     <script src="animation.js"></script>
 
-    <div class="container">
-        <div id="images">
+    <div style="justify-content: space-evenly;" class="container">
+        <div>
           <h3>Loaded SVG's (click on them to run animation)</h3>
+          <div id="images">
+          </div>
         </div>
         <div id="currentServoAngles">
           <h3>Current servo angles and laser state</h3>
         </div>
     </div>
+    <hr>
     <div class="container">
       <div id="canvas" style="text-align: center"></div>
     <div id="tweak-values">
-      <div id = "platformParameters">
-        <h3>Tweak parameters (mm)</h3>
-        <div class="tweakParameter">
-          <label for="distanceToWallInput">Distance to wall:</label>
-          <input type="number" id="distanceToWallInput" name="distanceToWallInput" min="200" max="10000">
+      <div class = "tweaker" id = "platformParameters">
+        <h3 style="text-align: center;">Tweak parameters (mm)</h3>
+        <div id="tweak-parameters-opts">
+          <div style="width: 240px;">
+            <div class="tweakParameter">
+              <label for="distanceToWallInput">Distance to wall:</label>
+              <input type="number" id="distanceToWallInput" name="distanceToWallInput" min="200" max="10000">
+            </div>
+            <div class="tweakParameter">
+              <label for="rotationAxisOffsetInput">Rotation axis offset:</label>
+              <input type="number" id="rotationAxisOffsetInput" name="rotationAxisOffsetInput" min="0" max="500" step="5">
+            </div>
+            <div class="tweakParameter">
+              <label for="drawingSizeInput">Drawing size:</label>
+              <input type="number" id="drawingSizeInput" name="drawingSizeInput" min="50" max="1000" step="10">
+            </div>
+            <div class="tweakParameter">
+              <label for="drawingSpeedInput">Drawing speed:</label>
+              <input type="number" id="drawingSpeedInput" name="drawingSpeedInput" min="0.1" max="1" step="0.1">
+            </div>   
+          </div>
+          <button style="flex-grow: 2; padding: 0px;" id="tweakParametersBtn">Apply Changes</button> 
         </div>
-        <div class="tweakParameter">
-          <label for="rotationAxisOffsetInput">Rotation axis offset:</label>
-          <input type="number" id="rotationAxisOffsetInput" name="rotationAxisOffsetInput" min="1" max="100">
-        </div>
-        <div class="tweakParameter">
-          <label for="drawingSizeInput">Drawing size:</label>
-          <input type="number" id="drawingSizeInput" name="drawingSizeInput" min="1" max="100">
-        </div>
-        <div class="tweakParameter">
-          <label for="drawingSpeedInput">Drawing speed:</label>
-          <input type="number" id="drawingSpeedInput" name="drawingSpeedInput" min="1" max="100">
-        </div>   
-        <button style="width:100%; margin-top: 10px;" id="tweakParametersBtn">Change Parameters</button>                 
+                        
       </div>
-      <div id="camera-angles">
-        <h3>Change camera position</h3>
+      <hr>
+      <div class = "tweaker" id="camera-angles">
+        <h3 style="text-align: center;">Change camera position</h3>
         <div id="camera-btn-container">
           <button class="camera-button" id="defaultView">Default view</button>
           <button class="camera-button" id="frontView">Front view</button>  
@@ -56,19 +65,26 @@
           <button class="camera-button" id="sphereView">Wall view</button> 
         </div>  
       </div>
+      <hr>
+      <div class = "tweaker" id="servo-angles">
+        <h3 style="text-align: center;">Servo Angles</h3>
+        <div class="servo-angles-content">
+          <div class="checkbox">
+            <button class="bottomButton" id="getAnimationAnglesBtn">Download servo angles of previous animation</button>
+            <div class="inner-checkbox">
+              <label for="animationAnglesType" style="font-size: 12px;">Original servo angles</label>
+              <input type="checkbox" id="animationAnglesType" name="animationAnglesType">
+            </div>
+          </div>
+          <button class="bottomButton" id="getHighestServoValuesBtn">Print highest servo angles of previous animation</button>
+        </div>
+      </div>
     </div>
     </div>
     
 
     
-    <div class="checkbox">
-      <div class="inner-checkbox">
-        <label for="animationAnglesType">Original servo angles</label>
-        <input type="checkbox" id="animationAnglesType" name="animationAnglesType">
-      </div>
-      <button class="bottomButton" id="getAnimationAnglesBtn">Download servo angles of previous animation</button>
-    </div>
-    <button class="bottomButton" id="getHighestServoValuesBtn">Print highest servo angles of previous animation</button>
+
 
   </body>
 </html>

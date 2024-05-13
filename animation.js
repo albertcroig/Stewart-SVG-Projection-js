@@ -184,41 +184,7 @@ Animation.Interpolate = function(data) {
     duration += data[i].t;
   }
 
-  function calculateMovements(x, y, z) {
-    let rotationAxisOffset = platform.rotationAxisOffset
-    let wallDistance = platform.wallDistance
 
-    let movements = {}
-    let theta, beta
-    let xTrans, yTrans, zTrans
-
-    theta = -Math.asin(z/(rotationAxisOffset + wallDistance))
-    beta = Math.asin(y/(rotationAxisOffset + wallDistance))
-
-    let rotY = theta === 0 ? 0 : 1
-    let rotZ = beta === 0 ? 0 : 1
-    let laserState = x !== 0 ? 0 : 1
-
-    xTrans = rotationAxisOffset - rotationAxisOffset * Math.cos(theta) * Math.cos(beta)
-    yTrans = rotationAxisOffset * Math.sin(beta)
-    zTrans = -rotationAxisOffset * Math.sin(theta)
-
-    movements = {
-      x: -xTrans,
-      y: yTrans,
-      z: zTrans,
-      rotY: rotY,
-      rotZ: rotZ,
-      theta: theta,
-      beta: beta,
-      laserState: laserState
-    }
-    return movements
-  }
-
-  function interpolateWithPrevious(previous, current, scale) {
-    return previous + (current - previous) * scale
-  }
 
   return {   // Return the normalized object for animation.
     duration: duration,
@@ -226,12 +192,51 @@ Animation.Interpolate = function(data) {
     next: null,
     fn: function(pct) {
 
-      var pctStart = 0;  // Variable for starting progress of animation (initialize to 0%)
+      // Get desired y and z coordinates and calculate rotation and translation needed to accomplish them into wall projection
+      const calculateMovements = function(x, y, z) {
+        let rotationAxisOffset = platform.rotationAxisOffset
+        let wallDistance = platform.wallDistance
+    
+        let movements = {}
+        let theta, beta
+        let xTrans, yTrans, zTrans
+    
+        theta = -Math.asin(z/(rotationAxisOffset + wallDistance))
+        beta = Math.asin(y/(rotationAxisOffset + wallDistance))
+    
+        let rotY = theta === 0 ? 0 : 1
+        let rotZ = beta === 0 ? 0 : 1
+        let laserState = x !== 0 ? 0 : 1
+    
+        xTrans = rotationAxisOffset - rotationAxisOffset * Math.cos(theta) * Math.cos(beta)
+        yTrans = rotationAxisOffset * Math.sin(beta)
+        zTrans = -rotationAxisOffset * Math.sin(theta)
+    
+        movements = {
+          x: -xTrans,
+          y: yTrans,
+          z: zTrans,
+          rotY: rotY,
+          rotZ: rotZ,
+          theta: theta,
+          beta: beta,
+          laserState: laserState
+        }
+        return movements
+      }
 
-      const xValue = function(movement) {
+      // Find required position knowing its desired position and its current position, interpolating with scale for smoothness.
+      const interpolateWithPrevious = function(previous, desired, scale) {
+        return previous + (desired - previous) * scale
+      }
+
+      const xValuePath = function(movement) {
         //return (platform.wallDistance + platform.rotationAxisOffset) * Math.cos(movement.theta) * Math.cos(movement.beta) - 2 * platform.rotationAxisOffset
         return (platform.rotationAxisOffset + platform.wallDistance) * (Math.cos(movement.theta) * Math.cos(movement.beta)) - platform.rotationAxisOffset
       }
+
+      var pctStart = 0;  // Variable for starting progress of animation (initialize to 0%)
+
       
       for (var i = 1; i < data.length; i++) {  // For every step of the animation
 
@@ -244,14 +249,16 @@ Animation.Interpolate = function(data) {
           var prev = i === 0 ? data[0] : data[i - 1];  // Previous step, if i = 0 (meaning first step of animation), previous step is same step, otherwise its i-1
 
 
+          // Calculate movements and previous movements according to distance to wall and rotation axis offset.
           var movements = calculateMovements(p.x, p.y, p.z)
           var prevMovements = calculateMovements(prev.x, prev.y, prev.z)
 
           // For path drawing
-          this.path[0].push(interpolateWithPrevious(xValue(prevMovements), xValue(movements), scale))                    
+          this.path[0].push(interpolateWithPrevious(xValuePath(prevMovements), xValuePath(movements), scale))                    
           this.path[1].push(interpolateWithPrevious(prev.y, p.y, scale))
           this.path[2].push(interpolateWithPrevious(prev.z, p.z, scale))
           this.path[3].push(movements.laserState)
+          console.log(this.path)
 
           // Set the new location with previous' step location + its difference multiplied by completion progress of step.
           this.translation[0] = interpolateWithPrevious(prevMovements.x, movements.x, scale)
@@ -259,7 +266,6 @@ Animation.Interpolate = function(data) {
           this.translation[2] = interpolateWithPrevious(prevMovements.z, movements.z, scale)
           this.translation[3] = movements.laserState;
           this.orientation = Quaternion.fromAxisAngle([0, movements.rotY, 0], prevMovements.theta + (movements.theta - prevMovements.theta) * scale).mul(Quaternion.fromAxisAngle([0, 0, movements.rotZ], prevMovements.beta + (movements.beta - prevMovements.beta) * scale))
-          //console.log(movements.beta)
           return; // Once the if condition is true, there is no need to continue with the loop, so return.
         }
         pctStart = pctEnd; // Assign the start pct to the end pct for continuing the loop.
@@ -269,7 +275,7 @@ Animation.Interpolate = function(data) {
       var lastMovements = calculateMovements(data[data.length-1].x, data[data.length-1].y, data[data.length-1].z)
 
       // For path drawing
-      this.path[0].push(xValue(lastMovements))
+      this.path[0].push(xValuePath(lastMovements))
       this.path[1].push(data[data.length-1].y)
       this.path[2].push(data[data.length-1].z)
       this.path[3].push(lastMovements.laserState)
@@ -630,60 +636,6 @@ Animation.prototype = {
         this.orientation = Quaternion.fromAxisAngle([x, y, z], b);
       }
     },
-    circle: {
-      duration: 7000,
-      pathVisible: false,
-      next: 'circle',
-      fn: function(pct) {
-
-        let wallDistance = platform.wallDistance
-        let radius = 100 // 10 cm
-        let angleFromRadius = Math.atan(radius / wallDistance)
-
-        let x = 0
-        let y = 0
-        let z = 1
-
-        let b = angleFromRadius * Math.cos(2*Math.PI*pct)
-        //console.log("Platform's rotation is "+ Math.round(b*180/Math.PI*100)/100 + ' degrees.')
-
-        // Separate animation in 4 parts. 
-        if (pct < 1 / 4) {           // If completion percentage is < 25%         
-          z = 1;
-          x = 1;
-          y = 1;                   
-        } else if (pct < 1 / 2) {    // If completion percentage is > 25% and < 50%
-          z = 1
-          x = -1
-          y = -1     
-        } else if (pct < 3 / 4) {    // If completion percentage is > 50% and < 75%
-          z = 1 
-          x = 1
-          y = 1
-        } else {                     // If completion percentage is > 75% and < 100%
-          z = 1
-          x = 1
-          y = 1                     
-        }
-        // Set movement = 0 since the platform only rotates
-        this.translation[0] = 0; // Set x movement = 0
-        this.translation[1] = 0; // Set y movement = 0
-        this.translation[2] = 0; // Set z movement = 0
-
-        this.orientation = Quaternion.fromAxisAngle([x, y, z], b);
-      }
-    },
-    square: (function() {
-      var tmp = Animation.Interpolate([
-        {x: -30, y: -30, z: 0 + 10, t: 0},
-        {x: -30, y: 30, z: 0, t: 1000},
-        {x: 30, y: 30, z: +10, t: 1000},
-        {x: 30, y: -30, z: 0, t: 1000},
-        {x: -30, y: -30, z: 0 + 10, t: 1000},
-      ]);
-      tmp.next = "square";
-      return tmp;
-    })(),
     wobble: {
       duration: 3000,
       pathVisible: false,
@@ -702,7 +654,6 @@ Animation.prototype = {
 
   // Object that simply binds the names of the predefined animations to their corresponding keys in the keyboard
   map: {
-    q: "square",
     w: "wobble",
     r: "rotate",
     t: "tilt",
