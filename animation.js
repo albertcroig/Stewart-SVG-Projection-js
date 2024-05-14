@@ -258,7 +258,7 @@ Animation.Interpolate = function(data) {
           this.path[1].push(interpolateWithPrevious(prev.y, p.y, scale))
           this.path[2].push(interpolateWithPrevious(prev.z, p.z, scale))
           this.path[3].push(movements.laserState)
-          console.log(this.path)
+          //console.log(this.path)
 
           // Set the new location with previous' step location + its difference multiplied by completion progress of step.
           this.translation[0] = interpolateWithPrevious(prevMovements.x, movements.x, scale)
