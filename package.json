@@ -35,6 +35,7 @@
         "bezier-js": "^6.1.0",
         "leapjs": "^1.1.1",
         "p5": "^1.4.1",
-        "quaternion": "^1.2.1"
+        "quaternion": "^1.2.1",
+        "text-to-svg": "^3.1.5"
     }
 }

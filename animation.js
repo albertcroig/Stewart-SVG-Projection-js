@@ -25,10 +25,11 @@ function Animation(platform) {
   this.getServos = false
   this.servoAnglesToPrint = []
 
-  this.drawingSize = 140
+  this.drawingSize = 300
   this.drawingSpeed = 0.1
 
   this.path = [[],[],[],[]]
+  this.stopDrawingPath = false
 
   // The 'start' method is called with the argument 'wobble' to initiate a specific type of animation
   this.start('wobble');
@@ -254,11 +255,14 @@ Animation.Interpolate = function(data) {
           var prevMovements = calculateMovements(prev.x, prev.y, prev.z)
 
           // For path drawing
-          this.path[0].push(interpolateWithPrevious(xValuePath(prevMovements), xValuePath(movements), scale))                    
-          this.path[1].push(interpolateWithPrevious(prev.y, p.y, scale))
-          this.path[2].push(interpolateWithPrevious(prev.z, p.z, scale))
-          this.path[3].push(movements.laserState)
-          //console.log(this.path)
+          if (!this.stopDrawingPath) {
+            this.path[0].push(interpolateWithPrevious(xValuePath(prevMovements), xValuePath(movements), scale))                    
+            this.path[1].push(interpolateWithPrevious(prev.y, p.y, scale))
+            this.path[2].push(interpolateWithPrevious(prev.z, p.z, scale))
+            this.path[3].push(movements.laserState)
+            //console.log(this.path)
+          }
+
 
           // Set the new location with previous' step location + its difference multiplied by completion progress of step.
           this.translation[0] = interpolateWithPrevious(prevMovements.x, movements.x, scale)
@@ -275,11 +279,12 @@ Animation.Interpolate = function(data) {
       var lastMovements = calculateMovements(data[data.length-1].x, data[data.length-1].y, data[data.length-1].z)
 
       // For path drawing
-      this.path[0].push(xValuePath(lastMovements))
-      this.path[1].push(data[data.length-1].y)
-      this.path[2].push(data[data.length-1].z)
-      this.path[3].push(lastMovements.laserState)
-
+      if (!this.stopDrawingPath) {
+        this.path[0].push(xValuePath(lastMovements))
+        this.path[1].push(data[data.length-1].y)
+        this.path[2].push(data[data.length-1].z)
+        this.path[3].push(lastMovements.laserState)
+      }
       // For movements
       this.translation[0] = lastMovements.x;
       this.translation[1] = lastMovements.y;
@@ -347,7 +352,7 @@ Animation.prototype = {
           myData[i][6] += '\t}'
         }
         // Add step number (commented)
-        myData.forEach((row, index) => row.push('// ' + (index+1) + '\t\t' + originalAngles[index].join('\t')));
+        myData.forEach((row, index) => row.push('// ' + (index+1) + '\t' + originalAngles[index].join('\t')));
       }
       else {
         header = ['Step', 'Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Laser on/off'];
@@ -416,10 +421,13 @@ Animation.prototype = {
     let activationArr = []
     for (let i = 0; i < data.length; i++) {
       if (i === 0) {
+        activationArr.push(0)
+      }
+      else if (i === 1) {
         activationArr.push(data[i][6])
       }
       else {
-        activationArr.push(data[i-1][6])
+        activationArr.push(data[i-2][6])
       }
     }
     for (let i = 0; i < data.length; i++) {
@@ -464,23 +472,48 @@ Animation.prototype = {
       return
     }
 
+    // function adjustPathToMaxVertices(pathArr, maxSize) {
+    //   if (pathArr[0].length > maxSize) {
+    //     const elementsToRemove = pathArr[0].length - maxSize;
+    //     const step = Math.floor(pathArr[0].length / elementsToRemove);
+    //     const trimmedArray = [[],[],[],[]];
+    //     let indexToRemove = Math.floor(step / 2);
+    //     for (let i = 0; i < pathArr[0].length; i++) {
+    //         if (indexToRemove === i) {
+    //             indexToRemove += step;
+    //         } else {
+    //             for (let j = 0; j < trimmedArray.length; j++) {
+    //               trimmedArray[j].push(pathArr[j][i])
+    //             }
+    //         }
+    //     }
+    //     return trimmedArray;
+    //   }
+    //   return pathArr;
+    // }
+
+    // const maxVertices = 500
+    let simplifiedPath = this.path //adjustPathToMaxVertices(this.path, maxVertices)
     let isShapeBeginning = false
     p.beginShape();         // Tell the program I want to draw a shape with some vertices
     p.noFill();             // Background of shape transparent
     p.stroke(255, 0, 0);    // Contour of shape color red
-    
-    for (let i=0; i < this.path[0].length; i++) {
-      if (this.path[3][i-1] !== 0) {
+    // console.log(simplifiedPath)
+    for (let i=0; i < simplifiedPath[0].length; i++) {
+      if (simplifiedPath[3][i-1] !== 0) {
         if (isShapeBeginning) {
           p.beginShape();
         }
-        p.vertex(this.path[0][i], this.path[1][i], this.path[2][i] + platform.T0[2])
+        p.vertex(simplifiedPath[0][i], simplifiedPath[1][i], simplifiedPath[2][i] + platform.T0[2])
         isShapeBeginning = false
       }
       else {
         p.endShape();
         isShapeBeginning = true
       }
+    }
+    if (simplifiedPath[3][simplifiedPath[0].length-2] !== 0) {
+      p.vertex(simplifiedPath[0][simplifiedPath[0].length-1], simplifiedPath[1][simplifiedPath[0].length-1], simplifiedPath[2][simplifiedPath[0].length-1] + platform.T0[2])
     }
     p.endShape();
   },
@@ -547,6 +580,7 @@ Animation.prototype = {
     // by much of a difference. So adjust it to 1 and then make corresponding adjustments.
     if (elapsed > 1) {
       elapsed = 1
+      this.stopDrawingPath = true
     }
 
     // Call fn function inside animation object to update this.translation and this.orientation, passing
@@ -557,6 +591,7 @@ Animation.prototype = {
     // If the animation is completed and there is a next animation, then start the next animation.
     if (elapsed === 1 && this.cur.duration !== 0 && this.next !== null) {
       this.start(this.next);
+      this.servoAngles.push(platform.getServoAngles(this.translation));
     }
 
     if (elapsed !== 1) {
@@ -654,8 +689,8 @@ Animation.prototype = {
 
   // Object that simply binds the names of the predefined animations to their corresponding keys in the keyboard
   map: {
-    w: "wobble",
-    r: "rotate",
-    t: "tilt",
+    // w: "wobble",
+    // r: "rotate",
+    // t: "tilt",
   }
 };
