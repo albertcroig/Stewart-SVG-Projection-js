@@ -9,6 +9,7 @@
     <script src="node_modules/bezier-js/bezier.js"></script>
     <script src="node_modules/p5/lib/p5.min.js"></script>
     <script src="node_modules/quaternion/quaternion.min.js"></script>
+    <!-- <script src="node_modules/text-to-svg/src/index.js"></script> -->
     <script src="main.js"></script>
     <script src="stewart.js"></script>
     <script src="platform.js"></script>
@@ -26,61 +27,70 @@
     </div>
     <hr>
     <div class="container">
-      <div id="canvas" style="text-align: center"></div>
-    <div id="tweak-values">
-      <div class = "tweaker" id = "platformParameters">
-        <h3 style="text-align: center;">Tweak parameters (mm)</h3>
-        <div id="tweak-parameters-opts">
-          <div style="width: 240px;">
-            <div class="tweakParameter">
-              <label for="distanceToWallInput">Distance to wall:</label>
-              <input type="number" id="distanceToWallInput" name="distanceToWallInput" min="200" max="10000">
+      <div id="canvas"></div>
+      <div id="tweak-values">
+        <div class = "tweaker" id = "textToSVG">
+          <h3 style="text-align: center;">Convert text to SVG</h3>
+          <p style="margin: 0px;">Enter text to draw:</p>
+            <div id="textToDrawContainer">
+              <input type="text" class="inputField" id="textToDrawInput" name="textToDrawInput" style="width: 75%; margin-top: 5px;">
+              <button style="flex-grow: 2;" id="drawTextBtn">Draw</button> 
             </div>
-            <div class="tweakParameter">
-              <label for="rotationAxisOffsetInput">Rotation axis offset:</label>
-              <input type="number" id="rotationAxisOffsetInput" name="rotationAxisOffsetInput" min="0" max="500" step="5">
-            </div>
-            <div class="tweakParameter">
-              <label for="drawingSizeInput">Drawing size:</label>
-              <input type="number" id="drawingSizeInput" name="drawingSizeInput" min="50" max="1000" step="10">
-            </div>
-            <div class="tweakParameter">
-              <label for="drawingSpeedInput">Drawing speed:</label>
-              <input type="number" id="drawingSpeedInput" name="drawingSpeedInput" min="0.1" max="1" step="0.1">
-            </div>   
-          </div>
-          <button style="flex-grow: 2; padding: 0px;" id="tweakParametersBtn">Apply Changes</button> 
         </div>
-                        
-      </div>
-      <hr>
-      <div class = "tweaker" id="camera-angles">
-        <h3 style="text-align: center;">Change camera position</h3>
-        <div id="camera-btn-container">
-          <button class="camera-button" id="defaultView">Default view</button>
-          <button class="camera-button" id="frontView">Front view</button>  
-          <button class="camera-button" id="sideView">Side view</button>  
-          <button class="camera-button" id="topView">Top view</button>
-          <button class="camera-button" id="logoView">Logo view</button>
-          <button class="camera-button" id="sphereView">Wall view</button> 
-          <button class="camera-button" id="platformView">Platform view</button>
-        </div>  
-      </div>
-      <hr>
-      <div class = "tweaker" id="servo-angles">
-        <h3 style="text-align: center;">Servo Angles</h3>
-        <div class="servo-angles-content">
-          <div class="checkbox">
-            <button class="bottomButton" id="getAnimationAnglesBtn">Download servo angles of previous animation</button>
-            <div class="inner-checkbox">
-              <label for="animationAnglesType" style="font-size: 12px;">Original servo angles</label>
-              <input type="checkbox" id="animationAnglesType" name="animationAnglesType">
+        <hr>
+        <div class = "tweaker" id = "platformParameters">
+          <h3 style="text-align: center;">Tweak parameters (mm)</h3>
+          <div id="tweak-parameters-opts">
+            <div style="width: 70%;">
+              <div class="tweakParameter">
+                <label for="distanceToWallInput">Distance to wall:</label>
+                <input type="number" class="inputField" id="distanceToWallInput" name="distanceToWallInput" min="200" max="10000">
+              </div>
+              <div class="tweakParameter">
+                <label for="rotationAxisOffsetInput">Rotation axis offset:</label>
+                <input type="number" class="inputField" id="rotationAxisOffsetInput" name="rotationAxisOffsetInput" min="0" max="500" step="5">
+              </div>
+              <div class="tweakParameter">
+                <label for="drawingSizeInput">Drawing size:</label>
+                <input type="number" class="inputField" id="drawingSizeInput" name="drawingSizeInput" min="50" max="1000" step="10">
+              </div>
+              <div class="tweakParameter">
+                <label for="drawingSpeedInput">Drawing speed:</label>
+                <input type="number" class="inputField" id="drawingSpeedInput" name="drawingSpeedInput" min="0.1" max="1" step="0.1">
+              </div>   
             </div>
+            <button style="flex-grow: 2; padding: 0px; margin: 5px 0px;" id="tweakParametersBtn">Apply Changes</button> 
           </div>
-          <button class="bottomButton" id="getHighestServoValuesBtn">Print highest servo angles of previous animation</button>
+                          
+        </div>
+        <hr>
+        <div class = "tweaker" id="camera-angles">
+          <h3 style="text-align: center;">Change camera position</h3>
+          <div id="camera-btn-container">
+            <button class="camera-button" id="defaultView">Default view</button>
+            <button class="camera-button" id="frontView">Front view</button>  
+            <button class="camera-button" id="sideView">Side view</button>  
+            <button class="camera-button" id="topView">Top view</button>
+            <button class="camera-button" id="logoView">SVG view</button>
+            <button class="camera-button" id="sphereView">Wall view</button> 
+            <button class="camera-button" id="platformView">Platform view</button>
+          </div>  
+        </div>
+        <hr>
+        <div class = "tweaker" id="servo-angles">
+          <h3 style="text-align: center;">Servo Angles</h3>
+          <div class="servo-angles-content">
+            <div class="checkbox">
+              <button class="bottomButton" id="getAnimationAnglesBtn"><u>Download</u> servo angles of previous animation</button>
+              <div class="inner-checkbox">
+                <label for="animationAnglesType" style="font-size: 12px;">Original servo angles</label>
+                <input type="checkbox" id="animationAnglesType" name="animationAnglesType">
+              </div>
+            </div>
+            <button class="bottomButton" id="getHighestServoValuesBtn"><u>Log</u> highest servo angles of previous animation</button>
+          </div>
         </div>
       </div>
-    </div>
     </div>
     
 
