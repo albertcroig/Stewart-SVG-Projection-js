@@ -10,7 +10,7 @@ function setupPlatform() {
     var currentView = 'defaultView'
     var canvasWidth = 600
     var canvasHeight = 460
-    var isFullscreen = false
+    var isInputFocused = false
 
     // p5.js sketch constructor function. helps organize and modularize code
     var sketch = function (p) {
@@ -93,6 +93,10 @@ function setupPlatform() {
     // Event listener that executes this function when clicking any key. The e argument gives information about
     // the clicked key. e.keyCode gives us the code of the clicked key, for example.
     document.onkeydown = function(e) {
+
+        if (isInputFocused) {
+            return
+        }
 
         // If clicked key is spacebar, it toggles the visibility of the path.
         if (e.keyCode === 32) {
@@ -258,6 +262,12 @@ function setupPlatform() {
     // When enter key is pressed inside of any of the input fields, also execute the function
     var inputValueField = document.getElementsByClassName('inputField');
     for (var i = 0; i < inputValueField.length; i++) {
+        inputValueField[i].addEventListener('focus', function() {
+            isInputFocused = true
+        });     
+        inputValueField[i].addEventListener('blur', function() {
+            isInputFocused = false
+        });       
         inputValueField[i].addEventListener('keydown', function(event) {
             if (event.keyCode === 13) {
                 applyParameterChanges()
@@ -312,6 +322,77 @@ function setupPlatform() {
             currentView = event.target.id
         });
     }
+
+    // When change parameters button is pressed execute this function to change parameters corresponding to inputs.
+    drawTextBtn.addEventListener('click', drawTextToSVG)
+    
+    // When enter key is pressed inside of any of the input fields, also execute the function
+    var textToDrawInput = document.getElementById('textToDrawInput');
+
+    textToDrawInput.addEventListener('focus', function() {
+        isInputFocused = true
+    });     
+    textToDrawInput.addEventListener('blur', function() {
+        isInputFocused = false
+    });
+
+    textToDrawInput.addEventListener('keydown', function(event) {
+        if (event.keyCode === 13) {
+            drawTextToSVG()
+        }
+    });
+
+    function textToSvgPath(text, width, height) {
+        // Create an SVG element
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("width", width);
+        svg.setAttribute("height", height);
+    
+        // Create a text element
+        const textElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        textElement.textContent = text;
+        textElement.setAttribute("x", "50%");
+        textElement.setAttribute("y", "50%");
+        textElement.setAttribute("text-anchor", "middle");
+        textElement.setAttribute("dominant-baseline", "middle");
+        svg.appendChild(textElement);
+    
+        // Get the bounding box of the text
+        const bbox = textElement.getBBox();
+    
+        // Calculate scaling factors to fit the text into the bounding box
+        const scaleX = width / bbox.width;
+        const scaleY = height / bbox.height;
+        const scale = Math.min(scaleX, scaleY);
+    
+        // Apply the scaling to the text element
+        textElement.setAttribute("transform", `scale(${scale}) translate(-${bbox.width / 2}, -${bbox.height / 2})`);
+    
+        // Get the SVG path data of the text
+        const pathData = textElement.getBBox();
+    
+        // Return the SVG path data
+        return pathData;
+    }
+    
+    // Example usage:
+    const svgPath = textToSvgPath("Hello, World!", 200, 100);
+    console.log(svgPath);
+    
+    
+    
+    
+      
+      
+    
+
+    function drawTextToSVG() {
+        const inputValue = textToDrawInput.value
+        textToDrawInput.value = ""
+  
+        console.log(textToSvgPath(inputValue, 512, 512))
+    }
+
 
     // Function to clone an array (also works for multidimensional arrays) Used when pressing getAnimationAnglesBtn.
     function cloneArray(arr) {
