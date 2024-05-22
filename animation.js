@@ -326,6 +326,22 @@ Animation.prototype = {
           }
         }
       }
+
+      // Remove redundant rows (duplicates and when laser activation is off)
+      const indexesToRemove = []
+      for (let i = 0; i < rawData.length-1; i++) {
+        if (i !== 0) {
+          if (rawData[i].every((value, index) => value === rawData[i-1][index])) {
+            indexesToRemove.push(i)
+          }
+          else if (rawData[i][6] == 0 && rawData[i+1][6] == 0 && rawData[i-1][6] == 0) {
+            indexesToRemove.push(i)
+          }
+        }
+      }
+      rawData = rawData.filter((_, index) => !indexesToRemove.includes(index));
+      console.log(indexesToRemove.length + ' redundant rows removed.')
+
       return rawData
     }
 
