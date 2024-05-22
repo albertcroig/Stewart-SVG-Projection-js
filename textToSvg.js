@@ -923,6 +923,7 @@ function drawTextToSVG(font) {
     textToDrawInput.value = ""
 
     const svgPath = createSVGPathFromHershey(inputValue, boundingBox, font)
+    console.log(svgPath)
     SVGS.push({path: svgPath, box: boundingBox})
     createSVGImage(SVGS.length-1, $images, svgPath, boundingBox)
     animation._start(Animation.SVG(svgPath, boundingBox, animation.drawingSize, animation.drawingSpeed), null)
