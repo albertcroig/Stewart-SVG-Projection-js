@@ -197,6 +197,9 @@ function setupPlatform() {
         },  {//Line test
         path: "M 256,0 v 512",
         box: { x: 0, y: 0, width: 512, height: 512 }
+        }, {//For testing purposes
+        path: "",
+        box: { x: 0, y: 0, width: 512, height: 512 }
         },];
 
         // 

@@ -75,7 +75,7 @@ Animation.SVG = function(svg, box, size, speed) {
 
   // Assign the returned steps from parseSVGPath to variable seg
   var seg = parseSVGPath(svg);
-
+  
   // Loop through every step of seg
   for (var i = 0; i < seg.length; i++) {
 
@@ -170,8 +170,7 @@ Animation.SVG = function(svg, box, size, speed) {
         }
     }
   }
-  //console.log(Animation.Interpolate(ret))
-  //console.log(ret)
+
   return Animation.Interpolate(ret);
 };
 
@@ -184,8 +183,6 @@ Animation.Interpolate = function(data) {
   for (var i = 1; i < data.length; i++) {  // Add all the durations of the whole animation steps together
     duration += data[i].t;
   }
-
-
 
   return {   // Return the normalized object for animation.
     duration: duration,
@@ -204,21 +201,17 @@ Animation.Interpolate = function(data) {
     
         theta = -Math.asin(z/(rotationAxisOffset + wallDistance))
         beta = Math.asin(y/(rotationAxisOffset + wallDistance))
-    
-        let rotY = theta === 0 ? 0 : 1
-        let rotZ = beta === 0 ? 0 : 1
+
         let laserState = x !== 0 ? 0 : 1
     
         xTrans = rotationAxisOffset - rotationAxisOffset * Math.cos(theta) * Math.cos(beta)
         yTrans = rotationAxisOffset * Math.sin(beta)
         zTrans = -rotationAxisOffset * Math.sin(theta)
-    
+      
         movements = {
           x: -xTrans,
           y: yTrans,
           z: zTrans,
-          rotY: rotY,
-          rotZ: rotZ,
           theta: theta,
           beta: beta,
           laserState: laserState
@@ -263,13 +256,13 @@ Animation.Interpolate = function(data) {
             //console.log(this.path)
           }
 
-
           // Set the new location with previous' step location + its difference multiplied by completion progress of step.
           this.translation[0] = interpolateWithPrevious(prevMovements.x, movements.x, scale)
           this.translation[1] = interpolateWithPrevious(prevMovements.y, movements.y, scale)
           this.translation[2] = interpolateWithPrevious(prevMovements.z, movements.z, scale)
           this.translation[3] = movements.laserState;
-          this.orientation = Quaternion.fromAxisAngle([0, movements.rotY, 0], prevMovements.theta + (movements.theta - prevMovements.theta) * scale).mul(Quaternion.fromAxisAngle([0, 0, movements.rotZ], prevMovements.beta + (movements.beta - prevMovements.beta) * scale))
+      
+          this.orientation = Quaternion.fromAxisAngle([0, 1, 0], prevMovements.theta + (movements.theta - prevMovements.theta) * scale).mul(Quaternion.fromAxisAngle([0, 0, 1], prevMovements.beta + (movements.beta - prevMovements.beta) * scale))
           return; // Once the if condition is true, there is no need to continue with the loop, so return.
         }
         pctStart = pctEnd; // Assign the start pct to the end pct for continuing the loop.
@@ -290,7 +283,7 @@ Animation.Interpolate = function(data) {
       this.translation[1] = lastMovements.y;
       this.translation[2] = lastMovements.z;
       this.translation[3] = lastMovements.laserState;
-      this.orientation = Quaternion.fromAxisAngle([0, lastMovements.rotY, 0], lastMovements.theta).mul(Quaternion.fromAxisAngle([0, 0, lastMovements.rotZ], lastMovements.beta))
+      this.orientation = Quaternion.fromAxisAngle([0, 1, 0], lastMovements.theta).mul(Quaternion.fromAxisAngle([0, 0, 1], lastMovements.beta))
     },
 
   };

@@ -684,7 +684,7 @@ function createSVGPathFromHershey(text, boundingBox, font) {
             },
             {
                 "d": "M9,16 L8,14 6,13 4,13 2,14 1,15 0,17 0,19 1,21 3,22 5,22 7,21 8,19 10,13 9,18 9,21 10,22 11,22 13,21 14,20 16,17",
-                "o": 10
+                "o": 9
             },
             {
                 "d": "M0,17 L2,14 5,9 6,7 7,4 7,2 6,1 4,2 3,4 2,8 1,15 1,21 2,22 3,22 5,21 7,19 8,16 8,13 9,17 10,18 12,18 14,17",
@@ -696,7 +696,7 @@ function createSVGPathFromHershey(text, boundingBox, font) {
             },
             {
                 "d": "M9,16 L8,14 6,13 4,13 2,14 1,15 0,17 0,19 1,21 3,22 5,22 7,21 8,19 14,1 M10,13 L9,18 9,21 10,22 11,22 13,21 14,20 16,17",
-                "o": 10
+                "o": 9
             },
             {
                 "d": "M1,20 L3,19 4,18 5,16 5,14 4,13 3,13 1,14 0,16 0,19 1,21 3,22 5,22 7,21 8,20 10,17",
@@ -716,7 +716,7 @@ function createSVGPathFromHershey(text, boundingBox, font) {
             },
             {
                 "d": "M3,8 L3,9 4,9 4,8 3,8 M0,17 L2,13 0,19 0,21 1,22 2,22 4,21 5,20 7,17",
-                "o": 5
+                "o": 4
             },
             {
                 "d": "M3,8 L3,9 4,9 4,8 3,8 M0,17 L2,13 -4,31 -5,33 -7,34 -8,33 -8,31 -7,28 -4,25 -1,23 1,22 4,20 7,17",
@@ -732,7 +732,7 @@ function createSVGPathFromHershey(text, boundingBox, font) {
             },
             {
                 "d": "M0,17 L2,14 4,13 5,14 5,15 4,19 3,22 M4,19 L5,17 7,14 9,13 11,13 12,14 12,15 11,19 10,22 M11,19 L12,17 14,14 16,13 18,13 19,14 19,16 18,19 18,21 19,22 20,22 22,21 23,20 25,17",
-                "o": 12
+                "o": 15
             },
             {
                 "d": "M0,17 L2,14 4,13 5,14 5,15 4,19 3,22 M4,19 L5,17 7,14 9,13 11,13 12,14 12,16 11,19 11,21 12,22 13,22 15,21 16,20 18,17",
@@ -913,7 +913,7 @@ function createSVGPathFromHershey(text, boundingBox, font) {
     }
 
     const transformedPath = fullPathAsArray.join(" ")
-    console.log(transformedPath)
+    //console.log(transformedPath)
     return transformedPath
 }
 

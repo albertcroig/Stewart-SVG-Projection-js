@@ -481,7 +481,7 @@ Stewart.prototype = {
 
     this.translation = translation;
     this.orientation = orientation;
-
+   
     // Calculate H, q and l
     for (var i = 0; i < B.length; i++) {
 
