@@ -11,6 +11,7 @@ function setupPlatform() {
     var canvasWidth = 600
     var canvasHeight = 460
     var isInputFocused = false
+    let platformValues = {}
 
     // p5.js sketch constructor function. helps organize and modularize code
     var sketch = function (p) {
@@ -28,7 +29,7 @@ function setupPlatform() {
             // Initialize Stewart platform and animation
             platform = new Stewart;                 // Create a new instance of a platform and assign it to previously defined variable
             animation = new Animation(platform);    // Create a new instance of animation and assign it to previously defined variable, as we create the object, the start() function is called for this object.
-            platform.initHexagonal();               // Execute the initHexagonal function with default values (opts argument is blank)  
+            platform.initHexagonal(platformValues);               // Execute the initHexagonal function with default values (opts argument is blank)  
 
             cameraAngles.defaultView = 
             [-1000, 0, platform.T0[2]+300, 
@@ -208,8 +209,20 @@ function setupPlatform() {
         createSVGImage(i, $images, SVGS[i].path, SVGS[i].box);
     }
 
-    // Variable that contains the get servo angles button on screen.
-    // const getServoAnglesBtn = document.getElementById('getServoAnglesBtn');
+    findBoundingBox = function(path) {
+        const svgNamespace = "http://www.w3.org/2000/svg";
+        const svgElement = document.createElementNS(svgNamespace, "svg");
+        svgElement.setAttribute('style', 'position:absolute; visibility:hidden; width:0; height:0;');
+        document.body.appendChild(svgElement);
+
+        const pathElement = document.createElementNS(svgNamespace, "path");
+        pathElement.setAttribute("d", path);
+        svgElement.appendChild(pathElement);
+
+        const bbox = pathElement.getBBox()
+        svgElement.removeChild(pathElement);
+        return bbox
+    }
 
     // Takes care of displaying the current servo angles onscreen. It's called by the draw function in the sketch.
     function displayCurrentServoAngles() {
@@ -261,8 +274,49 @@ function setupPlatform() {
         document.querySelector('label[for="drawingSpeedInput"]').textContent = 'Drawing speed (' + drawingSpeed + '): ';
     }
 
+    function findMaxSize(path) {
+
+        const simulationPlatform = new Stewart
+        const simulationAnimation = new Animation(simulationPlatform)
+        simulationPlatform.initHexagonal(platformValues)
+        let highestAngle = 0
+        let maxDrawingSize = 0
+        simulationAnimation.drawingSize = maxDrawingSize
+        
+        while (highestAngle < 59.7) {
+            const steps = 1000
+            const angles = []
+            for (var i = 0; i <= steps; i++) {  // For every vertex, define its position
+                let interpolation = Animation.SVG(path, SVGS[0].box, maxDrawingSize, animation.drawingSpeed)
+                interpolation.simulateMovements.call(simulationAnimation, i / steps); 
+                simulationPlatform.update(simulationAnimation.fictionalTranslation, simulationAnimation.fictionalOrientation)
+                angles.push(simulationPlatform.getServoAngles(animation.fictionalTranslation))
+            } 
+            highestAngle = Math.max(...(getHighestServoAngles(angles)))
+            console.log('Drawing size: '+maxDrawingSize+', highest angle: ' + highestAngle)
+            if (highestAngle < 60) {
+                if (highestAngle < 48) {
+                    maxDrawingSize += 100
+                }
+                else{
+                    maxDrawingSize += 10
+                }
+            }
+        }
+        maxDrawingSize = maxDrawingSize - 10
+        console.log(maxDrawingSize)
+
+        return maxDrawingSize
+    }
+
     // When change parameters button is pressed execute this function to change parameters corresponding to inputs.
     tweakParametersBtn.addEventListener('click', applyParameterChanges)
+
+    maxSizeBtn.addEventListener('click', function(){
+        document.querySelector('label[for="drawingSizeInput"]').textContent = 'Drawing size (calculating...): ';
+        document.getElementById('drawingSizeInput').value = findMaxSize(animation.cur.svgPath)
+        applyParameterChanges()
+    })
     
     // When enter key is pressed inside of any of the input fields, also execute the function
     var inputValueField = document.getElementsByClassName('inputField');
@@ -288,7 +342,7 @@ function setupPlatform() {
             drawingSpeed: document.getElementById('drawingSpeedInput'),
         }
 
-        let platformValues = {
+        platformValues = {
             wallDistance: parseFloat(inputMapping.wallDistance.value),
             rotationAxisOffset: parseFloat(inputMapping.rotationAxisOffset.value)
         }
@@ -350,10 +404,10 @@ function setupPlatform() {
         }
     })
 
-    getHighestServoValuesBtn.addEventListener('click', function () {
-        let servoAngles = animation.servoAnglesToPrint
-        
+    function getHighestServoAngles(arr) {
+        let servoAngles = arr
         let servoObject = {Servo0: [], Servo1: [], Servo2: [], Servo3: [], Servo4: [], Servo5: []}
+        let highestAngles = []
         for (let i=0; i < servoAngles.length; i++ ) {
             for (let j=0; j < servoAngles[i].length; j++) {
                 if (j !== 6) {
@@ -362,8 +416,17 @@ function setupPlatform() {
             }
         }
         for (let i=0; i<6; i++) {
-            console.log('Servo ' + i + ': ' + Math.round((Math.max(...servoObject['Servo'+i])*180/Math.PI)*10)/10 + ' degrees.')
+            highestAngles.push(Math.round((Math.max(...servoObject['Servo'+i])*180/Math.PI)*10)/10)
         }
+        return highestAngles
+    }
+    
+    getHighestServoValuesBtn.addEventListener('click', function () {
+        let highestAngles = getHighestServoAngles(animation.servoAnglesToPrint)
+        for (let i=0; i<highestAngles.length; i++) {
+            console.log('Servo ' + i + ': ' + highestAngles[i] + ' degrees.')
+        }
+        
     })
 }
 

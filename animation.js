@@ -17,9 +17,11 @@ function Animation(platform) {
   // 'this.orientation' represents the orientation of the animation using a Quaternion
   // Quaternion.ONE is an identity quaternion, indicating no rotation
   this.orientation = Quaternion.ONE;
+  this.fictionalOrientation = Quaternion.ONE
 
   // 'this.translation' is a 3D array representing the translation of the animation in x, y, and z directions
   this.translation = [0, 0, 0, 0];
+  this.fictionalTranslation = [0, 0, 0, 0];
 
   this.servoAngles = []
   this.getServos = false
@@ -171,13 +173,52 @@ Animation.SVG = function(svg, box, size, speed) {
     }
   }
 
-  return Animation.Interpolate(ret);
+  return Animation.Interpolate(ret, svg);
 };
 
 // This function is called by Animation.SVG function.
 // It creates the "normalized" animation type object that needs to be passed as argument to the _start function. This
 // takes as argument the array that stores the animation steps, created by the Animation.SVG function.
-Animation.Interpolate = function(data) {
+Animation.Interpolate = function(data, svgPath) {
+
+  // Get desired y and z coordinates and calculate rotation and translation needed to accomplish them into wall projection
+  const calculateMovements = function(x, y, z) {
+    let rotationAxisOffset = platform.rotationAxisOffset
+    let wallDistance = platform.wallDistance
+
+    let movements = {}
+    let theta, beta
+    let xTrans, yTrans, zTrans
+
+    theta = -Math.asin(z/(rotationAxisOffset + wallDistance))
+    beta = Math.asin(y/(rotationAxisOffset + wallDistance))
+
+    let laserState = x !== 0 ? 0 : 1
+
+    xTrans = rotationAxisOffset - rotationAxisOffset * Math.cos(theta) * Math.cos(beta)
+    yTrans = rotationAxisOffset * Math.sin(beta)
+    zTrans = -rotationAxisOffset * Math.sin(theta)
+  
+    movements = {
+      x: -xTrans,
+      y: yTrans,
+      z: zTrans,
+      theta: theta,
+      beta: beta,
+      laserState: laserState
+    }
+    return movements
+  }
+
+  // Find required position knowing its desired position and its current position, interpolating with scale for smoothness.
+  const interpolateWithPrevious = function(previous, desired, scale) {
+    return previous + (desired - previous) * scale
+  }
+
+  const xValuePath = function(movement) {
+    //return (platform.wallDistance + platform.rotationAxisOffset) * Math.cos(movement.theta) * Math.cos(movement.beta) - 2 * platform.rotationAxisOffset
+    return (platform.rotationAxisOffset + platform.wallDistance) * (Math.cos(movement.theta) * Math.cos(movement.beta)) - platform.rotationAxisOffset
+  }
 
   var duration = 0; // Initialize duration variable to 0
   for (var i = 1; i < data.length; i++) {  // Add all the durations of the whole animation steps together
@@ -188,46 +229,50 @@ Animation.Interpolate = function(data) {
     duration: duration,
     pathVisible: true,
     next: null,
-    fn: function(pct) {
+    svgPath: svgPath,
+    simulateMovements: function(pct) {
 
-      // Get desired y and z coordinates and calculate rotation and translation needed to accomplish them into wall projection
-      const calculateMovements = function(x, y, z) {
-        let rotationAxisOffset = platform.rotationAxisOffset
-        let wallDistance = platform.wallDistance
-    
-        let movements = {}
-        let theta, beta
-        let xTrans, yTrans, zTrans
-    
-        theta = -Math.asin(z/(rotationAxisOffset + wallDistance))
-        beta = Math.asin(y/(rotationAxisOffset + wallDistance))
-
-        let laserState = x !== 0 ? 0 : 1
-    
-        xTrans = rotationAxisOffset - rotationAxisOffset * Math.cos(theta) * Math.cos(beta)
-        yTrans = rotationAxisOffset * Math.sin(beta)
-        zTrans = -rotationAxisOffset * Math.sin(theta)
+      var pctStart = 0;  // Variable for starting progress of animation (initialize to 0%)
       
-        movements = {
-          x: -xTrans,
-          y: yTrans,
-          z: zTrans,
-          theta: theta,
-          beta: beta,
-          laserState: laserState
+      for (var i = 1; i < data.length; i++) {  // For every step of the animation
+
+        var p = data[i];  // from now on p = current step of animation
+        var pctEnd = pctStart + p.t / duration; // calculate the percentage of animation transcurred up until this step
+
+        if (pctStart <= pct && pct < pctEnd) {  // Execute code below only for step in selected pct (percentage) range.
+          //console.log(pctStart)
+          var scale = (pct - pctStart) / (pctEnd - pctStart); // Variable scale to calculate how far the animation is in selected step. (0 to 1)
+          var prev = i === 0 ? data[0] : data[i - 1];  // Previous step, if i = 0 (meaning first step of animation), previous step is same step, otherwise its i-1
+
+
+          // Calculate movements and previous movements according to distance to wall and rotation axis offset.
+          var movements = calculateMovements(p.x, p.y, p.z)
+          var prevMovements = calculateMovements(prev.x, prev.y, prev.z)
+
+          // Set the new location with previous' step location + its difference multiplied by completion progress of step.
+          this.fictionalTranslation[0] = interpolateWithPrevious(prevMovements.x, movements.x, scale)
+          this.fictionalTranslation[1] = interpolateWithPrevious(prevMovements.y, movements.y, scale)
+          this.fictionalTranslation[2] = interpolateWithPrevious(prevMovements.z, movements.z, scale)
+          this.fictionalTranslation[3] = movements.laserState;
+      
+          this.fictionalOrientation = Quaternion.fromAxisAngle([0, 1, 0], prevMovements.theta + (movements.theta - prevMovements.theta) * scale).mul(Quaternion.fromAxisAngle([0, 0, 1], prevMovements.beta + (movements.beta - prevMovements.beta) * scale))
+          return; // Once the if condition is true, there is no need to continue with the loop, so return.
         }
-        return movements
+        pctStart = pctEnd; // Assign the start pct to the end pct for continuing the loop.
       }
 
-      // Find required position knowing its desired position and its current position, interpolating with scale for smoothness.
-      const interpolateWithPrevious = function(previous, desired, scale) {
-        return previous + (desired - previous) * scale
-      }
+      // Set to last element in chain, that isn't considered on the for loop.
+      var lastMovements = calculateMovements(data[data.length-1].x, data[data.length-1].y, data[data.length-1].z)
 
-      const xValuePath = function(movement) {
-        //return (platform.wallDistance + platform.rotationAxisOffset) * Math.cos(movement.theta) * Math.cos(movement.beta) - 2 * platform.rotationAxisOffset
-        return (platform.rotationAxisOffset + platform.wallDistance) * (Math.cos(movement.theta) * Math.cos(movement.beta)) - platform.rotationAxisOffset
-      }
+      // For movements
+      this.fictionalTranslation[0] = lastMovements.x;
+      this.fictionalTranslation[1] = lastMovements.y;
+      this.fictionalTranslation[2] = lastMovements.z;
+      this.fictionalTranslation[3] = lastMovements.laserState;
+      this.fictionalOrientation = Quaternion.fromAxisAngle([0, 1, 0], lastMovements.theta).mul(Quaternion.fromAxisAngle([0, 0, 1], lastMovements.beta))
+    
+    },
+    fn: function(pct) {
 
       var pctStart = 0;  // Variable for starting progress of animation (initialize to 0%)
 
@@ -481,28 +526,7 @@ Animation.prototype = {
       return
     }
 
-    // function adjustPathToMaxVertices(pathArr, maxSize) {
-    //   if (pathArr[0].length > maxSize) {
-    //     const elementsToRemove = pathArr[0].length - maxSize;
-    //     const step = Math.floor(pathArr[0].length / elementsToRemove);
-    //     const trimmedArray = [[],[],[],[]];
-    //     let indexToRemove = Math.floor(step / 2);
-    //     for (let i = 0; i < pathArr[0].length; i++) {
-    //         if (indexToRemove === i) {
-    //             indexToRemove += step;
-    //         } else {
-    //             for (let j = 0; j < trimmedArray.length; j++) {
-    //               trimmedArray[j].push(pathArr[j][i])
-    //             }
-    //         }
-    //     }
-    //     return trimmedArray;
-    //   }
-    //   return pathArr;
-    // }
-
-    // const maxVertices = 500
-    let simplifiedPath = this.path //adjustPathToMaxVertices(this.path, maxVertices)
+    let simplifiedPath = this.path
     let isShapeBeginning = false
     p.beginShape();         // Tell the program I want to draw a shape with some vertices
     p.noFill();             // Background of shape transparent

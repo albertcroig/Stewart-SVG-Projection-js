@@ -5,6 +5,7 @@
       <title>Stewart Platform</title>
       <link rel="stylesheet" type="text/css" href="style.css"> 
       <script>
+        var findBoundingBox
         var $images
         var createSVGImage
         var SVGS = [];
@@ -49,7 +50,6 @@
               </div>
               <button style="flex-grow: 2; margin-left: 5px;" id="drawTextBtn">Draw</button> 
             </div>
-
         </div>
         <hr>
         <div class = "tweaker" id = "platformParameters">
@@ -67,6 +67,7 @@
               <div class="tweakParameter">
                 <label for="drawingSizeInput">Drawing size:</label>
                 <input type="number" class="inputField" id="drawingSizeInput" name="drawingSizeInput" min="50" max="1000" step="10">
+                <button type="button" id="maxSizeBtn">Max.</button>
               </div>
               <div class="tweakParameter">
                 <label for="drawingSpeedInput">Drawing speed:</label>
