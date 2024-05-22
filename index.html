@@ -14,7 +14,6 @@
     <script src="node_modules/bezier-js/bezier.js"></script>
     <script src="node_modules/p5/lib/p5.min.js"></script>
     <script src="node_modules/quaternion/quaternion.min.js"></script>
-    <script src="node_modules/opentype.js/dist/opentype.min.js"></script>
     <script src="main.js"></script>
     <script src="stewart.js"></script>
     <script src="platform.js"></script>
@@ -50,7 +49,6 @@
               </div>
               <button style="flex-grow: 2; margin-left: 5px;" id="drawTextBtn">Draw</button> 
             </div>
-
         </div>
         <hr>
         <div class = "tweaker" id = "platformParameters">
@@ -68,6 +66,7 @@
               <div class="tweakParameter">
                 <label for="drawingSizeInput">Drawing size:</label>
                 <input type="number" class="inputField" id="drawingSizeInput" name="drawingSizeInput" min="50" max="1000" step="10">
+                <button type="button" id="maxSizeBtn">Max.</button>
               </div>
               <div class="tweakParameter">
                 <label for="drawingSpeedInput">Drawing speed:</label>
@@ -96,13 +95,13 @@
           <h3 style="text-align: center;">Servo Angles</h3>
           <div class="servo-angles-content">
             <div class="checkbox">
-              <button class="bottomButton" id="getAnimationAnglesBtn"><u>Download</u> servo angles of previous animation</button>
+              <button class="bottomButton" id="getAnimationAnglesBtn"><u>Download</u> servo angles of current animation</button>
               <div class="inner-checkbox">
                 <label for="animationAnglesType" style="font-size: 12px;">Original servo angles</label>
                 <input type="checkbox" id="animationAnglesType" name="animationAnglesType">
               </div>
             </div>
-            <button class="bottomButton" id="getHighestServoValuesBtn"><u>Log</u> highest servo angles of previous animation</button>
+            <button class="bottomButton" id="getHighestServoValuesBtn"><u>Log</u> highest servo angles of current animation</button>
           </div>
         </div>
       </div>

@@ -11,6 +11,7 @@ function setupPlatform() {
     var canvasWidth = 600
     var canvasHeight = 460
     var isInputFocused = false
+    let platformValues = {}
 
     // p5.js sketch constructor function. helps organize and modularize code
     var sketch = function (p) {
@@ -28,14 +29,14 @@ function setupPlatform() {
             // Initialize Stewart platform and animation
             platform = new Stewart;                 // Create a new instance of a platform and assign it to previously defined variable
             animation = new Animation(platform);    // Create a new instance of animation and assign it to previously defined variable, as we create the object, the start() function is called for this object.
-            platform.initHexagonal();               // Execute the initHexagonal function with default values (opts argument is blank)  
+            platform.initHexagonal(platformValues);               // Execute the initHexagonal function with default values (opts argument is blank)  
 
             cameraAngles.defaultView = 
             [-1000, 0, platform.T0[2]+300, 
             platform.wallDistance/8, 0, platform.T0[2]]
 
             cameraView = cameraAngles.defaultView
-            animation._start(Animation.SVG(SVGS[0].path, SVGS[0].box, animation.drawingSize, animation.drawingSpeed), null)
+            animation._start(Animation.SVG(SVGS[0].path, SVGS[0].box, animation.drawingSize, animation.drawingSpeed))
         };
 
         // Draw function is called continuously to update the canvas
@@ -56,7 +57,7 @@ function setupPlatform() {
                 [platform.wallDistance*0.2, 0, platform.T0[2]+100, 
                 platform.wallDistance, 0, platform.T0[2]], 
                 sphereView: 
-                [platform.wallDistance*0.7, 0, (platform.wallDistance + platform.rotationAxisOffset)*1.1, 
+                [platform.wallDistance*0.5, 0, (platform.wallDistance + platform.rotationAxisOffset)*1.1, 
                 platform.wallDistance, 0, 0], 
                 platformView: 
                 [-platform.rotationAxisOffset*1.7, platform.rotationAxisOffset*2.2, platform.T0[2]+300, 
@@ -100,13 +101,10 @@ function setupPlatform() {
 
         // If clicked key is spacebar, it toggles the visibility of the path.
         if (e.keyCode === 32) {
-        animation.toggleVisiblePath();
-        e.preventDefault();
-        return;
+            animation.toggleVisiblePath();
+            e.preventDefault();
+            return;
         }
-        // If clicked key is any other key, it executes the start() function to start a new animation based on the
-        // key that belongs to that animation.
-        animation.start(String.fromCharCode(e.keyCode | 32));
     };
 
     // Function to create an SVG image and append it to the specified container
@@ -121,14 +119,11 @@ function setupPlatform() {
         svg.setAttribute("height", 50);
 
         // Add an onclick event to trigger an animation when the svg gets clicked, it calls the _start function.
-        // It passes two arguments,(play, next). The play argument is the object that contains the info about the animation to play.
-        // It is created using the Animation.SVG function, as there is no next animation, the second argument is null.
+        // It passes as argument,(play). The play argument is the object that contains the info about the animation to play.
+        // It is created using the Animation.SVG function.
         svg.onclick = function() {
             // console.log(SVGS[id])
-            animation._start(Animation.SVG(SVGS[id].path, SVGS[id].box, animation.drawingSize, animation.drawingSpeed), null);
-            animation.servoAngles.push(platform.getServoAngles(animation.translation))
-            animation.servoAnglesToPrint = animation.servoAngles
-            animation.servoAngles = []
+            animation._start(Animation.SVG(SVGS[id].path, SVGS[id].box, animation.drawingSize, animation.drawingSpeed));
             animation.path = [[],[],[],[]]
             animation.stopDrawingPath = false
         };
@@ -197,16 +192,33 @@ function setupPlatform() {
         },  {//Line test
         path: "M 256,0 v 512",
         box: { x: 0, y: 0, width: 512, height: 512 }
+        }, {//For testing purposes
+        path: "",
+        box: { x: 0, y: 0, width: 512, height: 512 }
         },];
-
-        // 
+ 
     // Calls the createSVGImage function for each of the svg image paths on the SVGS variable.
     for (var i = 0; i < SVGS.length; i++) {
         createSVGImage(i, $images, SVGS[i].path, SVGS[i].box);
     }
 
-    // Variable that contains the get servo angles button on screen.
-    // const getServoAnglesBtn = document.getElementById('getServoAnglesBtn');
+    function getAnglesOfCurrentAnimation(steps, size) {
+
+        const path = animation.cur.svg.svgPath
+        const simulationPlatform = new Stewart
+        const simulationAnimation = new Animation(simulationPlatform)
+        simulationPlatform.initHexagonal(platformValues)
+
+        const angles = []
+
+        for (var i = 0; i <= steps; i++) {  // For every vertex, define its position
+            let interpolation = Animation.SVG(path, animation.cur.svg.box, size, animation.drawingSpeed)
+            interpolation.simulateMovements.call(simulationAnimation, i / steps); 
+            simulationPlatform.update(simulationAnimation.fictionalTranslation, simulationAnimation.fictionalOrientation)
+            angles.push(simulationPlatform.getServoAngles(simulationAnimation.fictionalTranslation))
+        } 
+        return angles
+    }
 
     // Takes care of displaying the current servo angles onscreen. It's called by the draw function in the sketch.
     function displayCurrentServoAngles() {
@@ -258,8 +270,52 @@ function setupPlatform() {
         document.querySelector('label[for="drawingSpeedInput"]').textContent = 'Drawing speed (' + drawingSpeed + '): ';
     }
 
+    function findMaxSize() {
+ 
+        let maxServoRange = platform.servoRange[1] * 180 / Math.PI
+        let highestAngle = 0
+        let maxDrawingSize = 0
+        let outOfRange = false
+        
+        while (outOfRange === false) {
+            const steps = 70
+            const angles = getAnglesOfCurrentAnimation(steps, maxDrawingSize)
+
+            if (getHighestServoAngles(angles).some(element => typeof element === 'string')) {
+                outOfRange = true
+                highestAngle = 'Out of range (>' + Math.round(platform.servoRange[1] * 180 / Math.PI) + ')'
+            }
+            else {
+                highestAngle = Math.max(...(getHighestServoAngles(angles)))
+            }
+
+            console.log('Drawing size: ' + maxDrawingSize + ', highest angle: ' + highestAngle)
+
+            if (outOfRange === false) {
+                if (highestAngle < maxServoRange * 0.6) {
+                    maxDrawingSize += 70
+                }
+                else if (highestAngle < maxServoRange * 0.8) {
+                    maxDrawingSize += 30
+                }
+                else {
+                    maxDrawingSize += 10
+                }
+            }
+        }
+        maxDrawingSize -= 10
+        console.log(maxDrawingSize)
+        return maxDrawingSize
+    }
+
     // When change parameters button is pressed execute this function to change parameters corresponding to inputs.
     tweakParametersBtn.addEventListener('click', applyParameterChanges)
+
+    maxSizeBtn.addEventListener('click', function(){
+        document.querySelector('label[for="drawingSizeInput"]').textContent = 'Drawing size (calculating...): ';
+        document.getElementById('drawingSizeInput').value = findMaxSize()
+        applyParameterChanges()
+    })
     
     // When enter key is pressed inside of any of the input fields, also execute the function
     var inputValueField = document.getElementsByClassName('inputField');
@@ -285,7 +341,7 @@ function setupPlatform() {
             drawingSpeed: document.getElementById('drawingSpeedInput'),
         }
 
-        let platformValues = {
+        platformValues = {
             wallDistance: parseFloat(inputMapping.wallDistance.value),
             rotationAxisOffset: parseFloat(inputMapping.rotationAxisOffset.value)
         }
@@ -314,7 +370,9 @@ function setupPlatform() {
                 inputMapping[key].value = ""
             }
         }
-
+        animation._start(Animation.SVG(animation.cur.svg.svgPath, animation.cur.svg.box, animation.drawingSize, animation.drawingSpeed))
+        animation.path = [[],[],[],[]]
+        animation.stopDrawingPath = false
     }
 
     // Find the button with the specified class and add a click event listener
@@ -404,10 +462,12 @@ function setupPlatform() {
         return clonedArray;
     }    
 
+
     getAnimationAnglesBtn.addEventListener('click', function() {
         // Get the checkbox element
         const checkbox = document.getElementById('animationAnglesType');
-        let servoAngles = animation.servoAnglesToPrint
+        
+        const servoAngles = getAnglesOfCurrentAnimation(3000, animation.drawingSize)
         let servos = cloneArray(servoAngles)
 
         // Check if the checkbox is checked
@@ -418,10 +478,10 @@ function setupPlatform() {
         }
     })
 
-    getHighestServoValuesBtn.addEventListener('click', function () {
-        let servoAngles = animation.servoAnglesToPrint
-        
+    function getHighestServoAngles(arr) {
+        let servoAngles = arr
         let servoObject = {Servo0: [], Servo1: [], Servo2: [], Servo3: [], Servo4: [], Servo5: []}
+        let highestAngles = []
         for (let i=0; i < servoAngles.length; i++ ) {
             for (let j=0; j < servoAngles[i].length; j++) {
                 if (j !== 6) {
@@ -429,8 +489,26 @@ function setupPlatform() {
                 }
             }
         }
+ 
         for (let i=0; i<6; i++) {
-            console.log('Servo ' + i + ': ' + Math.round((Math.max(...servoObject['Servo'+i])*180/Math.PI)*10)/10 + ' degrees.')
+            if (servoObject['Servo'+i].includes(null)) {
+                highestAngles.push('Out of range (>' + Math.round(platform.servoRange[1] * 180 / Math.PI) + ')')
+            }
+            else {
+                highestAngles.push(Math.round((Math.max(...servoObject['Servo'+i])*180/Math.PI)*10)/10)
+            }
+        }
+        return highestAngles
+    }
+    
+    getHighestServoValuesBtn.addEventListener('click', function () {
+
+        const steps = 200
+        const angles = getAnglesOfCurrentAnimation(steps, animation.drawingSize)
+        highestAngles = getHighestServoAngles(angles)
+
+        for (let i=0; i<highestAngles.length; i++) {
+            console.log('Servo ' + i + ': ' + highestAngles[i] + ' degrees.')
         }
     })
 }
