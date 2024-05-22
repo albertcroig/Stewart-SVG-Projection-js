@@ -27,6 +27,21 @@ textToDrawInput.addEventListener('keydown', function(event) {
 
 function createSVGPathFromHershey(text, boundingBox, font) {
 
+    function findBoundingBox(path) {
+        const svgNamespace = "http://www.w3.org/2000/svg";
+        const svgElement = document.createElementNS(svgNamespace, "svg");
+        svgElement.setAttribute('style', 'position:absolute; visibility:hidden; width:0; height:0;');
+        document.body.appendChild(svgElement);
+
+        const pathElement = document.createElementNS(svgNamespace, "path");
+        pathElement.setAttribute("d", path);
+        svgElement.appendChild(pathElement);
+
+        const bbox = pathElement.getBBox()
+        svgElement.removeChild(pathElement);
+        return bbox
+    }
+
     const fonts = {
         sans1Stroke: [
             {

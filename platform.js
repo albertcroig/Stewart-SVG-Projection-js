@@ -124,7 +124,7 @@ Stewart.prototype = {
     var platformInts = getHexPlate(platformRadius, platformRadiusOuter, platformTurn ? Math.PI : 0);  // Platform vertices
 
     // Define servo range and visibility
-    var servoRange = opts.servoRange || [-Math.PI / 2, Math.PI / 2];
+    var servoRange = opts.servoRange || [-Math.PI/3, Math.PI/3];
     var servoRangeVisible = opts.servoRangeVisible === undefined ? false : opts.servoRangeVisible;
     
     // Offset of rotation axis and wall distance (from center of platform).
@@ -136,10 +136,6 @@ Stewart.prototype = {
     // Find platform edge where laser's going to be pointing
     laserPlatformEdge.x = (platformInts[1].x)
     laserPlatformEdge.y = 0
-
-    // Define servo range and visibility
-    var servoRange = opts.servoRange || [-Math.PI / 2, Math.PI / 2];
-    var servoRangeVisible = opts.servoRangeVisible === undefined ? false : opts.servoRangeVisible;
 
     // Execute init function with specific opts argument as anonymous object for hexagonal configuration
     this.init({
@@ -258,7 +254,7 @@ Stewart.prototype = {
         p.push()
         p.translate(-rotationAxisOffset,0,this.T0[2])
         p.rotateY(p.PI/2)
-        this.drawPartialSphere(p, (rotationAxisOffset+wallDistance + 1), 0, Math.PI/8, [221, 216, 187])
+        this.drawPartialSphere(p, (rotationAxisOffset+wallDistance + 1), 0, Math.PI/6, [221, 216, 187])
         p.pop()
 
         // Drawing floor cube

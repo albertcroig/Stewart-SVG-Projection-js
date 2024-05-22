@@ -5,7 +5,6 @@
       <title>Stewart Platform</title>
       <link rel="stylesheet" type="text/css" href="style.css"> 
       <script>
-        var findBoundingBox
         var $images
         var createSVGImage
         var SVGS = [];
@@ -96,13 +95,13 @@
           <h3 style="text-align: center;">Servo Angles</h3>
           <div class="servo-angles-content">
             <div class="checkbox">
-              <button class="bottomButton" id="getAnimationAnglesBtn"><u>Download</u> servo angles of previous animation</button>
+              <button class="bottomButton" id="getAnimationAnglesBtn"><u>Download</u> servo angles of current animation</button>
               <div class="inner-checkbox">
                 <label for="animationAnglesType" style="font-size: 12px;">Original servo angles</label>
                 <input type="checkbox" id="animationAnglesType" name="animationAnglesType">
               </div>
             </div>
-            <button class="bottomButton" id="getHighestServoValuesBtn"><u>Log</u> highest servo angles of previous animation</button>
+            <button class="bottomButton" id="getHighestServoValuesBtn"><u>Log</u> highest servo angles of current animation</button>
           </div>
         </div>
       </div>
