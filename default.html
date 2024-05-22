@@ -4,12 +4,18 @@
       <meta charset="utf-8">
       <title>Stewart Platform</title>
       <link rel="stylesheet" type="text/css" href="style.css"> 
+      <script>
+        var $images
+        var createSVGImage
+        var SVGS = [];
+      </script>
   </head>
   <body>
     <script src="node_modules/bezier-js/bezier.js"></script>
     <script src="node_modules/p5/lib/p5.min.js"></script>
     <script src="node_modules/quaternion/quaternion.min.js"></script>
-    <script src="node_modules/text-to-svg/text-to-svg.js"></script>
+    <script src="node_modules/opentype.js/dist/opentype.min.js"></script>
+    <script src="node_modules/font2svgcode/dist/font2svgcode.min.js"></script>
     <script src="main.js"></script>
     <script src="stewart.js"></script>
     <script src="platform.js"></script>
@@ -31,11 +37,21 @@
       <div id="tweak-values">
         <div class = "tweaker" id = "textToSVG">
           <h3 style="text-align: center;">Convert text to SVG</h3>
-          <p style="margin: 0px;">Enter text to draw:</p>
+          <p style="margin: 0px;">Draw personalized text onto the wall</p>
             <div id="textToDrawContainer">
-              <input type="text" class="inputField" id="textToDrawInput" name="textToDrawInput" style="width: 75%; margin-top: 5px;">
-              <button style="flex-grow: 2;" id="drawTextBtn">Draw</button> 
+              <div style="display: flex; flex-direction: column; width: 80%;">
+                <input type="text" class="inputField" placeholder="Enter your text here" id="textToDrawInput" name="textToDrawInput" style="width: 100%;">
+                <div style="margin-top: 5px;">
+                  <span>Choose font: </span>
+                  <select style="height: auto; font-size: 12px;" name="fontSelector" id="fontSelector">
+                    <option value="sans1Stroke">Regular</option>
+                    <option value="script1Stroke">Hand-written</option>
+                  </select>    
+                </div>
+              </div>
+              <button style="flex-grow: 2; margin-left: 5px;" id="drawTextBtn">Draw</button> 
             </div>
+
         </div>
         <hr>
         <div class = "tweaker" id = "platformParameters">
@@ -94,7 +110,7 @@
     </div>
     
 
-    
+    <script src="textToSvg.js"></script>
 
 
   </body>

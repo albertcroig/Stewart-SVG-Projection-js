@@ -5,7 +5,7 @@ var platform;
 // Function to set up the platform and initialize the animation
 function setupPlatform() {
 
-    var cameraView = []
+    var cameraView
     var cameraAngles = {}
     var currentView = 'defaultView'
     var canvasWidth = 600
@@ -110,7 +110,7 @@ function setupPlatform() {
     };
 
     // Function to create an SVG image and append it to the specified container
-    function createSVGImage(id, root, d, box) {
+    createSVGImage = function(id, root, d, box) {
 
         var xmlns = "http://www.w3.org/2000/svg";  //SVG namespace (necessary to display svg images)
 
@@ -124,6 +124,7 @@ function setupPlatform() {
         // It passes two arguments,(play, next). The play argument is the object that contains the info about the animation to play.
         // It is created using the Animation.SVG function, as there is no next animation, the second argument is null.
         svg.onclick = function() {
+            // console.log(SVGS[id])
             animation._start(Animation.SVG(SVGS[id].path, SVGS[id].box, animation.drawingSize, animation.drawingSpeed), null);
             animation.servoAngles.push(platform.getServoAngles(animation.translation))
             animation.servoAnglesToPrint = animation.servoAngles
@@ -145,10 +146,10 @@ function setupPlatform() {
     }
 
     // Acces the element images on html file
-    var $images = document.getElementById("images");
+    $images = document.getElementById("images");
 
     // List of all the paths of the svg images that will display onscreen, with their respective box attribute and main parameters.
-    var SVGS = [ {//Raw logo
+    SVGS = [ {//Raw logo
         path: "m 5.1677079,299.63527 -1.7495,-0.50798 -0.96506,-1.06587 c -0.53094,-0.58682 -1.18163,-1.82334 -1.4471,-2.74948 l -0.48302998,-1.68363 0.72653998,-2.11276 0.72655,-2.11276 38.4419001,-38.15448 38.44191,-38.15448 1.50098,-0.68363 1.50099,-0.68363 24.005862,-0.026 24.00586,-0.0259 1.93112,0.80738 1.93113,0.80738 0.88922,1.71956 0.88921,1.71955 v 8.03389 8.03388 l -1.93012,1.93013 -1.93013,1.93013 H 112.43258 93.209138 l -1.96806,0.56487 -1.96805,0.56487 -30.95791,30.87508 -30.95792,30.87508 -2.27144,0.3493 c -1.24949,0.19261 -5.84827,0.32933 -10.21951,0.30438 l -7.9490501,-0.0449 z m 111.8756321,0.22555 c -0.63573,-0.12675 -1.85329,-0.79441 -2.70558,-1.48403 l -1.54989,-1.25348 -0.49101,-1.7475 -0.49102,-1.7465 0.72654,-2.11276 0.72655,-2.11276 38.4419,-38.15448 38.4419,-38.15449 1.50099,-0.68362 1.50099,-0.68363 15.81129,-0.0259 15.81129,-0.026 1.95608,0.92814 1.95608,0.92814 0.82634,1.59879 0.82634,1.5988 v 39.23231 39.23232 l -0.80338,1.55289 -0.80339,1.55289 -1.55389,0.83133 -1.55388,0.83133 h -9.5249 -9.5249 l -1.60278,-1.18862 -1.60279,-1.18861 -0.67764,-1.93412 -0.67764,-1.93412 -0.0319,-21.48791 -0.0319,-21.48791 -0.96906,-1.63971 -0.96905,-1.63971 -1.81436,-0.86127 c -2.15368,-1.02195 -3.81934,-1.09081 -5.51195,-0.22954 -0.68163,0.3473 -13.12069,12.45003 -27.64156,26.89606 l -26.40106,26.26433 -2.27144,0.35029 c -2.43811,0.37625 -17.40909,0.35928 -19.32425,-0.022 z m 147.17084,-0.43912 c -2.52593,-0.9012 -2.25946,-0.66866 -3.43411,-2.98003 l -0.92415,-1.81735 v -38.61756 -38.61655 l 0.92315,-1.93512 0.92315,-1.93512 1.93512,-0.92315 1.93512,-0.92315 h 8.55285 8.55284 l 1.95608,0.92814 1.95608,0.92814 0.82634,1.5988 0.82634,1.59879 v 21.65956 21.65956 l 0.92615,1.95109 0.92614,1.95109 1.18762,0.83233 1.18762,0.83233 h 2.82932 2.82933 l 26.71043,-26.60864 26.71043,-26.60863 1.91616,-0.36028 1.91616,-0.36028 h 15.27736 15.27736 l 1.93113,0.80738 1.93112,0.80738 0.88922,1.71955 0.88922,1.71956 v 21.3372 21.33721 l 0.78243,1.87324 0.78243,1.87325 1.56486,1.23053 1.56486,1.23053 h 2.58382 2.58382 l 26.72141,-26.60664 26.72141,-26.60664 1.91616,-0.36227 1.91615,-0.36128 h 23.69149 23.69149 l 1.92913,1.2974 1.92913,1.2974 0.67764,1.96705 0.67764,1.96706 0.0319,6.09178 0.0319,6.09178 -0.92215,2.30438 -0.92215,2.30438 -1.60478,0.82934 -1.60478,0.83033 -18.33822,0.006 -18.33823,0.006 -2.27144,0.35129 -2.27145,0.3513 -31.22737,31.10961 -31.22737,31.10961 -2.55488,0.36826 -2.55487,0.36826 -14.8632,-0.18163 -14.86319,-0.18164 -1.60179,-1.18862 -1.60178,-1.18861 -0.67764,-1.93412 -0.67765,-1.93412 -0.0319,-22.05777 -0.0319,-22.05776 -1.96106,-1.96107 -1.96107,-1.96106 -2.8443,0.17265 -2.84429,0.17265 -26.9789,26.5797 -26.97889,26.57969 -1.85229,0.53094 -1.85228,0.53093 -14.76539,-0.025 -14.76539,-0.0249 z m 211.9699,0.24251 -1.97803,-0.46507 -1.28642,-1.496 -1.28642,-1.496 v -2.57483 -2.57484 l 6.95505,-7.10076 6.95505,-7.10076 1.53293,-0.7974 1.53292,-0.7974 h 8.85624 8.85724 l 1.62374,0.83932 1.62374,0.83931 0.96407,2.52494 0.96407,2.52494 -0.2026,6.81333 -0.20259,6.81334 -1.18862,1.60278 -1.18861,1.60279 -1.93412,0.67764 -1.93412,0.67764 -13.34225,-0.026 -13.34224,-0.0259 z M 85.669928,212.22245 6.2305979,291.66179 c -5.86898998,5.86899 2.27004,9.46793 8.1390201,3.59894 l 78.64925,-78.64924 c 5.86898,-5.86899 17.619652,-5.88168 11.750672,-0.0127 l -82.994072,82.99403 m 75.17426,-63.43628 19.570492,-19.57049 c 5.86898,-5.86898 16.76272,-5.02475 10.89374,0.84424 l -14.32451,14.32451 c -5.86899,5.86899 5.86898,5.86899 11.73797,0 l 10.18688,-10.18688 m 54.89634,-7.94446 -71.90084,71.90085 c -5.86899,5.86899 -3.21701,14.95498 2.65197,9.08599 l 77.9973,-77.99729 c 5.86899,-5.86899 17.62626,-5.88828 11.75728,-0.0193 l -83.05731,83.05731 m 63.08152,-51.34355 31.11297,-31.11298 c 5.86899,-5.86899 9.74585,1.99213 3.87686,7.86111 l -19.53714,19.53715 c -5.86898,5.86898 -4.90401,16.64198 0.96497,10.77299 l 18.57217,-18.57216 c 5.86899,-5.86899 5.86899,5.86898 0,11.73797 l -18.55474,18.55474 c -5.86899,5.86899 -5.85158,17.58955 0.0174,11.72056 l 18.53733,-18.53733 c 5.86899,-5.86898 5.86899,5.86899 0,11.73797 l -18.18471,18.18471 c -5.86898,5.86899 1.00034,10.73763 6.86933,4.86864 l 11.52668,-11.52667 c 5.58725,-5.58726 5.58725,6.15071 0,11.73797 l -4.19045,4.19044 m 38.90468,-74.11859 8.7686,-8.76861 c 5.86899,-5.86899 16.73852,-5.00055 10.86954,0.86844 l -15.2364,15.2364 c -5.86899,5.86899 -5.86899,17.60696 0,11.73798 l 18.58359,-18.5836 c 5.86899,-5.86898 5.86899,5.86898 0,11.73797 l -18.58359,18.58359 c -5.86899,5.86899 -5.86899,17.60696 0,11.73797 l 18.58359,-18.58359 c 5.86899,-5.86898 5.86899,5.86899 0,11.73798 l -18.58359,18.58366 c -5.86899,5.86898 -5.44176,17.17974 0.42723,11.31075 l 25.77654,-25.77654 m 64.7287,-52.99072 -83.12174,83.12175 c -5.86899,5.86898 5.84918,5.88878 11.71817,0.0198 l 78.73981,-78.73981 c 5.86899,-5.86899 17.60696,-5.86899 11.73797,0 l -83.16134,83.16134 m 97.8071,-86.06913 -27.19543,27.19544 c -5.86899,5.86898 0.009,11.72893 5.87802,5.85994 l 18.58338,-18.58337 c 5.86899,-5.86899 5.86899,5.86898 0,11.73797 l -18.56641,18.5664 c -5.86899,5.86899 -5.85201,17.59 0.017,11.72101 l 18.54944,-18.5494 c 5.86899,-5.86898 5.86899,5.86899 0,11.73798 l -18.53246,18.53246 c -5.86899,5.86899 -4.72055,16.45851 1.14843,10.58952 l 26.56029,-26.56027 m 65.48055,-53.74259 -82.96142,82.96142 c -5.86899,5.86899 5.72728,6.0107 11.59627,0.14172 l 78.70139,-78.7014 c 5.86898,-5.86899 17.60696,-5.86899 11.73797,0 l -83.24484,83.24484 m 75.39263,-63.65466 19.59018,-19.59018 c 5.86899,-5.86899 16.66639,-4.92841 10.79741,0.94058 l -14.24405,14.24404 c -5.86899,5.86898 5.87282,5.86515 11.7418,-0.004 l 10.38805,-10.38804 m -19.17809,54.392 -15.11518,15.11519 c -5.86899,5.86898 1.51914,10.21883 7.38813,4.34985 l 15.06329,-15.0633 c 5.86899,-5.86899 12.8732,-1.13523 7.00421,4.73376 l -10.87857,10.87858 c -5.16732,5.16731 6.54787,5.19009 11.71518,0.0228 l 3.87549,-3.87547",
         box: { x: 0, y: 0, width: 512, height: 512 }
         }, {//Odisee logo including "DE CO-HOGESCHOOL"
@@ -198,13 +199,14 @@ function setupPlatform() {
         box: { x: 0, y: 0, width: 512, height: 512 }
         },];
 
+        // 
     // Calls the createSVGImage function for each of the svg image paths on the SVGS variable.
     for (var i = 0; i < SVGS.length; i++) {
         createSVGImage(i, $images, SVGS[i].path, SVGS[i].box);
     }
 
     // Variable that contains the get servo angles button on screen.
-    const getServoAnglesBtn = document.getElementById('getServoAnglesBtn');
+    // const getServoAnglesBtn = document.getElementById('getServoAnglesBtn');
 
     // Takes care of displaying the current servo angles onscreen. It's called by the draw function in the sketch.
     function displayCurrentServoAngles() {
@@ -322,77 +324,6 @@ function setupPlatform() {
             currentView = event.target.id
         });
     }
-
-    // When change parameters button is pressed execute this function to change parameters corresponding to inputs.
-    drawTextBtn.addEventListener('click', drawTextToSVG)
-    
-    // When enter key is pressed inside of any of the input fields, also execute the function
-    var textToDrawInput = document.getElementById('textToDrawInput');
-
-    textToDrawInput.addEventListener('focus', function() {
-        isInputFocused = true
-    });     
-    textToDrawInput.addEventListener('blur', function() {
-        isInputFocused = false
-    });
-
-    textToDrawInput.addEventListener('keydown', function(event) {
-        if (event.keyCode === 13) {
-            drawTextToSVG()
-        }
-    });
-
-    function textToSvgPath(text, width, height) {
-        // Create an SVG element
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.setAttribute("width", width);
-        svg.setAttribute("height", height);
-    
-        // Create a text element
-        const textElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        textElement.textContent = text;
-        textElement.setAttribute("x", "50%");
-        textElement.setAttribute("y", "50%");
-        textElement.setAttribute("text-anchor", "middle");
-        textElement.setAttribute("dominant-baseline", "middle");
-        svg.appendChild(textElement);
-    
-        // Get the bounding box of the text
-        const bbox = textElement.getBBox();
-    
-        // Calculate scaling factors to fit the text into the bounding box
-        const scaleX = width / bbox.width;
-        const scaleY = height / bbox.height;
-        const scale = Math.min(scaleX, scaleY);
-    
-        // Apply the scaling to the text element
-        textElement.setAttribute("transform", `scale(${scale}) translate(-${bbox.width / 2}, -${bbox.height / 2})`);
-    
-        // Get the SVG path data of the text
-        const pathData = textElement.getBBox();
-    
-        // Return the SVG path data
-        return pathData;
-    }
-    
-    // Example usage:
-    const svgPath = textToSvgPath("Hello, World!", 200, 100);
-    console.log(svgPath);
-    
-    
-    
-    
-      
-      
-    
-
-    function drawTextToSVG() {
-        const inputValue = textToDrawInput.value
-        textToDrawInput.value = ""
-  
-        console.log(textToSvgPath(inputValue, 512, 512))
-    }
-
 
     // Function to clone an array (also works for multidimensional arrays) Used when pressing getAnimationAnglesBtn.
     function cloneArray(arr) {

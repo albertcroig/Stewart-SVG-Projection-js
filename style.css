@@ -109,8 +109,10 @@ body {
 }
 
 #textToDrawContainer {
+    margin-top: 5px;
     display: flex;
-    align-items: flex-end;
+    justify-content: space-between;
+    align-items: stretch;
     gap: 7px;
 }
 
