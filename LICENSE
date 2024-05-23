@@ -1,6 +1,15 @@
 MIT License
 
-Copyright (c) 2023 Robert Eisele
+Original Project:
+=================
+Stewart.js v1.0.1 17/02/2019
+https://raw.org/research/inverse-kinematics-of-a-stewart-platform/
+Copyright (c) 2023, Robert Eisele
+Licensed under the MIT License.
+
+Modifications and Improvements:
+===============================
+Copyright (c) 2024, Albert Castellanos Roig
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
