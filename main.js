@@ -1,3 +1,19 @@
+/**
+ * @license main.js v1.0.0 23/05/2024
+ * 
+ * This file is part of the Stewart.js project which has been split and modified.
+ *
+ * Original code from Stewart.js:
+ * Stewart.js v1.0.1 17/02/2019
+ * https://raw.org/research/inverse-kinematics-of-a-stewart-platform/
+ * 
+ * Copyright (c) 2023, Robert Eisele (robert@raw.org)
+ * Licensed under the MIT License.
+ *
+ * Modifications in this file by Albert Castellanos Roig (albertcastellanosrg@gmail.com), 2024
+ * Licensed under the MIT License.
+ */
+
 // Declare global variables for animation and platform
 var animation;
 var platform;
@@ -41,7 +57,6 @@ function setupPlatform() {
 
         // Draw function is called continuously to update the canvas
         p.draw = function () {
-            
             cameraAngles = {
                 defaultView: cameraAngles.defaultView, 
                 frontView: 
@@ -98,13 +113,18 @@ function setupPlatform() {
         if (isInputFocused) {
             return
         }
-
         // If clicked key is spacebar, it toggles the visibility of the path.
         if (e.keyCode === 32) {
-            animation.toggleVisiblePath();
+            animation.pathVisible = !animation.pathVisible;
             e.preventDefault();
             return;
         }
+        if (e.keyCode === 68) {
+            animation.realDraw = !animation.realDraw;
+            e.preventDefault();
+            return;
+        }
+
     };
 
     // Function to create an SVG image and append it to the specified container
@@ -124,7 +144,7 @@ function setupPlatform() {
         svg.onclick = function() {
             // console.log(SVGS[id])
             animation._start(Animation.SVG(SVGS[id].path, SVGS[id].box, animation.drawingSize, animation.drawingSpeed));
-            animation.path = [[],[],[],[]]
+            animation.currentPath = [[],[],[],[]]
             animation.stopDrawingPath = false
         };
 
@@ -213,9 +233,9 @@ function setupPlatform() {
 
         for (var i = 0; i <= steps; i++) {  // For every vertex, define its position
             let interpolation = Animation.SVG(path, animation.cur.svg.box, size, animation.drawingSpeed)
-            interpolation.simulateMovements.call(simulationAnimation, i / steps); 
-            simulationPlatform.update(simulationAnimation.fictionalTranslation, simulationAnimation.fictionalOrientation)
-            angles.push(simulationPlatform.getServoAngles(simulationAnimation.fictionalTranslation))
+            interpolation.fn.call(simulationAnimation, i / steps); 
+            simulationPlatform.update(simulationAnimation.translation, simulationAnimation.orientation)
+            angles.push(simulationPlatform.getServoAngles(simulationAnimation.translation))
         } 
         return angles
     }
@@ -371,7 +391,7 @@ function setupPlatform() {
             }
         }
         animation._start(Animation.SVG(animation.cur.svg.svgPath, animation.cur.svg.box, animation.drawingSize, animation.drawingSpeed))
-        animation.path = [[],[],[],[]]
+        animation.currentPath = [[],[],[],[]]
         animation.stopDrawingPath = false
     }
 
@@ -383,28 +403,25 @@ function setupPlatform() {
         });
     }
 
-    // Function to clone an array (also works for multidimensional arrays) Used when pressing getAnimationAnglesBtn.
-    function cloneArray(arr) {
-        var clonedArray = [];
-        for (var i = 0; i < arr.length; i++)
-            clonedArray[i] = arr[i].slice();
-        return clonedArray;
-    }    
-
-
     getAnimationAnglesBtn.addEventListener('click', function() {
+
+        // Function to clone an array (also works for multidimensional arrays) Used when pressing getAnimationAnglesBtn.
+        function cloneArray(arr) {
+            var clonedArray = [];
+            for (var i = 0; i < arr.length; i++)
+                clonedArray[i] = arr[i].slice();
+            return clonedArray;
+        }    
+
         // Get the checkbox element
-        const checkbox = document.getElementById('animationAnglesType');
-        
-        const servoAngles = getAnglesOfCurrentAnimation(3000, animation.drawingSize)
+        const isOriginalAngles = document.getElementById('animationAnglesType');
+        const isRemoveRedundant = document.getElementById('redundantRowsCheckbox')
+        let steps = isRemoveRedundant.checked ? 3000 : 2050
+        const servoAngles = getAnglesOfCurrentAnimation(steps, animation.drawingSize)
         let servos = cloneArray(servoAngles)
 
-        // Check if the checkbox is checked
-        if (checkbox.checked) {
-            animation.downloadServoAngles(servos, true)
-        } else {
-            animation.downloadServoAngles(servos, false);
-        }
+        animation.downloadServoAngles(servos, isOriginalAngles.checked, isRemoveRedundant.checked)
+
     })
 
     function getHighestServoAngles(arr) {

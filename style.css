@@ -27,7 +27,7 @@ ul {
     font-size: 14px;
 }
 
-.checkbox {
+.checkboxWithButton {
     display: flex;
     flex-direction: column;
     align-items: center; /* Center horizontally */

@@ -1,10 +1,43 @@
 /**
- * @license Stewart.js v1.0.1 17/02/2019
- * https://raw.org/research/inverse-kinematics-of-a-stewart-platform/
+ * @license platform.js v1.0.0 23/05/2024
+ * 
+ * This file is part of the Stewart.js project which has been split and modified.
  *
- * Copyright (c) 2019, Robert Eisele (robert@raw.org)
- * Dual licensed under the MIT or GPL Version 2 licenses.
- **/
+ * Original code from Stewart.js:
+ * Stewart.js v1.0.1 17/02/2019
+ * https://raw.org/research/inverse-kinematics-of-a-stewart-platform/
+ * 
+ * Copyright (c) 2023, Robert Eisele (robert@raw.org)
+ * Licensed under the MIT License.
+ *
+ * Modifications in this file by Albert Castellanos Roig (albertcastellanosrg@gmail.com), 2024
+ * Licensed under the MIT License.
+ */
+
+// Get the vertices of the "hexagonal" plates, used for both the base and the platform. We have 3 arguments:
+// inner radious, outer radious and the rotation of the plate.
+function getHexPlate(r_i, r_o, rot) {
+  // Initialize an empty array to store the vertices of the hexagon: "ret" name standing for "return array"
+  var ret = [];
+
+  // Calculate the distance from the center to the midpoint of each side (a_2: apothem)
+  var a_2 = (2 * r_i - r_o) / Math.sqrt(3);
+
+  // Loop through 6 times to create the hexagon
+  for (var i = 0; i < 6; i++) {
+    // Calculate the angle (phi) for each vertex
+    var phi = (i - i % 2) / 3 * Math.PI + rot;
+
+    // Calculate the coordinates of each vertex and push them into the array
+    var ap = a_2 * Math.pow(-1, i);
+    ret.push({
+      x: r_o * Math.cos(phi) + ap * Math.sin(phi),
+      y: r_o * Math.sin(phi) - ap * Math.cos(phi)
+    });
+  }
+  // Return the array of hexagon vertices
+  return ret;
+}
 
 // Constructor function for the stewart platform object. 
 function Stewart() {
@@ -378,6 +411,12 @@ Stewart.prototype = {
     // Using a return function to define the statements of draw, not necessary.
     return function(p) {
 
+      // Draw little black sphere to represent rotation axis
+      p.push()
+      p.fill((255,0,0))
+      p.translate(-this.rotationAxisOffset,0,this.T0[2])
+      p.sphere(2)
+      p.pop()
       // Base Frame
       drawFrame(p);
 

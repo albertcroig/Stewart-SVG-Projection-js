@@ -1,34 +1,329 @@
 /**
- * @license Stewart.js v1.0.1 17/02/2019
- * https://raw.org/research/inverse-kinematics-of-a-stewart-platform/
+ * @license animation.js v1.0.0 23/05/2024
+ * 
+ * This file is part of the Stewart.js project which has been split and modified.
  *
- * Copyright (c) 2019, Robert Eisele (robert@raw.org)
- * Dual licensed under the MIT or GPL Version 2 licenses.
- **/
+ * Original code from Stewart.js:
+ * Stewart.js v1.0.1 17/02/2019
+ * https://raw.org/research/inverse-kinematics-of-a-stewart-platform/
+ * 
+ * Copyright (c) 2023, Robert Eisele (robert@raw.org)
+ * Licensed under the MIT License.
+ *
+ * Modifications in this file by Albert Castellanos Roig (albertcastellanosrg@gmail.com), 2024
+ * Licensed under the MIT License.
+ */
+
+// Parse an SVG path string and extract its individual
+// segments along with their parameters. The function processes the path string character by character, identifying 
+// commands (e.g., M, L, C, Q, A) and their associated parameters.
+// https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
+function parseSVGPath(str) {
+
+  // This converts the path string containing all the commands separated by commas, into an array, where every command
+  // becomes an element of the array. Example: if str is "A, -3, B, c, 0.23", p will be [A, -3, B, c, 0.23]
+  var p = str.match(/[a-z]|[-+]?([0-9]*\.[0-9]+|[0-9]+)/ig);  
+  var COMMANDS = "MmZzLlHhVvCcSsQqTtAa";
+  var UPPERCASE = "MZLHVCSQTA";
+
+  var segments = [];
+
+  var cur = {y: 0, z: 0};
+  var start = null;
+  var cmd = null;
+  var prevCmd = null;
+  var isRelative = false;
+
+  while (p.length > 0) {
+
+    if (COMMANDS.indexOf(p[0]) !== -1) {           // If first element of p array is a command (is found within the COMMANDS string).
+      prevCmd = cmd;                               // Assign previous command to prevCmd variable
+      cmd = p.shift();                             // Removes first element from p array (new command) and assigns it to the cmd variable
+      isRelative = UPPERCASE.indexOf(cmd) === -1;  // It assigns this command as relative (boolean variable) if it's lowercase.
+      cmd = cmd.toUpperCase();                     // Converts this command (wether it's relative or not) to uppercase.
+    } else {
+      if (cmd === null) {                          // Error handling if it does not recognize the command
+        throw new Error("Invalid implicit command");
+      }
+      prevCmd = cmd; // For S and T                // Assigns the previous command to command
+    }
+
+    switch (cmd) {
+
+      case 'M':
+        var y = +p.shift();
+        var z = +p.shift();
+        //console.log(z)
+        if (isRelative) {
+          cur.y += y;
+          cur.z += z;
+        } else {
+          cur.y = y;
+          cur.z = z;
+        }
+
+        segments.push({cmd: "move", y: cur.y, z: cur.z});
+
+        // Reset start position
+        start = {y: cur.y, z: cur.z};
+
+        // Implicitely treat move as lineTo
+        cmd = 'L';
+        break;
+
+      case 'L':
+        var y = +p.shift();
+        var z = +p.shift();
+
+        if (isRelative) {
+          y += cur.y;
+          z += cur.z;
+        }
+
+        segments.push({cmd: "line", y1: cur.y, z1: cur.z, y2: y, z2: z});
+
+        cur.y = y;
+        cur.z = z;
+        break;
+
+      case 'H':
+        var y = +p.shift();
+
+        if (isRelative) {
+          y += cur.y;
+        }
+
+        segments.push({cmd: "line", y1: cur.y, z1: cur.z, y2: y, z2: cur.z});
+
+        cur.y = y;
+        break;
+
+      case 'V':
+        var z = +p.shift();
+
+        if (isRelative) {
+          z += cur.z;
+        }
+
+        segments.push({cmd: "line", y1: cur.y, z1: cur.z, y2: cur.y, z2: z});
+
+        cur.z = z;
+        break;
+
+      case 'Z':
+        if (start) {
+          segments.push({cmd: "line", y1: cur.y, z1: cur.z, y2: start.y, z2: start.z});
+          cur.y = start.y;
+          cur.z = start.z;
+        }
+        start = null;
+        cmd = null; // No implicit commands after path close
+        break;
+
+      case 'C':
+
+        var y1 = +p.shift();
+        var z1 = +p.shift();
+
+        var y2 = +p.shift();
+        var z2 = +p.shift();
+
+        var y = +p.shift();
+        var z = +p.shift();
+
+        if (isRelative) {
+          y1 += cur.y;
+          z1 += cur.z;
+
+          y2 += cur.y;
+          z2 += cur.z;
+
+          y += cur.y;
+          z += cur.z;
+        }
+
+        segments.push({
+          cmd: "cubic",
+          y0: cur.y, z0: cur.z, // Start
+          y1: y1, z1: z1, // Control 1
+          y2: y2, z2: z2, // Control 2
+          y3: y, z3: z, // End
+          bezier: new Bezier(cur.y, cur.z, y1, z1, y2, z2, y, z)
+        });
+
+        cur.y = y;
+        cur.z = z;
+        break;
+
+      case 'S':
+
+        // First control point is the reflection of the previous command.
+
+        if (prevCmd !== 'C' && prevCmd !== 'S') {
+          // If prev command was not C or S, assume first control point is coincident with current point
+          var y1 = cur.y;
+          var z1 = cur.z;
+        } else {
+          // The first control point is assumed to be the reflection of the second control point of the previous command relative to current point
+          var y1 = cur.y + cur.y - segments[segments.length - 1].y2;
+          var z1 = cur.z + cur.z - segments[segments.length - 1].z2;
+        }
+
+        var y2 = +p.shift();
+        var z2 = +p.shift();
+
+        var y = +p.shift();
+        var z = +p.shift();
+
+        if (isRelative) {
+          y2 += cur.y;
+          z2 += cur.z;
+
+          y += cur.y;
+          z += cur.z;
+        }
+
+        segments.push({
+          cmd: "cubic",
+          y0: cur.y, z0: cur.z, // Start
+          y1: y1, z1: z1, // Control 1
+          y2: y2, z2: z2, // Control 2
+          y3: y, z3: z, // End
+          bezier: new Bezier(cur.y, cur.z, y1, z1, y2, z2, y, z)
+        });
+
+        cur.y = y;
+        cur.z = z;
+        break;
+
+      case 'Q':
+
+        var y1 = +p.shift();
+        var z1 = +p.shift();
+
+        var y = +p.shift();
+        var z = +p.shift();
+
+
+        if (isRelative) {
+          y1 += cur.y;
+          z1 += cur.z;
+
+          y += cur.y;
+          z += cur.z;
+        }
+
+        // Quadratic Bezier
+        segments.push({
+          cmd: "quadratic",
+          y0: cur.y, z0: cur.z, // Start
+          y1: y1, z1: z1, // Control 1
+          y2: y, z2: z, // End
+          bezier: new Bezier(cur.y, cur.z, y1, z1, y, z)
+        });
+
+        cur.y = y;
+        cur.z = z;
+        break;
+
+      case 'T':
+
+        // Control point is the reflection of the previous command.
+
+        if (prevCmd !== 'Q' && prevCmd !== 'T') {
+          // If prev command was not C or S, assume first control point is coincident with current point
+          var y1 = cur.y;
+          var z1 = cur.z;
+        } else {
+          // The first control point is assumed to be the reflection of the second control point of the previous command relative to current point
+          var y1 = cur.y + cur.y - segments[segments.length - 1].y1;
+          var z1 = cur.z + cur.z - segments[segments.length - 1].z1;
+        }
+
+        var y = +p.shift();
+        var z = +p.shift();
+
+        if (isRelative) {
+          y += cur.y;
+          z += cur.z;
+        }
+
+        segments.push({
+          cmd: "quadratic",
+          y0: cur.y, z0: cur.z, // Start
+          y1: y1, z1: z1, // Control 1
+          y2: y, z2: z, // End
+          bezier: new Bezier(cur.y, cur.z, y1, z1, y, z)
+        });
+
+        cur.y = y;
+        cur.z = z;
+        break;
+
+      case 'A':
+
+        var ry = +p.shift();
+        var rz = +p.shift();
+
+        var axisRotation = +p.shift();
+        var largeArcFlag = +p.shift();
+        var sweepFlag = +p.shift();
+
+        var y = +p.shift();
+        var z = +p.shift();
+
+        if (isRelative) {
+          y += cur.y;
+          z += cur.z;
+        }
+
+        segments.push({
+          cmd: "arc",
+
+          ry: ry, rz: rz, // Radius
+
+          axisRotation: axisRotation,
+          largeArcFlag: largeArcFlag,
+          sweepFlag: sweepFlag,
+
+          y: y, z: z // End
+        });
+
+        cur.y = y;
+        cur.z = z;
+        break;
+
+      default:
+        throw new Error('Invalid SVG command ' + cmd);
+    }
+  }
+  //console.log(segments)
+  return segments;
+}
 
 // Constructor function for the Animation object that has a platform object as argument. Constructors are used to
 // create and initialize an object instance of a class. 
 // https://rollbar.com/blog/javascript-constructors/#:~:text=A%20constructor%20is%20a%20special,for%20any%20existing%20object%20properties.
 function Animation(platform) {
 
-  // 'this.platform' holds the Stewart Platform object associated with the animation
+  // 'this.platform' holds the Stewart Platform object associated with the animation object.
   this.platform = platform;
 
-  // 'this.orientation' represents the orientation of the animation using a Quaternion
+  // 'this.orientation' represents the orientation of the platform using a Quaternion
   // Quaternion.ONE is an identity quaternion, indicating no rotation
   this.orientation = Quaternion.ONE;
-  this.fictionalOrientation = Quaternion.ONE
 
-  // 'this.translation' is a 3D array representing the translation of the animation in x, y, and z directions
+  // 'this.translation' is a 4-element array representing the translation of the animation in x, y, and z directions. The fourht element represents the state of the laser (1-on, 2-off)
   this.translation = [0, 0, 0, 0];
-  this.fictionalTranslation = [0, 0, 0, 0];
 
-  this.drawingSize = 300
-  this.drawingSpeed = 0.1
 
-  this.path = [[],[],[],[]]
-  this.stopDrawingPath = false
+  this.drawingSize = 300 // Size of the drawing that will be projected onto the wall (300mmx300mm)
+  this.drawingSpeed = 0.1 // Speed of animation (10 units per sec)
 
+  this.currentPathPos = [0, 0, 0, 0] // 2D Array of length 4 that stores the drawing path of the animation, used for drawing the path as the animation progresses.
+  this.currentPath = [[],[],[],[]]
+  this.realDraw = false
+  this.stopDrawingPath = false // Boolean variable 
 }
 
 // This function is called when clicking at an SVG image displayed on screen, through the onclick event located in the
@@ -38,7 +333,7 @@ function Animation(platform) {
 // segments for animation. 
 Animation.SVG = function(svg, box, size, speed) {
 
-  const PERSEC = speed;  // Speed of animation (5units per sec)
+  const PERSEC = speed;  
   const L = 0;         // Lower value for the x-coordinate
   const H = 10;    // Higher value for the x-coordinate
 
@@ -189,12 +484,12 @@ Animation.Interpolate = function(data, svgPath, box) {
 
     let laserState = x !== 0 ? 0 : 1
 
-    xTrans = rotationAxisOffset - rotationAxisOffset * Math.cos(theta) * Math.cos(beta)
+    xTrans = -(rotationAxisOffset - rotationAxisOffset * Math.cos(theta) * Math.cos(beta))
     yTrans = rotationAxisOffset * Math.sin(beta)
     zTrans = -rotationAxisOffset * Math.sin(theta)
   
     movements = {
-      x: -xTrans,
+      x: xTrans,
       y: yTrans,
       z: zTrans,
       theta: theta,
@@ -209,11 +504,6 @@ Animation.Interpolate = function(data, svgPath, box) {
     return previous + (desired - previous) * scale
   }
 
-  const xValuePath = function(movement) {
-    //return (platform.wallDistance + platform.rotationAxisOffset) * Math.cos(movement.theta) * Math.cos(movement.beta) - 2 * platform.rotationAxisOffset
-    return (platform.rotationAxisOffset + platform.wallDistance) * (Math.cos(movement.theta) * Math.cos(movement.beta)) - platform.rotationAxisOffset
-  }
-
   var duration = 0; // Initialize duration variable to 0
   for (var i = 1; i < data.length; i++) {  // Add all the durations of the whole animation steps together
     duration += data[i].t;
@@ -222,10 +512,13 @@ Animation.Interpolate = function(data, svgPath, box) {
   return {   // Return the normalized object for animation.
     duration: duration,
     svg: {svgPath, box},
-    simulateMovements: function(pct) {
+    path: function(pct, addToCurrentPath) {
+
+      const xValue = function(movement) {
+        return (platform.rotationAxisOffset + platform.wallDistance) * (Math.cos(movement.theta) * Math.cos(movement.beta)) - platform.rotationAxisOffset
+      }
 
       var pctStart = 0;  // Variable for starting progress of animation (initialize to 0%)
-      
       for (var i = 1; i < data.length; i++) {  // For every step of the animation
 
         var p = data[i];  // from now on p = current step of animation
@@ -236,18 +529,22 @@ Animation.Interpolate = function(data, svgPath, box) {
           var scale = (pct - pctStart) / (pctEnd - pctStart); // Variable scale to calculate how far the animation is in selected step. (0 to 1)
           var prev = i === 0 ? data[0] : data[i - 1];  // Previous step, if i = 0 (meaning first step of animation), previous step is same step, otherwise its i-1
 
-
           // Calculate movements and previous movements according to distance to wall and rotation axis offset.
           var movements = calculateMovements(p.x, p.y, p.z)
           var prevMovements = calculateMovements(prev.x, prev.y, prev.z)
 
-          // Set the new location with previous' step location + its difference multiplied by completion progress of step.
-          this.fictionalTranslation[0] = interpolateWithPrevious(prevMovements.x, movements.x, scale)
-          this.fictionalTranslation[1] = interpolateWithPrevious(prevMovements.y, movements.y, scale)
-          this.fictionalTranslation[2] = interpolateWithPrevious(prevMovements.z, movements.z, scale)
-          this.fictionalTranslation[3] = movements.laserState;
-      
-          this.fictionalOrientation = Quaternion.fromAxisAngle([0, 1, 0], prevMovements.theta + (movements.theta - prevMovements.theta) * scale).mul(Quaternion.fromAxisAngle([0, 0, 1], prevMovements.beta + (movements.beta - prevMovements.beta) * scale))
+          if (!this.stopDrawingPath && addToCurrentPath) {
+            this.currentPath[0].push(interpolateWithPrevious(xValue(prevMovements), xValue(movements), scale))                    
+            this.currentPath[1].push(interpolateWithPrevious(prev.y, p.y, scale))
+            this.currentPath[2].push(interpolateWithPrevious(prev.z, p.z, scale))
+            this.currentPath[3].push(movements.laserState)
+          }
+    
+          this.currentPathPos[0] = (interpolateWithPrevious(xValue(prevMovements), xValue(movements), scale))                    
+          this.currentPathPos[1] = (interpolateWithPrevious(prev.y, p.y, scale))
+          this.currentPathPos[2] = (interpolateWithPrevious(prev.z, p.z, scale))
+          this.currentPathPos[3] = (movements.laserState)
+    
           return; // Once the if condition is true, there is no need to continue with the loop, so return.
         }
         pctStart = pctEnd; // Assign the start pct to the end pct for continuing the loop.
@@ -256,17 +553,22 @@ Animation.Interpolate = function(data, svgPath, box) {
       // Set to last element in chain, that isn't considered on the for loop.
       var lastMovements = calculateMovements(data[data.length-1].x, data[data.length-1].y, data[data.length-1].z)
 
-      // For movements
-      this.fictionalTranslation[0] = lastMovements.x;
-      this.fictionalTranslation[1] = lastMovements.y;
-      this.fictionalTranslation[2] = lastMovements.z;
-      this.fictionalTranslation[3] = lastMovements.laserState;
-      this.fictionalOrientation = Quaternion.fromAxisAngle([0, 1, 0], lastMovements.theta).mul(Quaternion.fromAxisAngle([0, 0, 1], lastMovements.beta))
-    },
+      if (!this.stopDrawingPath && addToCurrentPath) {
+        this.currentPath[0].push(xValue(lastMovements))
+        this.currentPath[1].push(data[data.length-1].y)
+        this.currentPath[2].push(data[data.length-1].z)
+        this.currentPath[3].push(lastMovements.laserState)
+      }
+
+      this.currentPathPos[0] = (xValue(lastMovements))
+      this.currentPathPos[1] = (data[data.length-1].y)
+      this.currentPathPos[2] = (data[data.length-1].z)
+      this.currentPathPos[3] = (lastMovements.laserState)
+
+    },    
     fn: function(pct) {
 
       var pctStart = 0;  // Variable for starting progress of animation (initialize to 0%)
-
       
       for (var i = 1; i < data.length; i++) {  // For every step of the animation
 
@@ -278,19 +580,9 @@ Animation.Interpolate = function(data, svgPath, box) {
           var scale = (pct - pctStart) / (pctEnd - pctStart); // Variable scale to calculate how far the animation is in selected step. (0 to 1)
           var prev = i === 0 ? data[0] : data[i - 1];  // Previous step, if i = 0 (meaning first step of animation), previous step is same step, otherwise its i-1
 
-
           // Calculate movements and previous movements according to distance to wall and rotation axis offset.
           var movements = calculateMovements(p.x, p.y, p.z)
           var prevMovements = calculateMovements(prev.x, prev.y, prev.z)
-
-          // For path drawing
-          if (!this.stopDrawingPath) {
-            this.path[0].push(interpolateWithPrevious(xValuePath(prevMovements), xValuePath(movements), scale))                    
-            this.path[1].push(interpolateWithPrevious(prev.y, p.y, scale))
-            this.path[2].push(interpolateWithPrevious(prev.z, p.z, scale))
-            this.path[3].push(movements.laserState)
-            //console.log(this.path)
-          }
 
           // Set the new location with previous' step location + its difference multiplied by completion progress of step.
           this.translation[0] = interpolateWithPrevious(prevMovements.x, movements.x, scale)
@@ -307,13 +599,6 @@ Animation.Interpolate = function(data, svgPath, box) {
       // Set to last element in chain, that isn't considered on the for loop.
       var lastMovements = calculateMovements(data[data.length-1].x, data[data.length-1].y, data[data.length-1].z)
 
-      // For path drawing
-      if (!this.stopDrawingPath) {
-        this.path[0].push(xValuePath(lastMovements))
-        this.path[1].push(data[data.length-1].y)
-        this.path[2].push(data[data.length-1].z)
-        this.path[3].push(lastMovements.laserState)
-      }
       // For movements
       this.translation[0] = lastMovements.x;
       this.translation[1] = lastMovements.y;
@@ -321,7 +606,6 @@ Animation.Interpolate = function(data, svgPath, box) {
       this.translation[3] = lastMovements.laserState;
       this.orientation = Quaternion.fromAxisAngle([0, 1, 0], lastMovements.theta).mul(Quaternion.fromAxisAngle([0, 0, 1], lastMovements.beta))
     },
-
   };
 };
 
@@ -338,7 +622,7 @@ Animation.prototype = {
   orientation: null,
   pathVisible: true,  // Initialize visible path to true, then it can change depending on user's interaction.
   
-  downloadServoAngles: function(data, originalValues) {
+  downloadServoAngles: function(data, originalValues, removeRedundant) {
 
     const calibrationData = {
       middlePos: [305, 313, 297, 313, 303, 317],
@@ -362,20 +646,23 @@ Animation.prototype = {
         }
       }
 
-      // Remove redundant rows (duplicates and when laser activation is off)
-      const indexesToRemove = []
-      for (let i = 0; i < rawData.length-1; i++) {
-        if (i !== 0) {
-          if (rawData[i].every((value, index) => value === rawData[i-1][index])) {
-            indexesToRemove.push(i)
-          }
-          else if (rawData[i][6] == 0 && rawData[i+1][6] == 0 && rawData[i-1][6] == 0) {
-            indexesToRemove.push(i)
+      // Remove redundant rows if option is checked (duplicates and when laser activation is off)
+
+      if (removeRedundant) {
+        const indexesToRemove = []
+        for (let i = 0; i < rawData.length-1; i++) {
+          if (i !== 0) {
+            if (rawData[i].every((value, index) => value === rawData[i-1][index])) {
+              indexesToRemove.push(i)
+            }
+            else if (rawData[i][6] == 0 && rawData[i+1][6] == 0 && rawData[i-1][6] == 0) {
+              indexesToRemove.push(i)
+            }
           }
         }
+        rawData = rawData.filter((_, index) => !indexesToRemove.includes(index));
+        console.log(indexesToRemove.length + ' redundant rows removed.')
       }
-      rawData = rawData.filter((_, index) => !indexesToRemove.includes(index));
-      console.log(indexesToRemove.length + ' redundant rows removed.')
 
       return rawData
     }
@@ -505,40 +792,55 @@ Animation.prototype = {
     performDownload(data, !originalValues)
   },
 
-  // Toggles visibility of the path
-  toggleVisiblePath: function() {
-    this.pathVisible = !this.pathVisible;
-  },
-
   // Draws a red line from the origin of the platform throughout the animation path. 
   drawPath: function(p) {
     if (!this.pathVisible) {
       return
     }
 
-    let simplifiedPath = this.path
-    let isShapeBeginning = false
-    p.beginShape();         // Tell the program I want to draw a shape with some vertices
-    p.noFill();             // Background of shape transparent
-    p.stroke(255, 0, 0);    // Contour of shape color red
-    // console.log(simplifiedPath)
-    for (let i=0; i < simplifiedPath[0].length; i++) {
-      if (simplifiedPath[3][i-1] !== 0) {
-        if (isShapeBeginning) {
-          p.beginShape();
+    function drawShapes(pathArr) {
+      let isShapeBeginning = false
+      p.beginShape();         // Tell the program I want to draw a shape with some vertices
+      p.noFill();             // Background of shape transparent
+      p.stroke(255, 0, 0);    // Contour of shape color red
+      // console.log(pathArr)
+      for (let i=0; i < pathArr[0].length; i++) {
+
+        if (pathArr[3][i-1] !== 0) {
+          if (isShapeBeginning) {
+            p.beginShape();
+            if (!this.realDraw) {
+              p.vertex(pathArr[0][i-1], pathArr[1][i-1], pathArr[2][i-1] + platform.T0[2])
+            }
+          }
+          p.vertex(pathArr[0][i], pathArr[1][i], pathArr[2][i] + platform.T0[2])
+          isShapeBeginning = false
         }
-        p.vertex(simplifiedPath[0][i], simplifiedPath[1][i], simplifiedPath[2][i] + platform.T0[2])
-        isShapeBeginning = false
+        else {
+          p.endShape();
+          isShapeBeginning = true
+        }
       }
-      else {
-        p.endShape();
-        isShapeBeginning = true
-      }
+      p.vertex(pathArr[0][pathArr[0].length-1], pathArr[1][pathArr[0].length-1], pathArr[2][pathArr[0].length-1] + platform.T0[2])
+      p.endShape();
     }
-    if (simplifiedPath[3][simplifiedPath[0].length-2] !== 0) {
-      p.vertex(simplifiedPath[0][simplifiedPath[0].length-1], simplifiedPath[1][simplifiedPath[0].length-1], simplifiedPath[2][simplifiedPath[0].length-1] + platform.T0[2])
+
+    if (this.realDraw) {
+      drawShapes(this.currentPath)
     }
-    p.endShape();
+    else {
+      let drawingPath = [[],[],[],[]]
+      const steps = 600
+      for (var i = 0; i <= steps; i++) {  // For every vertex, define its position
+          this.cur.path.call(this, i / steps, false); 
+          drawingPath[0].push(this.currentPathPos[0])
+          drawingPath[1].push(this.currentPathPos[1])
+          drawingPath[2].push(this.currentPathPos[2])
+          drawingPath[3].push(this.currentPathPos[3])
+      } 
+      drawShapes(drawingPath)
+    }
+
   },
 
   // This function is called by the "start" function and when clicking an svg image in the webpage, executed with the html code.
@@ -576,6 +878,7 @@ Animation.prototype = {
     // as argument the elapsed variable.
     // Info on call() method: https://www.w3schools.com/js/js_function_call.asp
     this.cur.fn.call(this, elapsed, p);
+    this.cur.path.call(this, elapsed, p)
 
     // Update platform position calling update function and passing on new position and orientation.
     this.platform.update(this.translation, this.orientation);
