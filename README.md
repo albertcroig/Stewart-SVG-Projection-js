@@ -1,16 +1,23 @@
-# Stewart Platform
+# Stewart Platform - Project SVG onto wall
 
-[![NPM Package](https://img.shields.io/npm/v/stewart.svg?style=flat)](https://npmjs.org/package/stewart "View this project on npm")
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 
+This project is the result of my Bachelor Thesis, for Odisee - Ontwerp Production Technology.
 
-[Stewart Platforms](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/) are used for motion platforms with six dimensions of freedom. With this library you can simulate Stewart Platforms as well as use the calculated angles to drive a real platform.
+[Stewart Platforms](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/) are used for motion platforms with six dimensions of freedom. This is a modification of the original Stewart.js repository by Robert Eisele, where you could simulate Stewart Platforms as well as use the calculated angles to drive a real platform.
+
+This software is based on the idea of attaching a laser pointer into a Stewart Platform, so that it moves with it. That way, the laser will point to wherever the platform moves. With some trigonometry, the translation and rotation of the platform can be calculated in order to achieve a projection of whatever shape we want onto a wall.
+
+The main functionality that has been modified is the SVG drawing. In Robert Eisele's library, there is an SVG renderer that can read SVG paths and transform them into a series of movements for the platform. However, it could only draw the shapes in the horizontal plane, right on top of the platform. With the mentioned objective of projecting the SVG's onto the wall, some tweaks and implementations have been made to the source code.
+
 
 ## Visualization
 
-![Stewart-Platform](https://github.com/rawify/Stewart.js/blob/master/res/stewart-platform.png?raw=true "Stewart Platform Visualization")
+![Stewart-Platform](https://github.com/albertcroig/Stewart.js/blob/development/res/graphical-interface.png?raw=true "Stewart Platform Visualization")
 
-The code can run headless, but to set up all parameters properly, a visualization of the platform can help a lot. To do so, we use p5.js and quaternion.js
+An important addition to the original source code is the graphical interface. Several options to control the characteristics of the animation and platform, as well as other useful implementations have been added.
+
+Check the demo on the [live github page](https://albertcroig.github.io/Stewart.js/) to give it a try.
 
 ```js
 <script src="p5.js"></script>
