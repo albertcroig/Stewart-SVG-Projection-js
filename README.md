@@ -78,6 +78,7 @@ There are three main sections on the browser display.
 
 ### Available functions
 ![Use-of-features](https://github.com/albertcroig/Stewart.js/blob/development/res/feature-use.png?raw=true "Demonstration use of some features")
+Screenshot demonstrating the use of the following features: camera angles, text to svg, tweak parameters.
 
 **Live display of servo angles and laser-state**
 
