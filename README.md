@@ -77,7 +77,7 @@ There are three main sections on the browser display.
 3. On the right part there's a set of options and functionalities related to the animation and the servo angles.
 
 ### Available functions
-![Stewart-Platform](https://github.com/albertcroig/Stewart.js/blob/development/res/feature-use.png?raw=true "Demonstration use of some features")
+![Use-of-features](https://github.com/albertcroig/Stewart.js/blob/development/res/feature-use.png?raw=true "Demonstration use of some features")
 
 **Live display of servo angles and laser-state**
 
