@@ -7,11 +7,10 @@ Simulate the projection of drawing an SVG onto a wall with a laser attached to a
 ## Table of Contents
 - [Introduction](#introduction)
 - [Installation](#installation)
-- [Changes in Behavior and Simulation](#changes-in-behavior-and-simulation)
+- [Changes in Behaviour and Simulation](#changes-in-behaviour-and-simulation)
 - [Display](#display)
 - [Files and Organization](#files-and-organization)
 - [Options](#options)
-- [Usage Examples](#usage-examples)
 - [Contribution Guidelines](#contribution-guidelines)
 - [Issue Reporting](#issue-reporting)
 - [Acknowledgements](#acknowledgements)
