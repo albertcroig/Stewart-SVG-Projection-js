@@ -843,7 +843,7 @@ Animation.prototype = {
     }
     else {
       let drawingPath = [[],[],[],[]]
-      const steps = 470
+      const steps = 800
       for (var i = 0; i <= steps; i++) {  // For every vertex, define its position
           this.cur.path.call(this, i / steps, false); 
           drawingPath[0].push(this.currentPathPos[0])
