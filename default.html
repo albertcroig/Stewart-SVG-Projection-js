@@ -8,6 +8,14 @@
         var $images
         var createSVGImage
         var SVGS = [];
+        
+        // Function to clone an array (also works for multidimensional arrays) Used when pressing getAnimationAnglesBtn.
+        function cloneArray(arr) {
+            var clonedArray = [];
+            for (var i = 0; i < arr.length; i++)
+                clonedArray[i] = arr[i].slice();
+            return clonedArray;
+        }    
       </script>
   </head>
   <body>

@@ -615,7 +615,7 @@ Animation.Interpolate = function(data, svgPath, box) {
 // for every instance of object, wasting memory.
 // https://www.youtube.com/watch?v=4jb4AYEyhRc
 Animation.prototype = {
-  cur: null,          // Current animation
+  cur: null,          // Current animation object
   startTime: 0,
   platform: null,
   translation: null,
@@ -632,39 +632,63 @@ Animation.prototype = {
     
     function adaptDataArduino(rawData) {
 
+      let dataToAdapt = cloneArray(rawData)
       // Apply mathematical operations to map servo angles into real-life servo arduino angles  
-      for (let i = 0; i < rawData.length; i++) {
-        for (let j = 0; j < rawData[i].length; j++) {
+      for (let i = 0; i < dataToAdapt.length; i++) {
+        for (let j = 0; j < dataToAdapt[i].length; j++) {
           if (j !== 6) {
             if (calibrationData.direction[j] === -1) {
-              rawData[i][j] = Math.floor(calibrationData.middlePos[j] -1 * rawData[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
+              dataToAdapt[i][j] = Math.floor(calibrationData.middlePos[j] -1 * dataToAdapt[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
             }
             else {
-              rawData[i][j] = Math.ceil(calibrationData.middlePos[j] + rawData[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
+              dataToAdapt[i][j] = Math.ceil(calibrationData.middlePos[j] + dataToAdapt[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
             }
           }
+        }
+      }
+
+      // Copy first row and set laser value to zero specified number of times to avoid beginning laser activation
+      const zerosBeginning = 3
+
+      dataToAdapt.unshift(dataToAdapt[0])
+      originalAngles.unshift(originalAngles[0])
+
+      for (let i = 0; i < zerosBeginning; i++) {
+        dataToAdapt[i][6] = 0
+        originalAngles[i][6] = 0
+        if (i === 0) {
+          dataToAdapt.shift()
         }
       }
 
       // Remove redundant rows if option is checked (duplicates and when laser activation is off)
-
       if (removeRedundant) {
         const indexesToRemove = []
-        for (let i = 0; i < rawData.length-1; i++) {
-          if (i !== 0) {
-            if (rawData[i].every((value, index) => value === rawData[i-1][index])) {
+        for (let i = 0; i < dataToAdapt.length-1; i++) {
+          if (i < 0 || i > zerosBeginning) {
+            if (dataToAdapt[i][6] == 0) {
+              let zerosToKeep = 6// Should be an even number
+              for (let j = 1; j <= Math.round(zerosToKeep/2); j++) {
+                if (dataToAdapt[i + j][6] === 0 && dataToAdapt[i - j][6] === 0) {
+                  if (j === Math.round(zerosToKeep/2)) indexesToRemove.push(i)
+                }
+                else {
+                  break
+                }
+              }
+            }
+            else if (dataToAdapt[i].every((value, index) => value === dataToAdapt[i-1][index])) {
               indexesToRemove.push(i)
             }
-            else if (rawData[i][6] == 0 && rawData[i+1][6] == 0 && rawData[i-1][6] == 0) {
-              indexesToRemove.push(i)
-            }
+
           }
         }
-        rawData = rawData.filter((_, index) => !indexesToRemove.includes(index));
+        dataToAdapt = dataToAdapt.filter((_, index) => !indexesToRemove.includes(index))
+        originalAngles = originalAngles.filter((_, index) => !indexesToRemove.includes(index))
         console.log(indexesToRemove.length + ' redundant rows removed.')
       }
 
-      return rawData
+      return dataToAdapt
     }
 
     function addHeaderAndSteps(myData, isAdapted) {
@@ -749,36 +773,26 @@ Animation.prototype = {
     data.splice(0, indexToCut + 1)
 
     // For the laser on/off, we offset the value *one step* so that it gets turned off later.
-    let activationArr = []
-    for (let i = 0; i < data.length; i++) {
-      if (i === 0) {
-        activationArr.push(0)
-      }
-      else if (i === 1) {
-        activationArr.push(data[i][6])
-      }
-      else {
-        activationArr.push(data[i-2][6])
-      }
-    }
-    for (let i = 0; i < data.length; i++) {
-      data[i][6] = activationArr[i]
-    }
-
-    // Copy last row and set laser value to 0 (off)
-    const lastRow = [...data[data.length-1]]
-    const newRow = []
-    for (let i = 0; i < lastRow.length; i++) {
-      const colValue = lastRow[i]
-      if (i === 6) {
-        newRow.push(0)
-      }
-      else {
-        newRow.push(colValue)
-      }
-    }
-    data.push(newRow)
+    // let activationArr = []
+    // for (let i = 0; i < data.length; i++) {
+    //   if (i === 0) {
+    //     activationArr.push(0)
+    //   }
+    //   else if (i === 1) {
+    //     activationArr.push(data[i][6])
+    //   }
+    //   else {
+    //     activationArr.push(data[i][6])
+    //   }
+    // }
+    // for (let i = 0; i < data.length; i++) {
+    //   data[i][6] = activationArr[i]
+    // }
     
+    // Copy last row and set laser value to zero
+    data.push([...data[data.length - 1]]);
+    data[data.length - 1][6] = 0;
+
     // Store original angles in a variable for later use
     let originalAngles = []
     for (var i = 0; i < data.length; i++) {
@@ -798,7 +812,7 @@ Animation.prototype = {
       return
     }
 
-    function drawShapes(pathArr) {
+    function drawShapes(pathArr, prevVertex) {
       let isShapeBeginning = false
       p.beginShape();         // Tell the program I want to draw a shape with some vertices
       p.noFill();             // Background of shape transparent
@@ -809,7 +823,7 @@ Animation.prototype = {
         if (pathArr[3][i-1] !== 0) {
           if (isShapeBeginning) {
             p.beginShape();
-            if (!this.realDraw) {
+            if (prevVertex) {
               p.vertex(pathArr[0][i-1], pathArr[1][i-1], pathArr[2][i-1] + platform.T0[2])
             }
           }
@@ -821,16 +835,15 @@ Animation.prototype = {
           isShapeBeginning = true
         }
       }
-      p.vertex(pathArr[0][pathArr[0].length-1], pathArr[1][pathArr[0].length-1], pathArr[2][pathArr[0].length-1] + platform.T0[2])
       p.endShape();
     }
 
     if (this.realDraw) {
-      drawShapes(this.currentPath)
+      drawShapes(this.currentPath, false)
     }
     else {
       let drawingPath = [[],[],[],[]]
-      const steps = 600
+      const steps = 470
       for (var i = 0; i <= steps; i++) {  // For every vertex, define its position
           this.cur.path.call(this, i / steps, false); 
           drawingPath[0].push(this.currentPathPos[0])
@@ -838,7 +851,7 @@ Animation.prototype = {
           drawingPath[2].push(this.currentPathPos[2])
           drawingPath[3].push(this.currentPathPos[3])
       } 
-      drawShapes(drawingPath)
+      drawShapes(drawingPath, true)
     }
 
   },

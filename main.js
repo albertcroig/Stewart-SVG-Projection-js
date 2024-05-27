@@ -303,7 +303,7 @@ function setupPlatform() {
 
             if (getHighestServoAngles(angles).some(element => typeof element === 'string')) {
                 outOfRange = true
-                highestAngle = 'Out of range (>' + Math.round(platform.servoRange[1] * 180 / Math.PI) + ')'
+                highestAngle = 'Out of range (>' + Math.round(maxServoRange) + ')'
             }
             else {
                 highestAngle = Math.max(...(getHighestServoAngles(angles)))
@@ -323,7 +323,7 @@ function setupPlatform() {
                 }
             }
         }
-        maxDrawingSize -= 10
+        maxDrawingSize -= 20 // To be safe, dont reach the limit
         console.log(maxDrawingSize)
         return maxDrawingSize
     }
@@ -405,18 +405,10 @@ function setupPlatform() {
 
     getAnimationAnglesBtn.addEventListener('click', function() {
 
-        // Function to clone an array (also works for multidimensional arrays) Used when pressing getAnimationAnglesBtn.
-        function cloneArray(arr) {
-            var clonedArray = [];
-            for (var i = 0; i < arr.length; i++)
-                clonedArray[i] = arr[i].slice();
-            return clonedArray;
-        }    
-
         // Get the checkbox element
         const isOriginalAngles = document.getElementById('animationAnglesType');
         const isRemoveRedundant = document.getElementById('redundantRowsCheckbox')
-        let steps = isRemoveRedundant.checked ? 3000 : 2050
+        let steps = isRemoveRedundant.checked ? 2800 : 2050
         const servoAngles = getAnglesOfCurrentAnimation(steps, animation.drawingSize)
         let servos = cloneArray(servoAngles)
 
