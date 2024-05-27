@@ -64,7 +64,7 @@ Simulation
 
 ## Display
 
-![Stewart-Platform](https://github.com/albertcroig/Stewart.js/blob/development/res/graphical-interface.png?raw=true "Stewart Platform Visualization")
+![Stewart-Platform](https://github.com/albertcroig/Stewart.js/blob/development/res/graphical-interface.png?raw=true "Stewart Platform Interface Visualization")
 
 An important addition to the original source code is the graphical interface. Several options to control the characteristics of the animation and platform, as well as other useful implementations have been added.
 
@@ -134,28 +134,34 @@ The platform visualization is meant to draw a platform in milimeters. The follow
 + **rotationAxisOffset**: distance in the x axis from the origin to the center of rotation of the platform. Default=250
 
 - **rodLength**: The length of the rod attached to the servo horn and the platform. Default=130
-- **hornLength**: The length of the servo horn attached to the motor shaft and the rod. Default=50
+- **hornLength**: The length of the servo horn attached to the motor shaft and the rod. Default=40
 - **hornDirection**: The horn direction indicates if the servo horn is rotated to the left or to the right. 0=right, 1=left, Default=0
-- **servoRange**: A valid range for the servo motors to rotate. A typical low-cost servo has 180° working space. The value is an array [minAngle, maxAngle]. Default=[-pi/2, pi/2]
+- **servoRange**: A valid range for the servo motors to rotate. A typical low-cost servo has 180° working space. The value is an array [minAngle, maxAngle]. Default=[-pi/3, pi/3]
 - **servoRangeVisible**: A boolean if the servo range should be visible in the drawing. Default=false
 - **baseRadius + baseRadiusOuter**: When a hexagonal stewart platform is used, the `baseRadiusOuter` is used to draw the base plate in accordance to the [description](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/).
 - **platformRadius + platformRadiusOuter**: When a hexagonal stewart platform is used, the `platformRadiusOuter` is used to draw the platform plate in accordance to the [description](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/).
-- **shaftDistance + ankerDistance**: For a circular platform this indicates the radial distance of pairs of rod ankers between the shafts on the base plate and the platform plate. For hexagonal platforms this indicates the distance from the middle of a side to attach the rod ankers. Default=20
-- **platformTurn**: A boolean for hexagonal platforms to indicate if the platform shall look into the same direction as the base plate. Default=true
+- **shaftDistance + ankerDistance**: Indicates the distance from the middle of a side to attach the rod ankers. Default=22.5
+- **platformTurn**: A boolean for hexagonal platforms to indicate if the platform shall look into the same direction as the base plate. Default=false
 
 ### Animation options
-These options can be modified at the animation.js file, when the constructor function of the animation object is defined.
-
+The following options can be modified at the animation.js file, when the constructor function of the animation object is defined:
 - **drawingSize**: Size of the drawing projected onto the wall. Default value is 300, so the size of the drawing window is a square of 300mmx300mm. Default=300
 - **drawingSpeed**: Speed of the animation (in units per second) of the animation. Take in account that, as it gets increased, the drawing of the SVG becomes less precise. However, it's only a visual matter. Default=0.1
 - **realDraw**: Determine if the path drawing is going to start as the end result or as the live draw. Default=false
 
-### Servo calibration values (for arduino board)
-Each servo has its own calibration values that have to be found in a real life test. This variable is an object and can is located inside Animation.prototype, on the downloadServoAngles function. Modify the arrays on it according to your platform servos. Each position of the elements in the array corresponds to the servo number.
+This next option is located inside the `drawPath` function in the `Animation.prototype`.
+- **steps**: Number of vertices that contain the shapes of the path drawn. Increase for better resolution, decrease for better performance. Deafult=400 
+
+### Servo values download (for arduino board)
+
+Each servo has its own calibration values that have to be found in a real life test. This variable is an object and can is located inside `Animation.prototype`, on the `downloadServoAngles` function. Modify the arrays on it according to your platform servos. Each position of the elements in the array corresponds to the servo number.
 
 - **middlePos**: 
 - **amplitude**:
 - **direction**: What is considered positive angles. In this case, it should remain the same for everyone because it is hard coded like that, where the uneven indexes have a mirrored rotation value. Default=[1, -1, 1, -1, 1, -1]
+
+This next option is located inside the `getAnimationAnglesBtn` click event in the main.js script.
+- **steps**: Choose the number of resulting steps to calculate. The more steps, the better precision (up until certain limit). This number is before applying the modifications to the resulting values, so the end result is always going to be smaller than what you input. Default=2800 with remove redundant option, 2050 without remove redundant option.
 
 ## Acknowledgements
 This project includes code from other open source projects:
