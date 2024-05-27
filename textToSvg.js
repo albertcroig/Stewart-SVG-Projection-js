@@ -5,13 +5,15 @@
  * Licensed under the MIT License.
  *
  * This script is part of the Stewart.js project.
- *
+ * 
  * Original project license:
  * Stewart.js v1.0.1 17/02/2019
  * https://raw.org/research/inverse-kinematics-of-a-stewart-platform/
  * 
  * Copyright (c) 2019, Robert Eisele (robert@raw.org)
  * Dual licensed under the MIT or GPL Version 2 licenses.
+ * 
+ * The fonts object in this script contains the fonts from the repository hersheytextjs by techninja.
  */
 
 

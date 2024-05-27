@@ -1,5 +1,4 @@
 # Stewart Platform - Project SVG onto wall
-# Stewart Platform - Project SVG onto wall
 
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 
@@ -12,7 +11,7 @@ This software is based on the idea of attaching a laser pointer into a Stewart P
 The main functionality that has been modified is the SVG drawing. In Robert Eisele's library, there is an SVG renderer that can read SVG paths and transform them into a series of movements for the platform. However, it could only draw the shapes in the horizontal plane, right on top of the platform. With the mentioned objective of projecting the SVG's onto the wall, some tweaks and implementations have been made to the source code.
 
 
-## Visualization
+## Display
 
 ![Stewart-Platform](https://github.com/albertcroig/Stewart.js/blob/development/res/graphical-interface.png?raw=true "Stewart Platform Visualization")
 
@@ -20,48 +19,68 @@ An important addition to the original source code is the graphical interface. Se
 
 Check the demo on the [live github page](https://albertcroig.github.io/Stewart.js/) to give it a try.
 
-```js
-<script src="p5.js"></script>
-<script src="quaternion.js"></script>
-<script src="stewart.js"></script>
-<script>
-var sketch = function(p) {
+There are three main sections on the browser display.
 
-  p.setup = function() {
-    p.createCanvas(600, 600, p.WEBGL);
+1. On the top section are located the loaded SVG's (that can be clicked to run their corresponding animation), as well as the current angles for the servo motors (in radians and degrees). 
+2. On the left part there's the simulation of the platform.
+3. On the right part there's a set of options and functionalities related to the animation and the servo angles.
 
-    p.camera(100.0, -290.0, (p.height / 2.0) / Math.tan(Math.PI / 6),
-            0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0);
+## Modifications and implementations
 
-    platform = new Stewart;
-    platform.initHexagonal(/*{ options }*/);
-  };
+As stated before, this project is focused on the SVG drawing part of the original software, that way, most of the original features have been removed (predefined animations, xbox controller, etc.)
 
-  p.draw = function() {
+### Stewart platform behaviour and simulation
 
-    p.background(255);
+The visualization of the simulation has been changed in order to see its projections onto the wall and enhance user-interaction. These are the following additions:
 
-    p.push();
+Platform
+- Letters (x,y,z) for both axes (platform and base).
+- Every servo labeled with its corresponding number.
+- A "ball" attached to a red line coming from the platform's coordinate origin to represent the center-point of platform's rotation.
+- A violet laser pointing towards the wall.
 
-    p.translate(50, -70, 200);
-    p.rotateX(Math.PI / 2); // Work in correct X-Y-Z plane
+Wall
+- Spherical wall in a light brown color, positioned according to the "wall distance" and scaled according to the "rotation axis offset".
+- In the center of the wall, the selected SVG will be drawn. The user has the option to see the end-result or to see the drawing process live (not recommended in slow or old machines, since it takes more processing memory).
 
-    // Set correct position where to drive to
-    platform.update([0, 0, 0], Quaternion.ONE);
+Camera
+- Option of switching the view to different pre-defined camera-angles.
 
-    // Draw the updated platform
-    platform.draw(p);
+### Functions available in the browser
 
-    // Send to servos
-    // platform.getServoAngles();
+Live display of servo angles and laser-state:
+A small window on the top-right of the screen shows real-time values of the angle of each servo-motor, as well as the state of the laser (on/off). When any of the servos is out of the predefined range of angles, it shows as "Out of range".
 
-    p.pop();
-  };
-};
-new p5(sketch, 'canvas');
-</script>
-```
+Convert text to SVG:
+Enter any text and it will be automatically scaled and converted to an SVG, and the animation will be run on the simulation side.
+- There are two types of fonts: regular font and hand-drawing like font.
+- To force a line break, enter the character "\" in between the words where you want it to happen.
+- Press enter or click the "Draw" button in order to run the animation.
+- Once the text is entered, it will be shown in the Loaded SVG's section for later use.
+
+Warning: This functionality does not support accents and some special characters.
+
+
+
+Tweak paramaters:
+
+Change camera position:
+
+Servo angles of current animation:
+
+
+### Files and organization
+
+Since the lines of code have been greatly increased, I opted for splitting the original file (stewart.js) into two different ones: "animation.js" and "platform.js". Each containing the corresponding object information and its functions.
+
+Visualization and interaction with the display is splitted in three files: "default.html" (structure and info of the browser), "style.css" (styling and formatting) and "main.js" (logic). The basic functionality is taken from the "default.html" file in the original repo.
+
+Apart from those, I found it suitable to add one more file, that takes care of the Text to SVG functionality.
+
+
+
+### Visual modifications
+
 
 ## Examples
 
