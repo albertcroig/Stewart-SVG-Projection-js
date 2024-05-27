@@ -114,16 +114,16 @@ Before you begin, ensure you have met the following requirements:
 ### Clone the Repository
 Open any command line interface application (like Git Bash), navigate to the directory you want to store the project in, and run the following:
 
-'''
+´´´
 git clone https://github.com/albertcroig/Stewart.js.git
 cd Stewart.js
-'''
+´´´
 
 ### Install dependencies
 Install the required dependencies using npm:
-'''
+´´´
 npm install
-'''
+´´´
 After that, replace the "bezier-js" folder in the "node_modules" directory by the one in the root directory.
 
 ## Options
@@ -168,18 +168,12 @@ A boolean for hexagonal platforms to indicate if the platform shall look into th
 
 
 
-## Installation
+## Acknowledgements
+This project includes code from other open source projects:
 
-Installing Stewart is as easy as cloning this repo or use one of the following command:
+- **Stewart.js** by Robert Eisele (rawify), licensed under MIT. See https://github.com/rawify/Stewart.js.
+- **hesheytextjs** by James T (techninja), licensed under MIT. See (https://github.com/techninja/hersheytextjs).
 
-```
-npm install stewart
-```
-
-
-
-
-Copyright and licensing
-===
-Copyright (c) 2023, [Robert Eisele](https://raw.org/)
+## Copyright and licensing
+Copyright (c) 2024, Albert Castellanos Roig
 Licensed under the MIT license.
