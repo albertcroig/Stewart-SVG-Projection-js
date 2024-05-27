@@ -77,6 +77,7 @@ There are three main sections on the browser display.
 3. On the right part there's a set of options and functionalities related to the animation and the servo angles.
 
 ### Available functions
+![Stewart-Platform](https://github.com/albertcroig/Stewart.js/blob/development/res/feature-use.png?raw=true "Demonstration use of some features")
 
 **Live display of servo angles and laser-state**
 
@@ -128,8 +129,8 @@ The default values can be changed implicitly in the code.
 ### Platform options
 The platform visualization is meant to draw a platform in milimeters. The following options are available when running the `initHexagonal` function of the platform object.
 
-- **wallDistance**: distance in the x axis from the origin to the center of the wall. Default=820
-- **rotationAxisOffset**: distance in the x axis from the origin to the center of rotation of the platform. Default=250
++ **wallDistance**: distance in the x axis from the origin to the center of the wall. Default=820
++ **rotationAxisOffset**: distance in the x axis from the origin to the center of rotation of the platform. Default=250
 
 - **rodLength**: The length of the rod attached to the servo horn and the platform. Default=130
 - **hornLength**: The length of the servo horn attached to the motor shaft and the rod. Default=50
