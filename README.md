@@ -190,10 +190,27 @@ Most of the mathematical calculations used to make this possible are well descri
 *My problem, then, narrowed down to finding how the platform needed to rotate and translate to make the projection onto the wall.*
 
 My starting point with the SVG plotter was the following:
-![Starting Point](https://github.com/albertcroig/Stewart.js/blob/development/res/starting-point.png?raw=true "Starting Point of SVG Plotter")
 
-The end result had to look something like this:
-![Desired Result](https://github.com/albertcroig/Stewart.js/blob/development/res/desired-result.png?raw=true "Desired result of SVG Plotter")
+<p align="center">
+  <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/starting-point.png?raw=true" width="400">
+</p>
+
+And the end result had to look something like this:
+
+<p align="center">
+<img src="https://github.com/albertcroig/Stewart.js/blob/development/res/desired-result.png?raw=true" width="400">
+</p>  
+
+With that in mind, what I had to do in a first instance, was to make the SVG plot in the vertical plane, without any projection, just change the axes. Attaching a laser to the platform would already allow it to draw the SVG onto the wall. However, the limitation would be that the size of the drawing would be restricted to the translation range of the platform. 
+
+By inspecting the code and the SVG parsing functions, it wasn't long until I found that just by tweaking some values (changing the "x" for the "z", and the "z" for the "y") and adding a negative sign in front of an equation, I would be able to pass everything onto the vertical plane.
+
+What I had then was this:
+
+<p align="center">
+<img src="https://github.com/albertcroig/Stewart.js/blob/development/res/vertical-plane-translation.png?raw=true" width="400">
+</p>  
+
 
 
 
