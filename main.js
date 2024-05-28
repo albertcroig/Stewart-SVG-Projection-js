@@ -408,7 +408,7 @@ function setupPlatform() {
         // Get the checkbox element
         const isOriginalAngles = document.getElementById('animationAnglesType');
         const isRemoveRedundant = document.getElementById('redundantRowsCheckbox')
-        let steps = isRemoveRedundant.checked ? 2800 : 2050
+        let steps = isRemoveRedundant.checked ? 2800 : 50
         const servoAngles = getAnglesOfCurrentAnimation(steps, animation.drawingSize)
         let servos = cloneArray(servoAngles)
 

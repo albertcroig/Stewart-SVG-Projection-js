@@ -632,44 +632,42 @@ Animation.prototype = {
     
     function adaptDataArduino(rawData) {
 
-      let dataToAdapt = cloneArray(rawData)
       // Apply mathematical operations to map servo angles into real-life servo arduino angles  
-      for (let i = 0; i < dataToAdapt.length; i++) {
-        for (let j = 0; j < dataToAdapt[i].length; j++) {
+      for (let i = 0; i < rawData.length; i++) {
+        for (let j = 0; j < rawData[i].length; j++) {
           if (j !== 6) {
             if (calibrationData.direction[j] === -1) {
-              dataToAdapt[i][j] = Math.floor(calibrationData.middlePos[j] -1 * dataToAdapt[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
+              rawData[i][j] = Math.floor(calibrationData.middlePos[j] -1 * rawData[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
             }
             else {
-              dataToAdapt[i][j] = Math.ceil(calibrationData.middlePos[j] + dataToAdapt[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
+              rawData[i][j] = Math.ceil(calibrationData.middlePos[j] + rawData[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
             }
           }
         }
       }
 
       // Copy first row and set laser value to zero specified number of times to avoid beginning laser activation
-      const zerosBeginning = 3
-
-      dataToAdapt.unshift(dataToAdapt[0])
-      originalAngles.unshift(originalAngles[0])
+      const zerosBeginning = 1
 
       for (let i = 0; i < zerosBeginning; i++) {
-        dataToAdapt[i][6] = 0
-        originalAngles[i][6] = 0
-        if (i === 0) {
-          dataToAdapt.shift()
-        }
+        rawData.unshift([...rawData[0]])
+        originalAngles.unshift([...originalAngles[0]])
+        rawData[0][6] = 0
+        originalAngles[0][6] = 0
       }
+
+      rawData[zerosBeginning][6] = 1
+      originalAngles[zerosBeginning][6] = 1
 
       // Remove redundant rows if option is checked (duplicates and when laser activation is off)
       if (removeRedundant) {
         const indexesToRemove = []
-        for (let i = 0; i < dataToAdapt.length-1; i++) {
+        for (let i = 0; i < rawData.length-1; i++) {
           if (i < 0 || i > zerosBeginning) {
-            if (dataToAdapt[i][6] == 0) {
-              let zerosToKeep = 6// Should be an even number
+            if (rawData[i][6] == 0) {
+              let zerosToKeep = 6 // Should be an even number
               for (let j = 1; j <= Math.round(zerosToKeep/2); j++) {
-                if (dataToAdapt[i + j][6] === 0 && dataToAdapt[i - j][6] === 0) {
+                if (rawData[i + j][6] === 0 && rawData[i - j][6] === 0) {
                   if (j === Math.round(zerosToKeep/2)) indexesToRemove.push(i)
                 }
                 else {
@@ -677,18 +675,18 @@ Animation.prototype = {
                 }
               }
             }
-            else if (dataToAdapt[i].every((value, index) => value === dataToAdapt[i-1][index])) {
+            else if (rawData[i].every((value, index) => value === rawData[i-1][index])) {
               indexesToRemove.push(i)
             }
 
           }
         }
-        dataToAdapt = dataToAdapt.filter((_, index) => !indexesToRemove.includes(index))
+        rawData = rawData.filter((_, index) => !indexesToRemove.includes(index))
         originalAngles = originalAngles.filter((_, index) => !indexesToRemove.includes(index))
         console.log(indexesToRemove.length + ' redundant rows removed.')
       }
 
-      return dataToAdapt
+      return rawData
     }
 
     function addHeaderAndSteps(myData, isAdapted) {
@@ -799,11 +797,18 @@ Animation.prototype = {
       originalAngles[i] = data[i].slice();
     }
 
+   
     if (!originalValues) {
       data = adaptDataArduino(data)
+      let newData = cloneArray(data)
+      addHeaderAndSteps(newData, !originalValues);
+      performDownload(newData, !originalValues)
     }
-    addHeaderAndSteps(data, !originalValues);
-    performDownload(data, !originalValues)
+    else {
+      addHeaderAndSteps(data, !originalValues);
+      performDownload(data, !originalValues)
+    }
+
   },
 
   // Draws a red line from the origin of the platform throughout the animation path. 
