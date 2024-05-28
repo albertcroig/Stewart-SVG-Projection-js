@@ -10,7 +10,7 @@ Simulate the projection of drawing an SVG onto a wall with a laser attached to a
 - [Changes in Behaviour and Simulation](#changes-in-behaviour-and-simulation)
 - [Display](#display)
 - [Files and Organization](#files-and-organization)
-- [Options](#in-code-customization)
+- [In-code Customization](#in-code-customization)
 - [Contribution Guidelines](#contribution-guidelines)
 - [Issue Reporting](#issue-reporting)
 - [Acknowledgements](#acknowledgements)
@@ -63,13 +63,13 @@ After that, replace the "bezier-js" folder in the "node_modules" directory with 
 This project focuses on the SVG drawing feature of the original software, removing most of the original features (predefined animations, Xbox controller support, etc.). The simulation visualization has been changed to show projections onto the wall and enhance user interaction. The following additions have been made:
 
 **Platform**
-- Labels for the x, y, and z axes (platform and base)
+- Labels for the x, y, and z axes (platform and base).
 - Every servo labeled with its corresponding number.
-- A "ball" attached to a red line from the platform's coordinate origin to represent the center-point of rotation
-- A violet laser pointing towards the wall
+- A "ball" attached to a red line from the platform's coordinate origin to represent the center-point of rotation.
+- A violet laser pointing towards the wall.
 
 **Wall**
-- A light brown spherical wall positioned according to the "wall distance" and scaled according to the "rotation axis offset"
+- A light brown spherical wall positioned according to the "wall distance" and scaled according to the "rotation axis offset".
 - The selected SVG is drawn in the center of the wall. Users can toggle the drawing visualization (press spacebar) to see the end result or the drawing process live (press "d"). The former is not recommended on slow or old machines due to high processing demands.
 
 **Simulation**
@@ -79,15 +79,15 @@ This project focuses on the SVG drawing feature of the original software, removi
 
 ![Stewart-Platform](https://github.com/albertcroig/Stewart.js/blob/development/res/graphical-interface.png?raw=true "Stewart Platform Interface Visualization")
 
-A significant addition to the original source code is the graphical interface. Several options to control the animation and platform characteristics, as well as other useful features, have been added.
+A significant addition to the original source code is the graphical interface. Several options to control the animation and platform characteristics have been added, as well as other useful features.
 
 Check the demo on the [live github page](https://albertcroig.github.io/Stewart.js/) to give it a try.
 
 There are three main sections on the browser display.
 
-1. **Top Section**: Loaded SVGs (clickable to run their corresponding animation) and current servo motor angles (in radians and degrees)
-2. **Left Section**: Simulation of the platform
-3. **Right Section**: Options and functionalities related to the animation and servo angles
+1. **Top Section**: Loaded SVGs (clickable to run their corresponding animation) and current servo motor angles (in radians and degrees).
+2. **Left Section**: Simulation of the platform.
+3. **Right Section**: Options and functionalities related to the animation and servo angles.
 
 ### Available Functions
 ![Use-of-features](https://github.com/albertcroig/Stewart.js/blob/development/res/feature-use.png?raw=true "Demonstration use of some features")
@@ -100,10 +100,10 @@ A small window in the top-right corner shows real-time values of each servo moto
 **Convert Text to SVG**
 
 Enter any text and it will be automatically scaled, positioned and converted to an SVG, and the animation will be run on the simulation side.
-- Two font types: regular font and hand-drawn
-- To force a line break, enter the character "\\" between words
-- Press enter or click the "Draw" button to run the animation
-- Once the text is entered, it appears in the Loaded SVGs section for later use
+- Two font types: regular font and hand-drawn.
+- To force a line break, enter the character "\\" between words.
+- Press enter or click the "Draw" button to run the animation.
+- Once the text is entered, it appears in the Loaded SVGs section for later use.
 
 *Note: This functionality does not support accents and some special characters.*
 
@@ -111,11 +111,11 @@ Enter any text and it will be automatically scaled, positioned and converted to 
 
 Apart from the main platform parameters (rod length, horn length, size, etc.) that can be modified within the code, some can be adjusted on the fly. Enter the desired values and click the "Apply Changes" button or press enter. A new animation will start with the updated values.
 
-- Distance to wall: Distance from the origin to the wall's center (in mm)
-- Rotation axis offset: Distance from the origin to the platform's center of rotation (in mm)
-- Drawing size: Size of the drawing projected onto the wall (default is 300 mm x 300 mm)
+- Distance to wall: Distance from the origin to the wall's center (in mm).
+- Rotation axis offset: Distance from the origin to the platform's center of rotation (in mm).
+- Drawing size: Size of the drawing projected onto the wall (default is 300 mm x 300 mm).
   - Max size: Calculates the maximum possible size for the animation without the servos going out of range. *Note: This can take several seconds for complex SVGs due to recursive simulation.*
-- Drawing speed: Speed of the animation (in units per second). Higher speeds reduce precision but only affect visual quality
+- Drawing speed: Speed of the animation (in units per second). Higher speeds reduce precision but only affect visual quality.
 
 **Change Camera Position**
 
@@ -125,11 +125,11 @@ Click buttons to view the simulation from different angles during the animation.
 
 The current animation is either the one running or the last one that ran. Two buttons relate to the servo angles of that animation:
 
-- Download formatted servo angles:  Download a text file with all animation steps and servo angles. By default, the file is formatted as a C++ object with servo angles adapted to Arduino pulses. Additional information and original angles are included as comments for easy integration into a C++ script for an Arduino board
+- Download formatted servo angles:  Download a text file with all animation steps and servo angles. By default, the file is formatted as a C++ object with servo angles adapted to Arduino pulses. Additional information and original angles are included as comments for easy integration into a C++ script for an Arduino board.
   Options:
-    - Original angles: Download only the original servo angles (in radians)
-    - Remove redundant rows: Remove duplicate and transition rows where the laser is off, reducing file size
-- Log highest servo angles: Log the highest angle of each servo for the animation to the browser's console (press F12, then go to the console tab)
+    - Original angles: Download only the original servo angles (in radians).
+    - Remove redundant rows: Remove duplicate and transition rows where the laser is off, reducing file size.
+- Log highest servo angles: Log the highest angle of each servo for the animation to the browser's console (press F12, then go to the console tab).
 
 ## Files and Organization
 
@@ -140,13 +140,12 @@ The original "stewart.js" file has been split into two files: "animation.js" and
 ## In-code Customization
 
 ### Add SVG Paths
-The predefined SVG paths are initialized every time the browser loads. They are stored inside the global variable called `SVGS`. This global variable is an array of objects, and every object represents an SVG, with the following keys:
+The predefined SVG paths are initialized every time the browser loads. They are stored inside the global variable called `SVGS`, which is an array of objects. Each object represents an SVG and has the following keys:
 
 - **path**
 - **box**
 
-Add an object to the array, copy the path and set its corresponding bounding box in the `box` key.
-
+To add a new SVG path, simply add an object to the `SVGS` array. Copy the SVG path into the `path` key and set its corresponding bounding box in the `box` key.
 
 ### Platform Options
 The platform visualization is designed to draw in millimeters. The following options are available in the `initHexagonal` function of the platform object.
