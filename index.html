@@ -8,6 +8,14 @@
         var $images
         var createSVGImage
         var SVGS = [];
+        
+        // Function to clone an array (also works for multidimensional arrays) Used when pressing getAnimationAnglesBtn.
+        function cloneArray(arr) {
+            var clonedArray = [];
+            for (var i = 0; i < arr.length; i++)
+                clonedArray[i] = arr[i].slice();
+            return clonedArray;
+        }    
       </script>
   </head>
   <body>
@@ -15,7 +23,6 @@
     <script src="node_modules/p5/lib/p5.min.js"></script>
     <script src="node_modules/quaternion/quaternion.min.js"></script>
     <script src="main.js"></script>
-    <script src="stewart.js"></script>
     <script src="platform.js"></script>
     <script src="animation.js"></script>
 
@@ -92,16 +99,18 @@
         </div>
         <hr>
         <div class = "tweaker" id="servo-angles">
-          <h3 style="text-align: center;">Servo Angles</h3>
+          <h3 style="text-align: center;">Servo angles of current animation</h3>
           <div class="servo-angles-content">
-            <div class="checkbox">
-              <button class="bottomButton" id="getAnimationAnglesBtn"><u>Download</u> servo angles of current animation</button>
+            <div class="checkboxWithButton" style="width: 65%;">
+              <button style="width: 100%;" id="getAnimationAnglesBtn"><u>Download</u> formatted servo angles</button>
               <div class="inner-checkbox">
-                <label for="animationAnglesType" style="font-size: 12px;">Original servo angles</label>
-                <input type="checkbox" id="animationAnglesType" name="animationAnglesType">
+                <label for="animationAnglesType" style="font-size: 12px;">Original angles</label>
+                <input type="checkbox" id="animationAnglesType" name="animationAnglesType" style="margin-right: 15px;">
+                <label for="redundantRowsCheckbox" style="font-size: 12px;">Remove redundant rows</label>
+                <input type="checkbox" id="redundantRowsCheckbox" name="redundantRowsCheckbox">
               </div>
             </div>
-            <button class="bottomButton" id="getHighestServoValuesBtn"><u>Log</u> highest servo angles of current animation</button>
+            <button style="width: 35%;" id="getHighestServoValuesBtn"><u>Log</u> highest servo angles</button>
           </div>
         </div>
       </div>

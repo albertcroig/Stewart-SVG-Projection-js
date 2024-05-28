@@ -1,4 +1,24 @@
+/**
+ * @license textToSvg.js v1.0.0 23/05/2024
+ * 
+ * Copyright (c) 2024, Albert Castellanos Roig (albertcastellanosrg@gmail.com)
+ * Licensed under the MIT License.
+ *
+ * This script is part of the Stewart.js project.
+ * 
+ * Original project license:
+ * Stewart.js v1.0.1 17/02/2019
+ * https://raw.org/research/inverse-kinematics-of-a-stewart-platform/
+ * 
+ * Copyright (c) 2019, Robert Eisele (robert@raw.org)
+ * Dual licensed under the MIT or GPL Version 2 licenses.
+ * 
+ * The fonts object in this script contains the fonts from the repository hersheytextjs by techninja.
+ */
+
+
 let selectedFont = 'sans1Stroke'
+
 const selectElement = document.getElementById("fontSelector");
 selectElement.addEventListener('change', function(event) {
     selectedFont = event.target.value
@@ -810,22 +830,26 @@ function createSVGPathFromHershey(text, boundingBox, font) {
     }
 
     let svgPaths = []
+
     for (i = 0; i < text.length; i++) {
         
-        if (text[i] !== ' ') {
-            console.log(fonts[font][text[i].charCodeAt(0)-33]['d'])
-            svgPaths.push({
-                path: fonts[font][text[i].charCodeAt(0)-33]['d'],
-                separation: parseInt(fonts[font][text[i].charCodeAt(0)-33]['o'], 10)
-            })
+        if (text[i] === '\\') {
+            svgPaths.push({path: 'lineChange', separation: 0})
+        }
+        else if (text[i] === ' ') {
+            svgPaths.push({path: 'M 0 10', separation: 6})
         }
         else {
-            svgPaths.push({path: 'M 0 10', separation: 6})
+            //console.log(fonts[font][text[i].charCodeAt(0)-33]['d'])
+            svgPaths.push({
+                path: fonts[font][text[i].charCodeAt(0)-33]['d'],
+                separation: parseInt(fonts[font][text[i].charCodeAt(0)-33]['o'], 10)     
+            })       
         }
     }
 
     const combinedPath = [];
-    const goToNextLineFrom = 12;
+    const goToNextLineFrom = 16;
     const yOffset = 30;
 
     let currentXOffset = 0;
@@ -837,44 +861,44 @@ function createSVGPathFromHershey(text, boundingBox, font) {
     svgPaths.forEach((element) => {
 
         let path = element['path']
-        const xOffset = element['separation'] * 1.68  //path == 'M 10 10' ? element['separation'] : bbox.width + 3;
+        const xOffset = element['separation'] * 1.68
         const pathAsArray = path.match(/[a-z]|[-+]?([0-9]*\.[0-9]+|[0-9]+)/ig); 
 
         characterCount += 1;
         isCurrentCharSpace = path == 'M 0 10' ? true : false
-        if (characterCount >= goToNextLineFrom && isCurrentCharSpace) {
+        isChangingLine = path == 'lineChange' ? true: false
+        if ((characterCount >= goToNextLineFrom && isCurrentCharSpace) || isChangingLine) {
             characterCount = 0
             currentYOffset += yOffset
             currentXOffset = 0
             isChangingLine = true
         }
 
-        let currentTerm = 0
-        for (let i = 0; i < pathAsArray.length; i++) {
-            if (pathAsArray[i] === 'M' || pathAsArray[i] === 'L' ) {
-                currentTerm = 0
-            }
-            else {
-                if (currentTerm == 0) {
-                    let value = parseFloat(pathAsArray[i])
-                    pathAsArray[i] = value + parseFloat(currentXOffset)
-                    currentTerm = 1
-                    // console.log('Changing x value from ' + value + ' to ' + pathAsArray[i])
-                }
-                else {
-                    let value = parseFloat(pathAsArray[i])
-                    pathAsArray[i] = value + parseFloat(currentYOffset)
+        if (!isChangingLine) {
+            let currentTerm = 0
+            for (let i = 0; i < pathAsArray.length; i++) {
+                if (pathAsArray[i] === 'M' || pathAsArray[i] === 'L' ) {
                     currentTerm = 0
                 }
+                else {
+                    if (currentTerm == 0) {
+                        let value = parseFloat(pathAsArray[i])
+                        pathAsArray[i] = value + parseFloat(currentXOffset)
+                        currentTerm = 1
+                        // console.log('Changing x value from ' + value + ' to ' + pathAsArray[i])
+                    }
+                    else {
+                        let value = parseFloat(pathAsArray[i])
+                        pathAsArray[i] = value + parseFloat(currentYOffset)
+                        currentTerm = 0
+                    }
+                }
             }
-        }
-
-        const translatedPath = pathAsArray.join(" ")
-        if (!(isChangingLine && isCurrentCharSpace)) {
+            const translatedPath = pathAsArray.join(" ")
             currentXOffset += xOffset;
+            isChangingLine = false
+            combinedPath.push(translatedPath)
         }
-        isChangingLine = false
-        combinedPath.push(translatedPath)
     });
 
     let fullPath = combinedPath.join(" ");
@@ -913,7 +937,6 @@ function createSVGPathFromHershey(text, boundingBox, font) {
     }
 
     const transformedPath = fullPathAsArray.join(" ")
-    //console.log(transformedPath)
     return transformedPath
 }
 
@@ -923,13 +946,10 @@ function drawTextToSVG(font) {
     textToDrawInput.value = ""
 
     const svgPath = createSVGPathFromHershey(inputValue, boundingBox, font)
-    console.log(svgPath)
+    //console.log(svgPath)
     SVGS.push({path: svgPath, box: boundingBox})
     createSVGImage(SVGS.length-1, $images, svgPath, boundingBox)
-    animation._start(Animation.SVG(svgPath, boundingBox, animation.drawingSize, animation.drawingSpeed), null)
-    animation.servoAngles.push(platform.getServoAngles(animation.translation))
-    animation.servoAnglesToPrint = animation.servoAngles
-    animation.servoAngles = []
-    animation.path = [[],[],[],[]]
+    animation._start(Animation.SVG(svgPath, boundingBox, animation.drawingSize, animation.drawingSpeed))
+    animation.currentPath = [[],[],[],[]]
     animation.stopDrawingPath = false
 }

@@ -1,3 +1,19 @@
+/**
+ * @license main.js v1.0.0 23/05/2024
+ * 
+ * This file is part of the Stewart.js project which has been split and modified.
+ *
+ * Original code from Stewart.js:
+ * Stewart.js v1.0.1 17/02/2019
+ * https://raw.org/research/inverse-kinematics-of-a-stewart-platform/
+ * 
+ * Copyright (c) 2023, Robert Eisele (robert@raw.org)
+ * Licensed under the MIT License.
+ *
+ * Modifications in this file by Albert Castellanos Roig (albertcastellanosrg@gmail.com), 2024
+ * Licensed under the MIT License.
+ */
+
 // Declare global variables for animation and platform
 var animation;
 var platform;
@@ -41,7 +57,6 @@ function setupPlatform() {
 
         // Draw function is called continuously to update the canvas
         p.draw = function () {
-            
             cameraAngles = {
                 defaultView: cameraAngles.defaultView, 
                 frontView: 
@@ -98,13 +113,18 @@ function setupPlatform() {
         if (isInputFocused) {
             return
         }
-
         // If clicked key is spacebar, it toggles the visibility of the path.
         if (e.keyCode === 32) {
-            animation.toggleVisiblePath();
+            animation.pathVisible = !animation.pathVisible;
             e.preventDefault();
             return;
         }
+        if (e.keyCode === 68) {
+            animation.realDraw = !animation.realDraw;
+            e.preventDefault();
+            return;
+        }
+
     };
 
     // Function to create an SVG image and append it to the specified container
@@ -124,7 +144,7 @@ function setupPlatform() {
         svg.onclick = function() {
             // console.log(SVGS[id])
             animation._start(Animation.SVG(SVGS[id].path, SVGS[id].box, animation.drawingSize, animation.drawingSpeed));
-            animation.path = [[],[],[],[]]
+            animation.currentPath = [[],[],[],[]]
             animation.stopDrawingPath = false
         };
 
@@ -213,9 +233,9 @@ function setupPlatform() {
 
         for (var i = 0; i <= steps; i++) {  // For every vertex, define its position
             let interpolation = Animation.SVG(path, animation.cur.svg.box, size, animation.drawingSpeed)
-            interpolation.simulateMovements.call(simulationAnimation, i / steps); 
-            simulationPlatform.update(simulationAnimation.fictionalTranslation, simulationAnimation.fictionalOrientation)
-            angles.push(simulationPlatform.getServoAngles(simulationAnimation.fictionalTranslation))
+            interpolation.fn.call(simulationAnimation, i / steps); 
+            simulationPlatform.update(simulationAnimation.translation, simulationAnimation.orientation)
+            angles.push(simulationPlatform.getServoAngles(simulationAnimation.translation))
         } 
         return angles
     }
@@ -283,7 +303,7 @@ function setupPlatform() {
 
             if (getHighestServoAngles(angles).some(element => typeof element === 'string')) {
                 outOfRange = true
-                highestAngle = 'Out of range (>' + Math.round(platform.servoRange[1] * 180 / Math.PI) + ')'
+                highestAngle = 'Out of range (>' + Math.round(maxServoRange) + ')'
             }
             else {
                 highestAngle = Math.max(...(getHighestServoAngles(angles)))
@@ -303,7 +323,7 @@ function setupPlatform() {
                 }
             }
         }
-        maxDrawingSize -= 10
+        maxDrawingSize -= 20 // To be safe, dont reach the limit
         console.log(maxDrawingSize)
         return maxDrawingSize
     }
@@ -371,7 +391,7 @@ function setupPlatform() {
             }
         }
         animation._start(Animation.SVG(animation.cur.svg.svgPath, animation.cur.svg.box, animation.drawingSize, animation.drawingSpeed))
-        animation.path = [[],[],[],[]]
+        animation.currentPath = [[],[],[],[]]
         animation.stopDrawingPath = false
     }
 
@@ -383,99 +403,17 @@ function setupPlatform() {
         });
     }
 
-    // When change parameters button is pressed execute this function to change parameters corresponding to inputs.
-    drawTextBtn.addEventListener('click', drawTextToSVG)
-    
-    // When enter key is pressed inside of any of the input fields, also execute the function
-    var textToDrawInput = document.getElementById('textToDrawInput');
-
-    textToDrawInput.addEventListener('focus', function() {
-        isInputFocused = true
-    });     
-    textToDrawInput.addEventListener('blur', function() {
-        isInputFocused = false
-    });
-
-    textToDrawInput.addEventListener('keydown', function(event) {
-        if (event.keyCode === 13) {
-            drawTextToSVG()
-        }
-    });
-
-    function textToSvgPath(text, width, height) {
-        // Create an SVG element
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.setAttribute("width", width);
-        svg.setAttribute("height", height);
-    
-        // Create a text element
-        const textElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        textElement.textContent = text;
-        textElement.setAttribute("x", "50%");
-        textElement.setAttribute("y", "50%");
-        textElement.setAttribute("text-anchor", "middle");
-        textElement.setAttribute("dominant-baseline", "middle");
-        svg.appendChild(textElement);
-    
-        // Get the bounding box of the text
-        const bbox = textElement.getBBox();
-    
-        // Calculate scaling factors to fit the text into the bounding box
-        const scaleX = width / bbox.width;
-        const scaleY = height / bbox.height;
-        const scale = Math.min(scaleX, scaleY);
-    
-        // Apply the scaling to the text element
-        textElement.setAttribute("transform", `scale(${scale}) translate(-${bbox.width / 2}, -${bbox.height / 2})`);
-    
-        // Get the SVG path data of the text
-        const pathData = textElement.getBBox();
-    
-        // Return the SVG path data
-        return pathData;
-    }
-    
-    // Example usage:
-    const svgPath = textToSvgPath("Hello, World!", 200, 100);
-    console.log(svgPath);
-    
-    
-    
-    
-      
-      
-    
-
-    function drawTextToSVG() {
-        const inputValue = textToDrawInput.value
-        textToDrawInput.value = ""
-  
-        console.log(textToSvgPath(inputValue, 512, 512))
-    }
-
-
-    // Function to clone an array (also works for multidimensional arrays) Used when pressing getAnimationAnglesBtn.
-    function cloneArray(arr) {
-        var clonedArray = [];
-        for (var i = 0; i < arr.length; i++)
-            clonedArray[i] = arr[i].slice();
-        return clonedArray;
-    }    
-
-
     getAnimationAnglesBtn.addEventListener('click', function() {
+
         // Get the checkbox element
-        const checkbox = document.getElementById('animationAnglesType');
-        
-        const servoAngles = getAnglesOfCurrentAnimation(3000, animation.drawingSize)
+        const isOriginalAngles = document.getElementById('animationAnglesType');
+        const isRemoveRedundant = document.getElementById('redundantRowsCheckbox')
+        let steps = isRemoveRedundant.checked ? 2800 : 2050
+        const servoAngles = getAnglesOfCurrentAnimation(steps, animation.drawingSize)
         let servos = cloneArray(servoAngles)
 
-        // Check if the checkbox is checked
-        if (checkbox.checked) {
-            animation.downloadServoAngles(servos, true)
-        } else {
-            animation.downloadServoAngles(servos, false);
-        }
+        animation.downloadServoAngles(servos, isOriginalAngles.checked, isRemoveRedundant.checked)
+
     })
 
     function getHighestServoAngles(arr) {
