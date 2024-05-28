@@ -10,7 +10,7 @@ Simulate the projection of drawing an SVG onto a wall with a laser attached to a
 - [Changes in Behaviour and Simulation](#changes-in-behaviour-and-simulation)
 - [Display](#display)
 - [Files and Organization](#files-and-organization)
-- [Options](#options)
+- [Options](#in-code-customization)
 - [Contribution Guidelines](#contribution-guidelines)
 - [Issue Reporting](#issue-reporting)
 - [Acknowledgements](#acknowledgements)
@@ -101,7 +101,7 @@ A small window in the top-right corner shows real-time values of each servo moto
 
 Enter any text and it will be automatically scaled, positioned and converted to an SVG, and the animation will be run on the simulation side.
 - Two font types: regular font and hand-drawn
-- To force a line break, enter the character "\" between words
+- To force a line break, enter the character "\\" between words
 - Press enter or click the "Draw" button to run the animation
 - Once the text is entered, it appears in the Loaded SVGs section for later use
 
