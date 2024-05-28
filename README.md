@@ -51,28 +51,28 @@ git clone https://github.com/albertcroig/Stewart.js.git
 cd Stewart.js
 ```
 
-### Install dependencies
+### Install Dependencies
 Install the required dependencies using npm:
 ```
 npm install
 ```
 After that, replace the "bezier-js" folder in the "node_modules" directory with the one in the root directory.
 
-## Changes on behaviour and simulation
+## Changes on Behaviour and Simulation
 
 This project focuses on the SVG drawing feature of the original software, removing most of the original features (predefined animations, Xbox controller support, etc.). The simulation visualization has been changed to show projections onto the wall and enhance user interaction. The following additions have been made:
 
-Platform
+**Platform**
 - Labels for the x, y, and z axes (platform and base)
 - Every servo labeled with its corresponding number.
 - A "ball" attached to a red line from the platform's coordinate origin to represent the center-point of rotation
 - A violet laser pointing towards the wall
 
-Wall
+**Wall**
 - A light brown spherical wall positioned according to the "wall distance" and scaled according to the "rotation axis offset"
 - The selected SVG is drawn in the center of the wall. Users can toggle the drawing visualization (press spacebar) to see the end result or the drawing process live (press "d"). The former is not recommended on slow or old machines due to high processing demands.
 
-Simulation
+**Simulation**
 - During the animation, the platform moves around the specified center of rotation, using translation and rotation movements to project the drawing onto the wall.
 
 ## Display
@@ -89,15 +89,15 @@ There are three main sections on the browser display.
 2. **Left Section**: Simulation of the platform
 3. **Right Section**: Options and functionalities related to the animation and servo angles
 
-### Available functions
+### Available Functions
 ![Use-of-features](https://github.com/albertcroig/Stewart.js/blob/development/res/feature-use.png?raw=true "Demonstration use of some features")
 Screenshot demonstrating the use of the following features: camera angles, text to svg, tweak parameters.
 
-**Live display of servo angles and laser-state**
+**Live Display of Servo Angles and Laser State**
 
 A small window in the top-right corner shows real-time values of each servo motor's angle and the laser's state (on/off). When any servo is out of the predefined angle range, it shows as "Out of range".
 
-**Convert text to SVG**
+**Convert Text to SVG**
 
 Enter any text and it will be automatically scaled, positioned and converted to an SVG, and the animation will be run on the simulation side.
 - Two font types: regular font and hand-drawn
@@ -107,7 +107,7 @@ Enter any text and it will be automatically scaled, positioned and converted to 
 
 *Note: This functionality does not support accents and some special characters.*
 
-**Tweak paramaters**
+**Tweak Paramaters**
 
 Apart from the main platform parameters (rod length, horn length, size, etc.) that can be modified within the code, some can be adjusted on the fly. Enter the desired values and click the "Apply Changes" button or press enter. A new animation will start with the updated values.
 
@@ -117,11 +117,11 @@ Apart from the main platform parameters (rod length, horn length, size, etc.) th
   - Max size: Calculates the maximum possible size for the animation without the servos going out of range. *Note: This can take several seconds for complex SVGs due to recursive simulation.*
 - Drawing speed: Speed of the animation (in units per second). Higher speeds reduce precision but only affect visual quality
 
-**Change camera position**
+**Change Camera Position**
 
 Click buttons to view the simulation from different angles during the animation.
 
-**Servo angles of current animation**
+**Servo Angles of Current Animation**
 
 The current animation is either the one running or the last one that ran. Two buttons relate to the servo angles of that animation:
 
@@ -131,16 +131,24 @@ The current animation is either the one running or the last one that ran. Two bu
     - Remove redundant rows: Remove duplicate and transition rows where the laser is off, reducing file size
 - Log highest servo angles: Log the highest angle of each servo for the animation to the browser's console (press F12, then go to the console tab)
 
-## Files and organization
+## Files and Organization
 
-The repository includes Robert's original code in the "original_commented" directory. The root directory contains all other project files, heavily commented for clarity.
+The repository includes Robert's original code in the "original_commented" directory. The root directory contains all other project files, thoroughly commented for clarity.
 
 The original "stewart.js" file has been split into two files: "animation.js" and "platform.js", each containing relevant object information and functions. Visualization and interaction with the display are split into "default.html" (structure and info), "style.css" (styling and formatting), and "main.js" (logic). The basic functionality is taken from the "default.html" file in the original repo. Additionally, "textToSvg.js" handles the Text to SVG functionality.
 
-## Options
-The default values can be changed implicitly in the code.
+## In-code Customization
 
-### Platform options
+### Add SVG Paths
+The predefined SVG paths are initialized every time the browser loads. They are stored inside the global variable called `SVGS`. This global variable is an array of objects, and every object represents an SVG, with the following keys:
+
+- **path**
+- **box**
+
+Add an object to the array, copy the path and set its corresponding bounding box in the `box` key.
+
+
+### Platform Options
 The platform visualization is designed to draw in millimeters. The following options are available in the `initHexagonal` function of the platform object.
 
 + **wallDistance**: Distance from the origin to the wall's center. Default=820
@@ -156,7 +164,7 @@ The platform visualization is designed to draw in millimeters. The following opt
 - **shaftDistance + ankerDistance**: Indicates the distance from the middle of a side to attach the rod ankers. Default=22.5
 - **platformTurn**: A boolean for hexagonal platforms to indicate if the platform shall look into the same direction as the base plate. Default=false
 
-### Animation options
+### Animation Options
 Modify the following options in the animation.js file, within the animation object's constructor function:
 - **drawingSize**: Size of the drawing projected onto the wall. Default value is 300, so the size of the drawing window is a square of 300mmx300mm. Default=300
 - **drawingSpeed**: Speed of the animation (in units per second) of the animation. Take in account that, as it gets increased, the drawing of the SVG becomes less precise. However, it's only a visual matter. Default=0.1
@@ -165,7 +173,7 @@ Modify the following options in the animation.js file, within the animation obje
 The following next option is located inside the `drawPath` function in the `Animation.prototype`.
 - **steps**: Number of vertices in the path shapes. Increase for better resolution, decrease for better performance. Default=400
 
-### Servo angles download options (for arduino board)
+### Download Servo Angles Options (for Arduino Board)
 
 Each servo has its own calibration values that have to be found in a real life test. This variable is an object and can is located inside `Animation.prototype`, on the `downloadServoAngles` function. Modify the arrays on it according to your platform servos. Each position of the elements in the array corresponds to the servo number.
 
