@@ -187,9 +187,10 @@ The following option is located inside the `getAnimationAnglesBtn` click event i
 ## Mathematical Description
 Most of the mathematical calculations used to make this possible are well described in Robert Eisele's paper [Inverse Kinematics of a Stewart Platform](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/), so I highly recommend to check it before continuing. Using said equations, it's possible to determine the necessary angles to rotate for each servo, in order to obtain a desired **rotation** and **translation** of the platform. 
 
-*My problem, then, narrowed down to finding how the platform needed to rotate and translate to make the projection onto the wall.*
+### The problem
+*The problem narrowed down to finding how the platform needed to rotate and translate to make the projection onto the wall.*
 
-My starting point with the SVG plotter was the following:
+The starting point with the SVG plotter was the following:
 
 <p align="center">
   <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/starting-point.png?raw=true" width="400">
@@ -200,16 +201,28 @@ And the end result had to look something like this:
 <p align="center">
 <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/desired-result.png?raw=true" width="400">
 </p>  
+By specifying desired projection size, distance to wall and offset of the rotation axis, find out how the platform has to move in order to achieve this.
 
-With that in mind, what I had to do in a first instance, was to make the SVG plot in the vertical plane, without any projection, just change the axes. Attaching a laser to the platform would already allow it to draw the SVG onto the wall. However, the limitation would be that the size of the drawing would be restricted to the translation range of the platform. 
+### The solution
 
-By inspecting the code and the SVG parsing functions, it wasn't long until I found that just by tweaking some values (changing the "x" for the "z", and the "z" for the "y") and adding a negative sign in front of an equation, I would be able to pass everything onto the vertical plane.
+**Transpose to Vertical Plane, Translation Only**
 
-What I had then was this:
+With the problem in mind, what I had to do in a first instance, was to make the SVG plot in the vertical plane, without any projection, just change the axes. Attaching a laser to the platform would already allow it to draw the SVG onto the wall. However, the limitation would be that the size of the drawing would be restricted to the translation range of the platform. 
+
+By inspecting the code and the SVG parsing functions, it wasn't long until I found that just by tweaking some values (changing the "x" for the "z", the "y" for the "x" and the "z" for the "y") and adding a negative sign in front of a specific equation, I would be able to transform everything into the vertical plane.
+
+What I had then, after adjusting the camera position, was the following:
 
 <p align="center">
 <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/vertical-plane-translation.png?raw=true" width="400">
 </p>  
+
+It's important to note that the SVG drawing is now perpendicular to the "x" axis.
+
+**Calculate the projection***
+I wasn't that far from the end result. I already had the position where the platform had to go to for the laser to draw the SVG shape. What was left, was to transform that position into a value for the new translation and rotation of the platform.
+
+Following the drawing's coordinate system:
 
 
 
