@@ -213,7 +213,7 @@ function setupPlatform() {
         path: "M 256,0 v 512",
         box: { x: 0, y: 0, width: 512, height: 512 }
         }, {//For testing purposes
-        path: "",
+        path: "M 480.00,320.00L 256.00,320.00L 256.00,480.00L 32.00,256.00L 256.00,32.00L 256.00,192.00L 480.00,192.00 z",
         box: { x: 0, y: 0, width: 512, height: 512 }
         },];
  

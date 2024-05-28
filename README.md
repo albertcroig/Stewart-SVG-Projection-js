@@ -58,9 +58,9 @@ npm install
 ```
 After that, replace the "bezier-js" folder in the "node_modules" directory with the one in the root directory.
 
-## Changes on Behaviour and Simulation
+## Changes in Behaviour and Simulation
 
-This project focuses on the SVG drawing feature of the original software, removing most of the original features (predefined animations, Xbox controller support, etc.). The simulation visualization has been changed to show projections onto the wall and enhance user interaction. The following additions have been made:
+This project focuses on the SVG drawing feature of the original software, removing most of the original features (predefined animations, Xbox controller support, etc.). The simulation visualization has been changed to show projections on the wall and enhance user interaction. The following additions have been made:
 
 **Platform**
 - Labels for the x, y, and z axes (platform and base).
@@ -73,7 +73,7 @@ This project focuses on the SVG drawing feature of the original software, removi
 - The selected SVG is drawn in the center of the wall. Users can toggle the drawing visualization (press spacebar) to see the end result or the drawing process live (press "d"). The former is not recommended on slow or old machines due to high processing demands.
 
 **Simulation**
-- During the animation, the platform moves around the specified center of rotation, using translation and rotation movements to project the drawing onto the wall.
+- During the animation, the platform moves around the specified center of rotation, using translation and rotation movements. Check the [mathematical description](mathematical-description) in its corresponding section.
 
 ## Display
 
@@ -182,6 +182,20 @@ Each servo has its own calibration values that have to be found in a real life t
 
 The following option is located inside the `getAnimationAnglesBtn` click event in the main.js script.
 - **steps**: Number of steps to calculate. More steps increase precision (up to a limit). Default=2800 with "remove redundant" option, 2050 without
+
+## Mathematical Description
+Most of the mathematical calculations used to make this possible are well described in Robert Eisele's paper [Inverse Kinematics of a Stewart Platform](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/), so I highly recommend to check it before continuing. Using said equations, it's possible to determine the necessary angles to rotate for each servo, in order to obtain a desired **rotation** and **translation** of the platform. 
+
+*My problem, then, narrowed down to finding how the platform needed to rotate and translate to make the projection onto the wall.*
+
+My starting point with the SVG plotter was the following:
+![Starting Point](https://github.com/albertcroig/Stewart.js/blob/development/res/starting-point.png?raw=true "Starting Point of SVG Plotter")
+
+The end result had to look something like this:
+![Desired Result](https://github.com/albertcroig/Stewart.js/blob/development/res/desired-result.png?raw=true "Desired result of SVG Plotter")
+
+
+
 
 ## Contribution Guidelines
 
