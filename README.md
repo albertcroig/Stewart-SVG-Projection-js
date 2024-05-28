@@ -11,6 +11,7 @@ Simulate the projection of drawing an SVG onto a wall with a laser attached to a
 - [Display](#display)
 - [Files and Organization](#files-and-organization)
 - [In-code Customization](#in-code-customization)
+- [Mathematical Description](#mathematical-description)
 - [Contribution Guidelines](#contribution-guidelines)
 - [Issue Reporting](#issue-reporting)
 - [Acknowledgements](#acknowledgements)
@@ -193,7 +194,6 @@ My starting point with the SVG plotter was the following:
 
 The end result had to look something like this:
 ![Desired Result](https://github.com/albertcroig/Stewart.js/blob/development/res/desired-result.png?raw=true "Desired result of SVG Plotter")
-
 
 
 
