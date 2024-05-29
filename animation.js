@@ -322,7 +322,7 @@ function Animation(platform) {
 
   this.currentPathPos = [0, 0, 0, 0] // 2D Array of length 4 that stores the drawing path of the animation, used for drawing the path as the animation progresses.
   this.currentPath = [[],[],[],[]]
-  this.realDraw = false
+  this.realDraw = true
   this.stopDrawingPath = false // Boolean variable 
 }
 
@@ -622,7 +622,7 @@ Animation.prototype = {
   orientation: null,
   pathVisible: true,  // Initialize visible path to true, then it can change depending on user's interaction.
   
-  downloadServoAngles: function(data, originalValues, removeRedundant) {
+  downloadServoAngles: function(data, options) {
 
     const calibrationData = {
       middlePos: [305, 313, 297, 313, 303, 317],
@@ -647,28 +647,26 @@ Animation.prototype = {
       }
 
       // Copy first row and set laser value to zero specified number of times to avoid beginning laser activation
-      const zerosBeginning = 1
 
-      for (let i = 0; i < zerosBeginning; i++) {
+      for (let i = 0; i < options.leadingZeros; i++) {
         rawData.unshift([...rawData[0]])
         originalAngles.unshift([...originalAngles[0]])
         rawData[0][6] = 0
         originalAngles[0][6] = 0
       }
 
-      rawData[zerosBeginning][6] = 1
-      originalAngles[zerosBeginning][6] = 1
+      rawData[options.leadingZeros][6] = 1
+      originalAngles[options.leadingZeros][6] = 1
 
       // Remove redundant rows if option is checked (duplicates and when laser activation is off)
-      if (removeRedundant) {
+      if (options.removeRedundant) {
         const indexesToRemove = []
         for (let i = 0; i < rawData.length-1; i++) {
-          if (i < 0 || i > zerosBeginning) {
+          if (i < 0 || i > options.leadingZeros) {
             if (rawData[i][6] == 0) {
-              let zerosToKeep = 6 // Should be an even number
-              for (let j = 1; j <= Math.round(zerosToKeep/2); j++) {
+              for (let j = 1; j <= Math.round(options.zerosToKeep/2); j++) {
                 if (rawData[i + j][6] === 0 && rawData[i - j][6] === 0) {
-                  if (j === Math.round(zerosToKeep/2)) indexesToRemove.push(i)
+                  if (j === Math.round(options.zerosToKeep/2)) indexesToRemove.push(i)
                 }
                 else {
                   break
@@ -771,21 +769,18 @@ Animation.prototype = {
     data.splice(0, indexToCut + 1)
 
     // For the laser on/off, we offset the value *one step* so that it gets turned off later.
-    // let activationArr = []
-    // for (let i = 0; i < data.length; i++) {
-    //   if (i === 0) {
-    //     activationArr.push(0)
-    //   }
-    //   else if (i === 1) {
-    //     activationArr.push(data[i][6])
-    //   }
-    //   else {
-    //     activationArr.push(data[i][6])
-    //   }
-    // }
-    // for (let i = 0; i < data.length; i++) {
-    //   data[i][6] = activationArr[i]
-    // }
+    let activationArr = []
+    for (let i = 0; i < data.length; i++) {
+      if (i === 0) {
+        activationArr.push(0)
+      }
+      else {
+        activationArr.push(data[i-1][6])
+      }
+    }
+    for (let i = 0; i < data.length; i++) {
+      data[i][6] = activationArr[i]
+    }
     
     // Copy last row and set laser value to zero
     data.push([...data[data.length - 1]]);
@@ -798,15 +793,15 @@ Animation.prototype = {
     }
 
    
-    if (!originalValues) {
+    if (!options.originalValues) {
       data = adaptDataArduino(data)
       let newData = cloneArray(data)
-      addHeaderAndSteps(newData, !originalValues);
-      performDownload(newData, !originalValues)
+      addHeaderAndSteps(newData, !options.originalValues);
+      performDownload(newData, !options.originalValues)
     }
     else {
-      addHeaderAndSteps(data, !originalValues);
-      performDownload(data, !originalValues)
+      addHeaderAndSteps(data, !options.originalValues);
+      performDownload(data, !options.originalValues)
     }
 
   },
@@ -848,7 +843,7 @@ Animation.prototype = {
     }
     else {
       let drawingPath = [[],[],[],[]]
-      const steps = 400
+      const steps = 700
       for (var i = 0; i <= steps; i++) {  // For every vertex, define its position
           this.cur.path.call(this, i / steps, false); 
           drawingPath[0].push(this.currentPathPos[0])
