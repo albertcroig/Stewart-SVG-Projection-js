@@ -71,7 +71,7 @@ This project focuses on the SVG drawing feature of the original software, removi
 
 **Wall**
 - A light brown spherical wall positioned according to the "wall distance" and scaled according to the "rotation axis offset".
-- The selected SVG is drawn in the center of the wall. Users can toggle the drawing visualization (press spacebar) to see the end result or the drawing process live (press "d"). The former is not recommended on slow or old machines due to high processing demands.
+- The selected SVG is drawn in the center of the wall. Users can toggle the drawing visualization (press spacebar) to toggle visibility. To toggle between the end result and the live drawing process, press "d". The former is not recommended on slow or old machines due to high processing demands.
 
 **Simulation**
 - During the animation, the platform moves around the specified center of rotation, using translation and rotation movements. Check the [mathematical description](mathematical-description) in its corresponding section.
@@ -168,10 +168,10 @@ The platform visualization is designed to draw in millimeters. The following opt
 Modify the following options in the animation.js file, within the animation object's constructor function:
 - **drawingSize**: Size of the drawing projected onto the wall. Default value is 300, so the size of the drawing window is a square of 300mmx300mm. Default=300
 - **drawingSpeed**: Speed of the animation (in units per second) of the animation. Take in account that, as it gets increased, the drawing of the SVG becomes less precise. However, it's only a visual matter. Default=0.1
-- **realDraw**: Determine if the path drawing is going to start as the end result or as the live draw. Default=false
+- **realDraw**: Determine if the path drawing is going to start as the end result or as the live draw. Default=true
 
 The following next option is located inside the `drawPath` function in the `Animation.prototype`.
-- **steps**: Number of vertices in the path shapes. Increase for better resolution, decrease for better performance. Default=400
+- **steps**: Number of vertices in the path shapes (for end result drawing). Increase for better resolution, decrease for better performance. Default=700
 
 ### Download Servo Angles Options (for Arduino Board)
 
@@ -181,14 +181,19 @@ Each servo has its own calibration values that have to be found in a real life t
 - **amplitude**:
 - **direction**: What is considered positive angles. In this case, it should remain the same for everyone because it is hard coded like that, where the uneven indexes have a mirrored rotation value. Default=[1, -1, 1, -1, 1, -1]
 
-The following option is located inside the `getAnimationAnglesBtn` click event in the main.js script.
-- **steps**: Number of steps to calculate. More steps increase precision (up to a limit). Default=2800 with "remove redundant" option, 2050 without
+The following options are located inside the `getAnimationAnglesBtn` click event in the main.js script.
+
+- **steps**: Number of steps to calculate. More steps increase precision (up to a limit). Default=2600 with "remove redundant" option, 2050 without.
+
+When remove redundant rows option is checked, there are two extra options for better laser control. These are necessary due to the imperfections of the laser activation. It's a way to avoid undesired laser activation.
+- **leadingZeros**: Add steps in the beginning preventing laser from activating before we want it to. Default=10
+- **zerosToKeep**: Keep steps where laser is off (when passing from an SVG closed path shape to another) preventing laser from activating in between. Should be an even number, minimum 2. Default=12
 
 ## Mathematical Description
-Most of the mathematical calculations used to make this possible are well described in Robert Eisele's paper [Inverse Kinematics of a Stewart Platform](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/), so I highly recommend to check it before continuing. Using said equations, it's possible to determine the necessary angles to rotate for each servo, in order to obtain a desired **rotation** and **translation** of the platform. 
+Most of the mathematical calculations used to make this possible are well described in Robert Eisele's paper [Inverse Kinematics of a Stewart Platform](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/), so I highly recommend to check it before continuing. Using said calculations, it's possible to determine the necessary angles to rotate for each servo, in order to obtain a desired **rotation** and **translation** of the platform. 
 
 ### The problem
-*The problem narrowed down to finding how the platform needed to rotate and translate to make the projection onto the wall.*
+*The problem narrows down to finding how the platform needs to rotate and translate to make the projection onto the wall.*
 
 The starting point with the SVG plotter was the following:
 
@@ -211,7 +216,7 @@ With the problem in mind, what I had to do in a first instance, was to make the 
 
 By inspecting the code and the SVG parsing functions, it wasn't long until I found that just by tweaking some values (changing the "x" for the "z", the "y" for the "x" and the "z" for the "y") and adding a negative sign in front of a specific equation, I would be able to transform everything into the vertical plane.
 
-What I had then, after adjusting the camera position, was the following:
+What I had then, after adjusting the camera position and orientation, was the following:
 
 <p align="center">
 <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/vertical-plane-translation.png?raw=true" width="400">
@@ -222,7 +227,32 @@ It's important to note that the SVG drawing is now perpendicular to the "x" axis
 **Calculate the projection***
 I wasn't that far from the end result. I already had the position where the platform had to go to for the laser to draw the SVG shape. What was left, was to transform that position into a value for the new translation and rotation of the platform.
 
-Following the drawing's coordinate system:
+Following the platform's coordinate system, this 2D sketches, both for the y,x and x,z axes, can be drawn, visualizing altogether the platform in its zero position, the platform in its "desired position", its rotation axes and the spherical wall.
+<p align="center">
+<img src="res/maths-1.png" width="950">
+</p>  
+
+Given:
+- $y_1$: Distance of desired $y$ projection.
+- $z_1$: Distance of desired $z$ projection.
+- $w$: Distance to wall, from coordinate origin.
+- $f$: Distance of the rotation axis offset.
+
+Find:
+- $x_{21}$: Distance of desired $x$ platform's translation caused by rotation $α$.
+- $x_{22}$: Distance of desired $x$ platform's translation caused by rotation $β$.
+- $y_2$: Distance of desired $y$ platform's translation.
+- $z_2$: Distance of desired $z$ platform's translation.
+- $α$: Angle to rotate around z axis.
+- $β$: Angle to rotate around y axis.
+
+Therefore, it can be deduced that:
+
+$\alpha = \arcsin\left(\frac{z_1}{f + w}\right)$, $\beta = \arcsin\left(\frac{y_1}{f + w}\right)$
+
+
+
+
 
 
 
