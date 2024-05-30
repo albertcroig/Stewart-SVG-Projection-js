@@ -479,8 +479,8 @@ Animation.Interpolate = function(data, svgPath, box) {
     let theta, beta
     let xTrans, yTrans, zTrans
 
-    theta = -Math.asin(z/(rotationAxisOffset + wallDistance))
-    beta = Math.asin(y/(rotationAxisOffset + wallDistance))
+    theta = -Math.atan(z/(rotationAxisOffset + wallDistance))
+    beta = Math.atan(y/(rotationAxisOffset + wallDistance))
 
     let laserState = x !== 0 ? 0 : 1
 
@@ -514,16 +514,11 @@ Animation.Interpolate = function(data, svgPath, box) {
     svg: {svgPath, box},
     path: function(pct, addToCurrentPath) {
 
-      const xValue = function(movement) {
-        return (platform.rotationAxisOffset + platform.wallDistance) * (Math.cos(movement.theta) * Math.cos(movement.beta)) - platform.rotationAxisOffset
-      }
-
       var pctStart = 0;  // Variable for starting progress of animation (initialize to 0%)
       for (var i = 1; i < data.length; i++) {  // For every step of the animation
 
         var p = data[i];  // from now on p = current step of animation
         var pctEnd = pctStart + p.t / duration; // calculate the percentage of animation transcurred up until this step
-
         if (pctStart <= pct && pct < pctEnd) {  // Execute code below only for step in selected pct (percentage) range.
           //console.log(pctStart)
           var scale = (pct - pctStart) / (pctEnd - pctStart); // Variable scale to calculate how far the animation is in selected step. (0 to 1)
@@ -531,16 +526,14 @@ Animation.Interpolate = function(data, svgPath, box) {
 
           // Calculate movements and previous movements according to distance to wall and rotation axis offset.
           var movements = calculateMovements(p.x, p.y, p.z)
-          var prevMovements = calculateMovements(prev.x, prev.y, prev.z)
 
-          if (!this.stopDrawingPath && addToCurrentPath) {
-            this.currentPath[0].push(interpolateWithPrevious(xValue(prevMovements), xValue(movements), scale))                    
+          if (!this.stopDrawingPath && addToCurrentPath) {                  
             this.currentPath[1].push(interpolateWithPrevious(prev.y, p.y, scale))
             this.currentPath[2].push(interpolateWithPrevious(prev.z, p.z, scale))
             this.currentPath[3].push(movements.laserState)
+        
           }
-    
-          this.currentPathPos[0] = (interpolateWithPrevious(xValue(prevMovements), xValue(movements), scale))                    
+                     
           this.currentPathPos[1] = (interpolateWithPrevious(prev.y, p.y, scale))
           this.currentPathPos[2] = (interpolateWithPrevious(prev.z, p.z, scale))
           this.currentPathPos[3] = (movements.laserState)
@@ -548,23 +541,10 @@ Animation.Interpolate = function(data, svgPath, box) {
           return; // Once the if condition is true, there is no need to continue with the loop, so return.
         }
         pctStart = pctEnd; // Assign the start pct to the end pct for continuing the loop.
+        if (pct === 1) {
+          this.stopDrawingPath = true
+        }
       }
-
-      // Set to last element in chain, that isn't considered on the for loop.
-      var lastMovements = calculateMovements(data[data.length-1].x, data[data.length-1].y, data[data.length-1].z)
-
-      if (!this.stopDrawingPath && addToCurrentPath) {
-        this.currentPath[0].push(xValue(lastMovements))
-        this.currentPath[1].push(data[data.length-1].y)
-        this.currentPath[2].push(data[data.length-1].z)
-        this.currentPath[3].push(lastMovements.laserState)
-      }
-
-      this.currentPathPos[0] = (xValue(lastMovements))
-      this.currentPathPos[1] = (data[data.length-1].y)
-      this.currentPathPos[2] = (data[data.length-1].z)
-      this.currentPathPos[3] = (lastMovements.laserState)
-
     },    
     fn: function(pct) {
 
@@ -595,16 +575,6 @@ Animation.Interpolate = function(data, svgPath, box) {
         }
         pctStart = pctEnd; // Assign the start pct to the end pct for continuing the loop.
       }
-
-      // Set to last element in chain, that isn't considered on the for loop.
-      var lastMovements = calculateMovements(data[data.length-1].x, data[data.length-1].y, data[data.length-1].z)
-
-      // For movements
-      this.translation[0] = lastMovements.x;
-      this.translation[1] = lastMovements.y;
-      this.translation[2] = lastMovements.z;
-      this.translation[3] = lastMovements.laserState;
-      this.orientation = Quaternion.fromAxisAngle([0, 1, 0], lastMovements.theta).mul(Quaternion.fromAxisAngle([0, 0, 1], lastMovements.beta))
     },
   };
 };
@@ -818,16 +788,16 @@ Animation.prototype = {
       p.noFill();             // Background of shape transparent
       p.stroke(255, 0, 0);    // Contour of shape color red
       // console.log(pathArr)
-      for (let i=0; i < pathArr[0].length; i++) {
+      for (let i=0; i < pathArr[1].length; i++) {
 
         if (pathArr[3][i-1] !== 0) {
           if (isShapeBeginning) {
             p.beginShape();
             if (prevVertex) {
-              p.vertex(pathArr[0][i-1], pathArr[1][i-1], pathArr[2][i-1] + platform.T0[2])
+              p.vertex(platform.wallDistance, pathArr[1][i-1], pathArr[2][i-1] + platform.T0[2])
             }
           }
-          p.vertex(pathArr[0][i], pathArr[1][i], pathArr[2][i] + platform.T0[2])
+          p.vertex(platform.wallDistance, pathArr[1][i], pathArr[2][i] + platform.T0[2])
           isShapeBeginning = false
         }
         else {
@@ -884,7 +854,6 @@ Animation.prototype = {
     // by much of a difference. So adjust it to 1 and then make corresponding adjustments.
     if (elapsed > 1) {
       elapsed = 1
-      this.stopDrawingPath = true
     }
 
     // Call fn function inside animation object to update this.translation and this.orientation, passing

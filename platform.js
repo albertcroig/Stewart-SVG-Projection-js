@@ -96,36 +96,6 @@ Stewart.prototype = {
 
   },
 
-  drawPartialSphere: function(p, radius, startAngle, endAngle, color) {
-    p.strokeWeight(0.05)
-    p.fill(color)
-    p.beginShape(p.TRIANGLE_STRIP);
-    for (let phi = startAngle; phi <= endAngle; phi += 0.1) {
-      for (let theta = 0; theta <= p.TWO_PI; theta += 0.1) {
-        let x = radius * p.sin(phi) * p.cos(theta);
-        let y = radius * p.sin(phi) * p.sin(theta);
-        let z = radius * p.cos(phi);
-        p.vertex(x, y, z);
-        
-        x = radius * p.sin(phi + 0.1) * p.cos(theta);
-        y = radius * p.sin(phi + 0.1) * p.sin(theta);
-        z = radius * p.cos(phi + 0.1);
-        p.vertex(x, y, z);
-      }
-      // Add the final vertex to close the shape
-      let x = radius * p.sin(phi) * p.cos(0);
-      let y = radius * p.sin(phi) * p.sin(0);
-      let z = radius * p.cos(phi);
-      p.vertex(x, y, z);
-      
-      x = radius * p.sin(phi + 0.1) * p.cos(0);
-      y = radius * p.sin(phi + 0.1) * p.sin(0);
-      z = radius * p.cos(phi + 0.1);
-      p.vertex(x, y, z);
-    }
-    p.endShape();
-  },
-
   // This function is called once from the html script in the p.setup() function.
   // This function initializes the Stewart platform with a hexagonal configuration, defining the base and platform geometry along with other parameters.
   // It also uses the init function to set up the common configuration for the Stewart platform.
@@ -283,11 +253,13 @@ Stewart.prototype = {
       },
       drawWall: function(p) {
 
-        // Drawing spherical wall
+        // Drawing wall
         p.push()
-        p.translate(-rotationAxisOffset,0,this.T0[2])
+        p.fill(221,216,187)
+        p.translate(wallDistance+1,0,this.T0[2])
         p.rotateY(p.PI/2)
-        this.drawPartialSphere(p, (rotationAxisOffset+wallDistance + 1), 0, Math.PI/6, [221, 216, 187])
+        p.rectMode(p.CENTER)
+        p.rect(0,0,animation.drawingSize*1.5,animation.drawingSize*1.5)
         p.pop()
 
         // Drawing floor cube
