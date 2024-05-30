@@ -581,9 +581,19 @@ Stewart.prototype = {
     else {
       ret.push(0)
     }
-    //ret.push(this.translation[2])
-    
+
+    // //to divide all angles in 2
+    // let dividedArr = ret.map((element, index) => {
+    //   if (index === ret.length - 1) {
+    //       return element; // Keep the last element as it is
+    //   } else {
+    //       return element / 2; // Divide other elements by 2
+    //   }
+    // });
+  
+    // console.log(ret)
     return ret;
+    // return dividedArr
   }
 };
 
