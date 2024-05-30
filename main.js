@@ -69,7 +69,7 @@ function setupPlatform() {
                 [-1300 -platform.rotationAxisOffset*1.3, 0, platform.wallDistance*2, 
                 platform.wallDistance*0.5, 0, platform.T0[2]],
                 logoView: 
-                [platform.wallDistance*0.2, 0, platform.T0[2]+100, 
+                [platform.wallDistance - 8*animation.drawingSize/(Math.tan(1.04)*2), 0, platform.T0[2], 
                 platform.wallDistance, 0, platform.T0[2]], 
                 sphereView: 
                 [platform.wallDistance*0.5, 0, (platform.wallDistance + platform.rotationAxisOffset)*1.1, 
