@@ -53,7 +53,6 @@ function parseSVGPath(str) {
       case 'M':
         var y = +p.shift();
         var z = +p.shift();
-        //console.log(z)
         if (isRelative) {
           cur.y += y;
           cur.z += z;
@@ -297,7 +296,6 @@ function parseSVGPath(str) {
         throw new Error('Invalid SVG command ' + cmd);
     }
   }
-  //console.log(segments)
   return segments;
 }
 
@@ -313,9 +311,10 @@ function Animation(platform) {
   // Quaternion.ONE is an identity quaternion, indicating no rotation
   this.orientation = Quaternion.ONE;
 
-  // 'this.translation' is a 4-element array representing the translation of the animation in x, y, and z directions. The fourht element represents the state of the laser (1-on, 2-off)
-  this.translation = [0, 0, 0, 0];
+  // 'this.translation' is a 3-element array representing the translation of the animation in x, y, and z directions. The fourht element represents the state of the laser (1-on, 2-off)
+  this.translation = [0, 0, 0];
 
+  this.laser = {laserState: 0, extraLaserLength: 0}
 
   this.drawingSize = 300 // Size of the drawing that will be projected onto the wall (300mmx300mm)
   this.drawingSpeed = 0.1 // Speed of animation (10 units per sec)
@@ -376,7 +375,6 @@ Animation.SVG = function(svg, box, size, speed) {
     // Switch statement to perform certain actions based on command name
     switch (s.cmd) {
       case 'move':
-        //console.log(cur.z)
         move(H, cur.y, cur.z);
         move(H, s.y, s.z);
         move(L, s.y, s.z);
@@ -483,6 +481,7 @@ Animation.Interpolate = function(data, svgPath, box) {
     beta = Math.atan(y/(rotationAxisOffset + wallDistance))
 
     let laserState = x !== 0 ? 0 : 1
+    let extraLaserLength = (rotationAxisOffset + wallDistance - (rotationAxisOffset + wallDistance) * Math.cos(beta) * Math.cos(theta)) / (Math.cos(beta) * Math.cos(theta))
 
     xTrans = -(rotationAxisOffset - rotationAxisOffset * Math.cos(theta) * Math.cos(beta))
     yTrans = rotationAxisOffset * Math.sin(beta)
@@ -494,7 +493,8 @@ Animation.Interpolate = function(data, svgPath, box) {
       z: zTrans,
       theta: theta,
       beta: beta,
-      laserState: laserState
+      laserState: laserState,
+      extraLaserLength: extraLaserLength
     }
     return movements
   }
@@ -520,7 +520,6 @@ Animation.Interpolate = function(data, svgPath, box) {
         var p = data[i];  // from now on p = current step of animation
         var pctEnd = pctStart + p.t / duration; // calculate the percentage of animation transcurred up until this step
         if (pctStart <= pct && pct < pctEnd) {  // Execute code below only for step in selected pct (percentage) range.
-          //console.log(pctStart)
           var scale = (pct - pctStart) / (pctEnd - pctStart); // Variable scale to calculate how far the animation is in selected step. (0 to 1)
           var prev = i === 0 ? data[0] : data[i - 1];  // Previous step, if i = 0 (meaning first step of animation), previous step is same step, otherwise its i-1
 
@@ -531,7 +530,6 @@ Animation.Interpolate = function(data, svgPath, box) {
             this.currentPath[1].push(interpolateWithPrevious(prev.y, p.y, scale))
             this.currentPath[2].push(interpolateWithPrevious(prev.z, p.z, scale))
             this.currentPath[3].push(movements.laserState)
-        
           }
                      
           this.currentPathPos[1] = (interpolateWithPrevious(prev.y, p.y, scale))
@@ -541,9 +539,6 @@ Animation.Interpolate = function(data, svgPath, box) {
           return; // Once the if condition is true, there is no need to continue with the loop, so return.
         }
         pctStart = pctEnd; // Assign the start pct to the end pct for continuing the loop.
-        if (pct === 1) {
-          this.stopDrawingPath = true
-        }
       }
     },    
     fn: function(pct) {
@@ -556,7 +551,6 @@ Animation.Interpolate = function(data, svgPath, box) {
         var pctEnd = pctStart + p.t / duration; // calculate the percentage of animation transcurred up until this step
 
         if (pctStart <= pct && pct < pctEnd) {  // Execute code below only for step in selected pct (percentage) range.
-          //console.log(pctStart)
           var scale = (pct - pctStart) / (pctEnd - pctStart); // Variable scale to calculate how far the animation is in selected step. (0 to 1)
           var prev = i === 0 ? data[0] : data[i - 1];  // Previous step, if i = 0 (meaning first step of animation), previous step is same step, otherwise its i-1
 
@@ -568,9 +562,14 @@ Animation.Interpolate = function(data, svgPath, box) {
           this.translation[0] = interpolateWithPrevious(prevMovements.x, movements.x, scale)
           this.translation[1] = interpolateWithPrevious(prevMovements.y, movements.y, scale)
           this.translation[2] = interpolateWithPrevious(prevMovements.z, movements.z, scale)
-          this.translation[3] = movements.laserState;
       
           this.orientation = Quaternion.fromAxisAngle([0, 1, 0], prevMovements.theta + (movements.theta - prevMovements.theta) * scale).mul(Quaternion.fromAxisAngle([0, 0, 1], prevMovements.beta + (movements.beta - prevMovements.beta) * scale))
+          
+          this.laser = {
+            laserState: movements.laserState,
+            extraLaserLength: movements.extraLaserLength
+          }
+
           return; // Once the if condition is true, there is no need to continue with the loop, so return.
         }
         pctStart = pctEnd; // Assign the start pct to the end pct for continuing the loop.
@@ -787,7 +786,7 @@ Animation.prototype = {
       p.beginShape();         // Tell the program I want to draw a shape with some vertices
       p.noFill();             // Background of shape transparent
       p.stroke(255, 0, 0);    // Contour of shape color red
-      // console.log(pathArr)
+
       for (let i=0; i < pathArr[1].length; i++) {
 
         if (pathArr[3][i-1] !== 0) {
@@ -859,11 +858,11 @@ Animation.prototype = {
     // Call fn function inside animation object to update this.translation and this.orientation, passing
     // as argument the elapsed variable.
     // Info on call() method: https://www.w3schools.com/js/js_function_call.asp
-    this.cur.fn.call(this, elapsed, p);
-    this.cur.path.call(this, elapsed, p)
+    this.cur.fn.call(this, elapsed);
+    this.cur.path.call(this, elapsed, true)
 
     // Update platform position calling update function and passing on new position and orientation.
-    this.platform.update(this.translation, this.orientation);
+    this.platform.update(this.translation, this.orientation, this.laser);
     
   }
 };

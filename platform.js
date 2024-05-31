@@ -69,6 +69,8 @@ Stewart.prototype = {
     this.H = [];       // servo horn end to mount the rod
     this.sinBeta = []; // Sin of Pan angle of motors in base plate
     this.cosBeta = []; // Cos of Pan angle of motors in base plate
+
+    this.laser = {}
     
     // Get the legs configuration using the provided function
     var legs = opts.getLegs.call(this);
@@ -234,7 +236,7 @@ Stewart.prototype = {
         p.push()
         p.stroke(238,130,238)
         p.translate(laserPlatformEdge.x, 0);
-        p.line(0, 0, wallDistance-laserPlatformEdge.x, 0);
+        p.line(0, 0, wallDistance - laserPlatformEdge.x + this.laser.extraLaserLength, 0);
         p.pop()
 
         // Draw line to center of rotation
@@ -474,7 +476,12 @@ Stewart.prototype = {
   // It's called by the function animation.update() from the animation object. And this function is called constantly because
   // it's located in the draw function in the main html script. 
   // Updates the position of the elements in the system, based on the translation and orientation calculated by the animation object.
-  update: function(translation, orientation) {
+  update: function(translation, orientation, laser) {
+
+    // Update laser length
+    this.laser.laserState = laser.laserState
+    this.laser.extraLaserLength = laser.extraLaserLength
+
 
     var hornLength = this.hornLength;
     var rodLength = this.rodLength;
@@ -534,7 +541,7 @@ Stewart.prototype = {
   // to work with a real prototype, since the only variable we are going to enter to the servos is the value of their rotation.
   // This calculates each of the angles the servos have to rotate to accomplish a specific position of the horn edge (H), 
   // using basic trigonometric functions described in the paper.
-  getServoAngles: function(translation) {
+  getServoAngles: function() {
     var ret = [];
     for (var i = 0; i < this.B.length; i++) {
       ret[i] = Math.asin((this.H[i][2] - this.B[i][2]) / this.hornLength);
@@ -547,7 +554,7 @@ Stewart.prototype = {
       }
     }
  
-    if (translation[3] === 1) {
+    if (this.laser.laserState === 1) {
       ret.push(1)
     }
     else {
