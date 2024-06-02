@@ -11,7 +11,7 @@ Simulate the projection of drawing an SVG onto a wall with a laser attached to a
 - [Display](#display)
 - [Files and Organization](#files-and-organization)
 - [In-code Customization](#in-code-customization)
-- [Mathematical Description](#mathematical-description)
+- [Mathematical Description](#mathematical-description-and-code-implementation)
 - [Contribution Guidelines](#contribution-guidelines)
 - [Issue Reporting](#issue-reporting)
 - [Acknowledgements](#acknowledgements)
@@ -29,7 +29,7 @@ The idea is to attach a laser pointer to the platform so that it moves with it, 
 The main goal is to have the laser attached to the platform draw shapes with specific requirements. The process is as follows:
 1. Define the platform parameters (rod length, horn length, base and platform size, servo range, etc.).
 2. Specify the wall distance from the platform, the desired size of the projection, and the center-point of rotation.
-3. Run the simulation to calculate the servo angles and steps. Download the resulting file with the information.
+3. Run the simulation to calculate the servo angles and steps. Download the resulting file with the data.
 4. Use the file with the servo angles on a real Stewart Platform to achieve the desired result.
 
 The primary modification to the source code is the SVG drawing feature. In Robert Eisele's library, an SVG plotter reads SVG paths and transforms them into a series of movements for the platform. However, it originally only drew shapes on the horizontal plane above the platform. To project SVGs onto the wall, several tweaks and implementations have been made.
@@ -70,11 +70,11 @@ This project focuses on the SVG drawing feature of the original software, removi
 - A violet laser pointing towards the wall.
 
 **Wall**
-- A light brown spherical wall positioned according to the "wall distance" and scaled according to the "rotation axis offset".
+- A light brown wall positioned according to the "wall distance" and automatically scaled according to the size of the drawing.
 - The selected SVG is drawn in the center of the wall. Users can toggle the drawing visualization (press spacebar) to toggle visibility. To toggle between the end result and the live drawing process, press "d". The former is not recommended on slow or old machines due to high processing demands.
 
 **Simulation**
-- During the animation, the platform moves around the specified center of rotation, using translation and rotation movements. Check the [mathematical description](mathematical-description) in its corresponding section.
+- During the animation, the platform moves around the specified center of rotation, using translation and rotation movements. Check the [mathematical description](mathematical-description-and-code-implementation) in its corresponding section.
 
 ## Display
 
@@ -189,7 +189,7 @@ When remove redundant rows option is checked, there are two extra options for be
 - **leadingZeros**: Add steps in the beginning preventing laser from activating before we want it to. Default=10
 - **zerosToKeep**: Keep steps where laser is off (when passing from an SVG closed path shape to another) preventing laser from activating in between. Should be an even number, minimum 2. Default=12
 
-## Mathematical Description
+## Mathematical Description and Code Implementation
 Most of the mathematical calculations used to make this possible are well described in Robert Eisele's paper [Inverse Kinematics of a Stewart Platform](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/), so I highly recommend to check it before continuing. Using said calculations, it's possible to determine the necessary angles to rotate for each servo, in order to obtain a desired **rotation** and **translation** of the platform. 
 
 ### The problem
@@ -224,12 +224,13 @@ What I had then, after adjusting the camera position and orientation, was the fo
 
 It's important to note that the SVG drawing is now perpendicular to the "x" axis.
 
-**Calculate the projection***
+**Calculate the projection**
+
 I wasn't that far from the end result. I already had the position where the platform had to go to for the laser to draw the SVG shape. What was left, was to transform that position into a value for the new translation and rotation of the platform.
 
-Following the platform's coordinate system, this 2D sketches, both for the y,x and x,z axes, can be drawn, visualizing altogether the platform in its zero position, the platform in its "desired position", its rotation axes and the spherical wall.
+Following the platform's coordinate system, this 2D sketches, both for the y,x and x,z axes, can be drawn, visualizing altogether the platform in its zero position, the platform in its "desired position", its rotation axes and the wall.
 <p align="center">
-<img src="res/maths-1.png" width="950">
+<img src="https://github.com/albertcroig/Stewart.js/blob/development/res/maths-1.png?raw=true" width="950">
 </p>  
 
 Given:
@@ -239,16 +240,42 @@ Given:
 - $f$: Distance of the rotation axis offset.
 
 Find:
-- $x_{21}$: Distance of desired $x$ platform's translation caused by rotation $α$.
-- $x_{22}$: Distance of desired $x$ platform's translation caused by rotation $β$.
-- $y_2$: Distance of desired $y$ platform's translation.
-- $z_2$: Distance of desired $z$ platform's translation.
 - $α$: Angle to rotate around z axis.
 - $β$: Angle to rotate around y axis.
+- $x_2$: Distance of desired $x$ platform's translation caused by rotation $α$ and $β$.
+- $y_2$: Distance of desired $y$ platform's translation.
+- $z_2$: Distance of desired $z$ platform's translation.
+- $L$: Laser length extension.  
 
-Therefore, it can be deduced that:
+Therefore, the $\alpha$ and $\beta$ angles to rotate can be deduced using the trigonometric function: $\tan \theta = \frac{\text{Opposite Side}}{\text{Adjacent Side}}$
 
-$\alpha = \arcsin\left(\frac{z_1}{f + w}\right)$, $\beta = \arcsin\left(\frac{y_1}{f + w}\right)$
+Resulting in:\
+$\alpha = \arcsin\left(\frac{y_1}{f + w}\right)$, $\beta = \arcsin\left(\frac{-z_1}{f + w}\right)$
+
+With the angle values, the value of $x_2$, $x_2$ and $x_2$ can be found with the trigonometric functions: $\cos \theta = \frac{\text{Adjacent Side}}{\text{Hypothenuse}}$ and $\sin \theta = \frac{\text{Opposite Side}}{\text{Hypothenuse}}$
+
+Resulting in:\
+$x_2 = f - f \cdot \cos(\alpha) \cdot \cos(\beta)$\
+$y_2 = f \cdot \sin(\alpha)$\
+$z_2 = f \cdot \sin(\beta)$
+
+Finally, for the laser length extension $L$, all that is needed is also the following trigonometric function: $\cos \theta = \frac{\text{Adjacent Side}}{\text{Hypothenuse}}$
+
+Having:\
+$(L + f + w) \cdot \cos(\alpha) \cdot \cos(\beta) = f + w$
+
+Resulting in:\
+$L = \frac{f + w}{\cos(\alpha) \cdot \cos(\beta)} - f - w$
+
+**Code implementation**
+
+Now that we know the values of each variable, all that is left is to implement this in our code, so that the already known $y_1$ and $z_1$ values (which are calculated with the Animation.SVG and parseSVGPath functions), are converted into the new translation and orientation values for the platform.
+
+
+
+
+
+
 
 
 
