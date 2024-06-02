@@ -470,39 +470,40 @@ Animation.Interpolate = function(data, svgPath, box) {
 
   // Get desired y and z coordinates and calculate rotation and translation needed to accomplish them into wall projection
   const calculateMovements = function(x, y, z) {
-    let rotationAxisOffset = platform.rotationAxisOffset
-    let wallDistance = platform.wallDistance
+    let rotationAxisOffset = platform.rotationAxisOffset;
+    let wallDistance = platform.wallDistance;
 
-    let movements = {}
-    let theta, beta
-    let xTrans, yTrans, zTrans
+    let movements = {};
+    let alpha, beta;
+    let xTrans, yTrans, zTrans;
 
-    theta = -Math.atan(z/(rotationAxisOffset + wallDistance))
-    beta = Math.atan(y/(rotationAxisOffset + wallDistance))
+    alpha = Math.atan(y / (rotationAxisOffset + wallDistance));
+    beta = Math.atan(-z / (rotationAxisOffset + wallDistance));
 
-    let laserState = x !== 0 ? 0 : 1
-    let extraLaserLength = (rotationAxisOffset + wallDistance - (rotationAxisOffset + wallDistance) * Math.cos(beta) * Math.cos(theta)) / (Math.cos(beta) * Math.cos(theta))
+    let laserState = x !== 0 ? 0 : 1;
+    let extraLaserLength = (rotationAxisOffset + wallDistance) / (Math.cos(alpha) * Math.cos(beta)) - rotationAxisOffset - wallDistance
 
-    xTrans = -(rotationAxisOffset - rotationAxisOffset * Math.cos(theta) * Math.cos(beta))
-    yTrans = rotationAxisOffset * Math.sin(beta)
-    zTrans = -rotationAxisOffset * Math.sin(theta)
-  
+
+    xTrans = -(rotationAxisOffset - rotationAxisOffset * Math.cos(alpha) * Math.cos(beta));
+    yTrans = rotationAxisOffset * Math.sin(alpha);
+    zTrans = -rotationAxisOffset * Math.sin(beta);
+
     movements = {
       x: xTrans,
       y: yTrans,
       z: zTrans,
-      theta: theta,
+      alpha: alpha,
       beta: beta,
       laserState: laserState,
       extraLaserLength: extraLaserLength
-    }
-    return movements
-  }
+    };
+    return movements;
+  };
 
   // Find required position knowing its desired position and its current position, interpolating with scale for smoothness.
   const interpolateWithPrevious = function(previous, desired, scale) {
-    return previous + (desired - previous) * scale
-  }
+    return previous + (desired - previous) * scale;
+  };
 
   var duration = 0; // Initialize duration variable to 0
   for (var i = 1; i < data.length; i++) {  // Add all the durations of the whole animation steps together
@@ -511,7 +512,7 @@ Animation.Interpolate = function(data, svgPath, box) {
 
   return {   // Return the normalized object for animation.
     duration: duration,
-    svg: {svgPath, box},
+    svg: { svgPath, box },
     path: function(pct, addToCurrentPath) {
 
       var pctStart = 0;  // Variable for starting progress of animation (initialize to 0%)
@@ -524,23 +525,23 @@ Animation.Interpolate = function(data, svgPath, box) {
           var prev = i === 0 ? data[0] : data[i - 1];  // Previous step, if i = 0 (meaning first step of animation), previous step is same step, otherwise its i-1
 
           // Calculate movements and previous movements according to distance to wall and rotation axis offset.
-          var movements = calculateMovements(p.x, p.y, p.z)
+          var movements = calculateMovements(p.x, p.y, p.z);
 
           if (!this.stopDrawingPath && addToCurrentPath) {                  
-            this.currentPath[1].push(interpolateWithPrevious(prev.y, p.y, scale))
-            this.currentPath[2].push(interpolateWithPrevious(prev.z, p.z, scale))
-            this.currentPath[3].push(movements.laserState)
+            this.currentPath[1].push(interpolateWithPrevious(prev.y, p.y, scale));
+            this.currentPath[2].push(interpolateWithPrevious(prev.z, p.z, scale));
+            this.currentPath[3].push(movements.laserState);
           }
-                     
-          this.currentPathPos[1] = (interpolateWithPrevious(prev.y, p.y, scale))
-          this.currentPathPos[2] = (interpolateWithPrevious(prev.z, p.z, scale))
-          this.currentPathPos[3] = (movements.laserState)
-    
+
+          this.currentPathPos[1] = (interpolateWithPrevious(prev.y, p.y, scale));
+          this.currentPathPos[2] = (interpolateWithPrevious(prev.z, p.z, scale));
+          this.currentPathPos[3] = (movements.laserState);
+
           return; // Once the if condition is true, there is no need to continue with the loop, so return.
         }
         pctStart = pctEnd; // Assign the start pct to the end pct for continuing the loop.
       }
-    },    
+    },
     fn: function(pct) {
 
       var pctStart = 0;  // Variable for starting progress of animation (initialize to 0%)
@@ -555,20 +556,45 @@ Animation.Interpolate = function(data, svgPath, box) {
           var prev = i === 0 ? data[0] : data[i - 1];  // Previous step, if i = 0 (meaning first step of animation), previous step is same step, otherwise its i-1
 
           // Calculate movements and previous movements according to distance to wall and rotation axis offset.
-          var movements = calculateMovements(p.x, p.y, p.z)
-          var prevMovements = calculateMovements(prev.x, prev.y, prev.z)
+          var movements = calculateMovements(p.x, p.y, p.z);
+          var prevMovements = calculateMovements(prev.x, prev.y, prev.z);
 
           // Set the new location with previous' step location + its difference multiplied by completion progress of step.
-          this.translation[0] = interpolateWithPrevious(prevMovements.x, movements.x, scale)
-          this.translation[1] = interpolateWithPrevious(prevMovements.y, movements.y, scale)
-          this.translation[2] = interpolateWithPrevious(prevMovements.z, movements.z, scale)
-      
-          this.orientation = Quaternion.fromAxisAngle([0, 1, 0], prevMovements.theta + (movements.theta - prevMovements.theta) * scale).mul(Quaternion.fromAxisAngle([0, 0, 1], prevMovements.beta + (movements.beta - prevMovements.beta) * scale))
+          this.translation[0] = interpolateWithPrevious(prevMovements.x, movements.x, scale);
+          this.translation[1] = interpolateWithPrevious(prevMovements.y, movements.y, scale);
+          this.translation[2] = interpolateWithPrevious(prevMovements.z, movements.z, scale);
           
+          // this.translation[0] = movements.x;
+          // this.translation[1] = movements.y;
+          // this.translation[2] = movements.z;
+      
+          // // Interpolate the rotation angles
+          // let interpolatedBeta = interpolateWithPrevious(prevMovements.beta, movements.beta, scale);
+          // let interpolatedAlpha = interpolateWithPrevious(prevMovements.alpha, movements.alpha, scale);
+
+          // // Create quaternions for the interpolated rotations
+          // let rotationY = Quaternion.fromAxisAngle([0, 1, 0], interpolatedBeta);
+          // let rotationZ = Quaternion.fromAxisAngle([0, 0, 1], interpolatedAlpha);
+
+          // Create quaternions for the interpolated rotations
+          let prevRotationY = Quaternion.fromAxisAngle([0, 1, 0], prevMovements.beta).normalize()
+          let currentRotationY = Quaternion.fromAxisAngle([0, 1, 0], movements.beta).normalize()
+          let slerpFunctionY = prevRotationY.slerp(currentRotationY)
+          let rotationY = slerpFunctionY(scale)
+
+          let prevRotationZ = Quaternion.fromAxisAngle([0, 0, 1], prevMovements.alpha).normalize()
+          let currentRotationZ = Quaternion.fromAxisAngle([0, 0, 1], movements.alpha).normalize()
+          let slerpFunctionZ = prevRotationZ.slerp(currentRotationZ)
+          let rotationZ = slerpFunctionZ(scale)
+
+          // Combine the rotations
+          this.orientation = rotationY.mul(rotationZ);
+          // this.orientation = currentRotationY.mul(currentRotationZ);
+
           this.laser = {
             laserState: movements.laserState,
-            extraLaserLength: movements.extraLaserLength
-          }
+            extraLaserLength: interpolateWithPrevious(prevMovements.extraLaserLength, movements.extraLaserLength, scale)
+          };
 
           return; // Once the if condition is true, there is no need to continue with the loop, so return.
         }
@@ -577,6 +603,7 @@ Animation.Interpolate = function(data, svgPath, box) {
     },
   };
 };
+
 
 // We use prototype in order to add methods that intrinsically belong to an object.
 // We define this methods ONCE inside the prototype, and every instance of an object will check the prototype

@@ -72,8 +72,8 @@ function setupPlatform() {
                 [platform.wallDistance - 8*animation.drawingSize/(Math.tan(1.04)*2), 0, platform.T0[2], 
                 platform.wallDistance, 0, platform.T0[2]], 
                 sphereView: 
-                [platform.wallDistance*0.5, 0, (platform.wallDistance + platform.rotationAxisOffset)*1.1, 
-                platform.wallDistance, 0, 0], 
+                [platform.wallDistance, 0, animation.drawingSize * 4 + platform.T0[2], 
+                platform.wallDistance*0.9, 0, 0], 
                 platformView: 
                 [-platform.rotationAxisOffset*1.7, platform.rotationAxisOffset*2.2, platform.T0[2]+300, 
                 0, 0, platform.T0[2]/2], 
@@ -241,8 +241,8 @@ function setupPlatform() {
         for (var i = 0; i <= steps; i++) {  // For every vertex, define its position
             let interpolation = Animation.SVG(path, animation.cur.svg.box, size, animation.drawingSpeed)
             interpolation.fn.call(simulationAnimation, i / steps); 
-            simulationPlatform.update(simulationAnimation.translation, simulationAnimation.orientation)
-            angles.push(simulationPlatform.getServoAngles(simulationAnimation.translation))
+            simulationPlatform.update(simulationAnimation.translation, simulationAnimation.orientation, simulationAnimation.laser)
+            angles.push(simulationPlatform.getServoAngles())
         } 
         return angles
     }

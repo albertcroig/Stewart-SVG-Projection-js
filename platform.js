@@ -391,6 +391,7 @@ Stewart.prototype = {
       p.translate(-this.rotationAxisOffset,0,this.T0[2])
       p.sphere(2)
       p.pop()
+
       // Base Frame
       drawFrame(p);
 
@@ -401,9 +402,8 @@ Stewart.prototype = {
 
       // Platform plate
       p.translate(this.translation[0], this.translation[1], this.translation[2] + this.T0[2]);
-      
       p.applyMatrix.apply(p, this.orientation.conjugate().toMatrix4());
-      
+
       this.drawPlatformPlate.call(this, p);
 
       // Platform Frame
