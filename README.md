@@ -38,7 +38,7 @@ The primary modification to the source code is the SVG drawing feature. In Rober
 Follow these steps to install and set up the project on your local machine.
 
 ### Prerequisites
-Before you begin, ensure you have met the following requirements:
+Before beginning, ensure you have met the following requirements:
 
 - You have installed Node.js (v14.x or higher) and npm (v6.x or higher).
 - You have a working internet connection.
@@ -146,10 +146,16 @@ The predefined SVG paths are initialized every time the browser loads. They are 
 - **path**
 - **box**
 
-To add a new SVG path, simply add an object to the `SVGS` array. Copy the SVG path into the `path` key and set its corresponding bounding box in the `box` key.
+To add a new SVG path, simply add an object to the SVGS array. Copy the SVG path into the path key and set its corresponding bounding box in the box key. Follow the pattern below:
+
+```
+path: "M ... Z",
+box: [x0, y0, width, height]
+```
+Replace x0, y0, width, and height with the values of your SVG bounding box.
 
 ### Platform Options
-The platform visualization is designed to draw in millimeters. The following options are available in the `initHexagonal` function of the platform object.
+The platform visualization is designed to draw in millimeters. The following options can be passed as an object into the `initHexagonal` function of the platform object. If no key is passed to the function, the default values will be chosen.
 
 + **wallDistance**: Distance from the origin to the wall's center. Default=820
 + **rotationAxisOffset**: Distance from the origin to the platform's center of rotation. Default=250
@@ -190,33 +196,36 @@ When remove redundant rows option is checked, there are two extra options for be
 - **zerosToKeep**: Keep steps where laser is off (when passing from an SVG closed path shape to another) preventing laser from activating in between. Should be an even number, minimum 2. Default=12
 
 ## Mathematical Description and Code Implementation
-Most of the mathematical calculations used to make this possible are well described in Robert Eisele's paper [Inverse Kinematics of a Stewart Platform](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/), so I highly recommend to check it before continuing. Using said calculations, it's possible to determine the necessary angles to rotate for each servo, in order to obtain a desired **rotation** and **translation** of the platform. 
 
-### The problem
-*The problem narrows down to finding how the platform needs to rotate and translate to make the projection onto the wall.*
+### Inverse Kinematics
+The mathematical calculations utilized in this project are extensively detailed in Robert Eisele's paper on [Inverse Kinematics of a Stewart Platform](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/). It is highly recommended to review this resource before proceeding. Inverse kinematics is used to determine the necessary servo angles to achieve a desired platform **position** and **orientation** by solving the equations that describe the platform's geometry.
 
-The starting point with the SVG plotter was the following:
+### The Problem
+*The challenge is to determine how the platform must rotate and translate to project an SVG image onto the wall.*
+
+Initially, the SVG plotter configuration was as follows:
 
 <p align="center">
   <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/starting-point.png?raw=true" width="400">
 </p>
 
-And the end result had to look something like this:
+The desired outcome is:
 
 <p align="center">
 <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/desired-result.png?raw=true" width="400">
 </p>  
-By specifying desired projection size, distance to wall and offset of the rotation axis, find out how the platform has to move in order to achieve this.
+
+Given the desired projection size, wall distance, and rotation axis offset, the task is to determine the platform's movements to achieve this projection.
 
 ### The solution
 
 **Transpose to Vertical Plane, Translation Only**
 
-With the problem in mind, what I had to do in a first instance, was to make the SVG plot in the vertical plane, without any projection, just change the axes. Attaching a laser to the platform would already allow it to draw the SVG onto the wall. However, the limitation would be that the size of the drawing would be restricted to the translation range of the platform. 
+The first step was to make the SVG plot on the vertical plane without any projection, simply by changing the axes. Attaching a laser to the platform would allow it to draw the SVG onto the wall. However, the drawing size would be limited to the platform's translation range.
 
-By inspecting the code and the SVG parsing functions, it wasn't long until I found that just by tweaking some values (changing the "x" for the "z", the "y" for the "x" and the "z" for the "y") and adding a negative sign in front of a specific equation, I would be able to transform everything into the vertical plane.
+By inspecting the code and SVG parsing functions, I found that swapping some values (changing "x" to "z", "y" to "x", and "z" to "y") and adding a negative sign to a specific equation transformed everything to the vertical plane.
 
-What I had then, after adjusting the camera position and orientation, was the following:
+After adjusting the camera position and orientation, the result was:
 
 <p align="center">
 <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/vertical-plane-translation.png?raw=true" width="400">
@@ -224,11 +233,12 @@ What I had then, after adjusting the camera position and orientation, was the fo
 
 It's important to note that the SVG drawing is now perpendicular to the "x" axis.
 
-**Calculate the projection**
+**Calculate the Projection**
 
-I wasn't that far from the end result. I already had the position where the platform had to go to for the laser to draw the SVG shape. What was left, was to transform that position into a value for the new translation and rotation of the platform.
+With the position for the laser to draw the SVG shape established, the next step was to transform this position into the platform's new translation and rotation values.
 
-Following the platform's coordinate system, this 2D sketches, both for the y,x and x,z axes, can be drawn, visualizing altogether the platform in its zero position, the platform in its "desired position", its rotation axes and the wall.
+Using the platform's coordinate system, we can visualize the problem in both the y-x and x-z planes. The following diagram shows the platform in its zero position, the platform in its "desired position," its rotation axes, and the wall.
+
 <p align="center">
 <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/maths-1.png?raw=true" width="950">
 </p>  
@@ -236,53 +246,46 @@ Following the platform's coordinate system, this 2D sketches, both for the y,x a
 Given:
 - $y_1$: Distance of desired $y$ projection.
 - $z_1$: Distance of desired $z$ projection.
-- $w$: Distance to wall, from coordinate origin.
+- $w$: Distance to wall from coordinate origin.
 - $f$: Distance of the rotation axis offset.
 
 Find:
 - $α$: Angle to rotate around z axis.
 - $β$: Angle to rotate around y axis.
-- $x_2$: Distance of desired $x$ platform's translation caused by rotation $α$ and $β$.
-- $y_2$: Distance of desired $y$ platform's translation.
-- $z_2$: Distance of desired $z$ platform's translation.
+- $x_2$: Distance of desired $x$ translation caused by rotations $α$ and $β$.
+- $y_2$: Distance of desired $y$ translation.
+- $z_2$: Distance of desired $z$ translation.
 - $L$: Laser length extension.  
 
-Therefore, the $\alpha$ and $\beta$ angles to rotate can be deduced using the trigonometric function: $\tan \theta = \frac{\text{Opposite Side}}{\text{Adjacent Side}}$
+The angles $\alpha$ and $\beta$ can be determined using the trigonometric function $\tan \theta = \frac{\text{Opposite Side}}{\text{Adjacent Side}}$.
 
-Resulting in:\
 $\alpha = \arcsin\left(\frac{y_1}{f + w}\right)$, $\beta = \arcsin\left(\frac{-z_1}{f + w}\right)$
 
-With the angle values, the value of $x_2$, $x_2$ and $x_2$ can be found with the trigonometric functions: $\cos \theta = \frac{\text{Adjacent Side}}{\text{Hypothenuse}}$ and $\sin \theta = \frac{\text{Opposite Side}}{\text{Hypothenuse}}$
+With these angles, the values of $x_2$, $x_2$ and $x_2$ can be found using the trigonometric functions $\cos \theta = \frac{\text{Adjacent Side}}{\text{Hypothenuse}}$ and $\sin \theta = \frac{\text{Opposite Side}}{\text{Hypothenuse}}$.
 
-Resulting in:\
 $x_2 = f - f \cdot \cos(\alpha) \cdot \cos(\beta)$\
 $y_2 = f \cdot \sin(\alpha)$\
 $z_2 = f \cdot \sin(\beta)$
 
-Finally, for the laser length extension $L$, all that is needed is also the following trigonometric function: $\cos \theta = \frac{\text{Adjacent Side}}{\text{Hypothenuse}}$
+Finally, the laser length extension $L$ is calculated using:
 
-Having:\
 $(L + f + w) \cdot \cos(\alpha) \cdot \cos(\beta) = f + w$
 
-Resulting in:\
+Solving for $L$:
+
 $L = \frac{f + w}{\cos(\alpha) \cdot \cos(\beta)} - f - w$
 
 **Code implementation**
 
-Now that we know the values of each variable, all that is left is to implement this in our code, so that the already known $y_1$ and $z_1$ values (which are calculated with the Animation.SVG and parseSVGPath functions), are converted into the new translation and orientation values for the platform.
+With the values of each variable known, the final step is to implement this in our code. The pre-calculated \( y_1 \) and \( z_1 \) values (obtained from the `Animation.SVG` and `parseSVGPath` functions) are converted into the new translation and orientation values for the platform.
 
+The original `Animation.Interpolate` function, which interpolates through the points of the path to create a smooth transition between vertices and returns the normalized object to run the animation, was modified. The changes include:
 
+- Adding the `calculateMovements` function to implement the previously discussed equations and return the corresponding position and orientation values for the platform.
+- Implementing orientation interpolation, as the SVG plotter initially only used translation movements.
+- Adding a new `path` function to calculate the drawing path positions of the animation, both in real-time and for the end result.
 
-
-
-
-
-
-
-
-
-
-
+From there, the functionality of the code remains largely unchanged (with minor tweaks for additional features), where an orientation and translation are set, and the platform is updated with the corresponding values.
 
 ## Contribution Guidelines
 
