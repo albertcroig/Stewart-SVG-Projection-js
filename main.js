@@ -442,11 +442,7 @@ function setupPlatform() {
 
     function downloadServoAngles(data, options) {
 
-        const calibrationData = {
-          middlePos: [305, 313, 297, 313, 303, 317],
-          amplitude: [186, 186, 186, 186, 186, 186],
-          direction: [1, -1, 1, -1, 1, -1]
-        }  
+        const calibrationData = options.calibrationData
         
         function adaptDataArduino(rawData) {
     
@@ -465,7 +461,6 @@ function setupPlatform() {
           }
     
           // Copy first row and set laser value to zero specified number of times to avoid beginning laser activation
-    
           for (let i = 0; i < options.leadingZeros; i++) {
             rawData.unshift([...rawData[0]])
             originalAngles.unshift([...originalAngles[0]])
@@ -502,6 +497,11 @@ function setupPlatform() {
             console.log(indexesToRemove.length + ' redundant rows removed.')
           }
     
+          // Add column form digital_out, for now all 0x0, but is a prevision for future changes.
+          for (let i = 0; i < rawData.length; i++) {
+            rawData[i].unshift('0x0')
+          }
+          console.log(rawData)
           return rawData
         }
     
@@ -509,24 +509,26 @@ function setupPlatform() {
           let header = []
     
           if (isAdapted) {
-            header = ['DigitalIn','Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Step', 'Original Angles']
+            header = ['DigitalOut','DigitalIn (Laser)','Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Step', 'Original Angles']
     
-            // Put last column into first position
+            // Put laser column into second position
             for (let i = 0; i < myData.length; i++) {
-              const subarray = myData[i];
-              subarray.unshift(subarray.pop())
+                const laserColumn = myData[i].pop()
+                myData[i].splice(1, 0, laserColumn)
             }
     
-            for (let i =0; i<myData.length; i++) {
-              myData[i][6] += '\t}'
+            // Add tab + closing bracket at the end of every row
+            for (let i = 0; i < myData.length; i++) {
+                 myData[i][myData[0].length-1] += '\t}'
             }
+
             // Add step number (commented)
             myData.forEach((row, index) => row.push('// ' + (index+1) + '\t' + originalAngles[index].join('\t')));
           }
           else {
-            header = ['Step', 'Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Laser on/off'];
-            // Create index column starting from 0
-            myData.forEach((row, index) => row.unshift(index));
+                header = ['Step', 'Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Laser on/off'];
+                // Create index column starting from 0
+                myData.forEach((row, index) => row.unshift(index));
           }
     
           // Add header to the data
@@ -534,9 +536,11 @@ function setupPlatform() {
         }
     
         function performDownload(tableToDownload, isAdapted) {
+
           // Convert data to text
           let text
     
+          // String manipulation for formatting
           if (isAdapted) {
             let order = [' Middle pos:', ' Amplitude:', ' Direction:', '\t']
             let headerText = '//\t\tCalibration values'
@@ -586,7 +590,7 @@ function setupPlatform() {
         }
         data.splice(0, indexToCut + 1)
     
-        // For the laser on/off, we offset the value *one step* so that it gets turned off later.
+        // For the laser on/off, we offset the value one step to fix activation.
         let activationArr = []
         for (let i = 0; i < data.length; i++) {
           if (i === 0) {
@@ -610,7 +614,6 @@ function setupPlatform() {
           originalAngles[i] = data[i].slice();
         }
     
-       
         if (!options.originalValues) {
           data = adaptDataArduino(data)
           let newData = cloneArray(data)
