@@ -11,7 +11,7 @@ Simulate the projection of drawing an SVG onto a wall with a laser attached to a
 - [Display](#display)
 - [Files and Organization](#files-and-organization)
 - [In-code Customization](#in-code-customization)
-- [Mathematical Description](#mathematical-description-and-code-implementation)
+- [Mathematical Description and Code Implementation](#mathematical-description-and-code-implementation)
 - [Contribution Guidelines](#contribution-guidelines)
 - [Issue Reporting](#issue-reporting)
 - [Acknowledgements](#acknowledgements)
@@ -134,7 +134,13 @@ The current animation is either the one running or the last one that ran. Two bu
 
 ## Files and Organization
 
-The repository includes Robert's original code in the "original_commented" directory. The root directory contains all other project files, thoroughly commented for clarity.
+### Original Code
+The repository includes Robert's original code in the "original_code" directory, as well as a [PDF file](original_code/original-code-documentation.pdf) documenting the code procedure and functions. If anything is unclear, check the documentation to resolve any doubts.
+
+Inside the "commented" directory, you can check the commented version of the original code for a better understanding of it.
+
+### Modified Code
+The root directory contains all of this project's files, also thoroughly commented for clarity.
 
 The original "stewart.js" file has been split into two files: "animation.js" and "platform.js", each containing relevant object information and functions. Visualization and interaction with the display are split into "default.html" (structure and info), "style.css" (styling and formatting), and "main.js" (logic). The basic functionality is taken from the "default.html" file in the original repo. Additionally, "textToSvg.js" handles the Text to SVG functionality.
 
@@ -181,17 +187,16 @@ The following next option is located inside the `drawPath` function in the `Anim
 
 ### Download Servo Angles Options (for Arduino Board)
 
-Each servo has its own calibration values that have to be found in a real life test. This variable is an object and can is located inside `Animation.prototype`, on the `downloadServoAngles` function. Modify the arrays on it according to your platform servos. Each position of the elements in the array corresponds to the servo number.
-
-- **middlePos**: 
-- **amplitude**:
-- **direction**: What is considered positive angles. In this case, it should remain the same for everyone because it is hard coded like that, where the uneven indexes have a mirrored rotation value. Default=[1, -1, 1, -1, 1, -1]
-
 The following options are located inside the `getAnimationAnglesBtn` click event in the main.js script.
+
+- **calibrationData**: Each servo has its own calibration values that have to be found in a real life test. Modify the arrays of this object according to your platform servos. Each position of the elements in the array corresponds to the servo number.
+  - **middlePos**: 
+  - **amplitude**:
+  - **direction**: What is considered positive angles. In this case, it should remain the same for everyone because it is hard coded like that, where the uneven indexes have a mirrored rotation value. Default=[1, -1, 1, -1, 1, -1]
 
 - **steps**: Number of steps to calculate. More steps increase precision (up to a limit). Default=2600 with "remove redundant" option, 2050 without.
 
-When remove redundant rows option is checked, there are two extra options for better laser control. These are necessary due to the imperfections of the laser activation. It's a way to avoid undesired laser activation.
+When remove redundant rows option is checked and original values unchecked, there are two extra options for better laser control. These are necessary due to the imperfections of the laser activation. It's a way to avoid undesired laser activation.
 - **leadingZeros**: Add steps in the beginning preventing laser from activating before we want it to. Default=10
 - **zerosToKeep**: Keep steps where laser is off (when passing from an SVG closed path shape to another) preventing laser from activating in between. Should be an even number, minimum 2. Default=12
 
@@ -217,7 +222,7 @@ The desired outcome is:
 
 Given the desired projection size, wall distance, and rotation axis offset, the task is to determine the platform's movements to achieve this projection.
 
-### The solution
+### The Solution
 
 **Transpose to Vertical Plane, Translation Only**
 
@@ -237,7 +242,7 @@ It's important to note that the SVG drawing is now perpendicular to the "x" axis
 
 With the position for the laser to draw the SVG shape established, the next step was to transform this position into the platform's new translation and rotation values.
 
-Using the platform's coordinate system, we can visualize the problem in both the y-x and x-z planes. The following diagram shows the platform in its zero position, the platform in its "desired position," its rotation axes, and the wall.
+Using the platform's coordinate system, we can visualize the problem in both the y-x and x-z planes. The following diagram shows the platform in its zero position, the platform in its "desired position", its rotation axes and the wall.
 
 <p align="center">
 <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/maths-1.png?raw=true" width="950">
@@ -277,7 +282,7 @@ $L = \frac{f + w}{\cos(\alpha) \cdot \cos(\beta)} - f - w$
 
 **Code implementation**
 
-With the values of each variable known, the final step is to implement this in our code. The pre-calculated \( y_1 \) and \( z_1 \) values (obtained from the `Animation.SVG` and `parseSVGPath` functions) are converted into the new translation and orientation values for the platform.
+With the values of each variable known, the final step is to implement this in our code. The pre-calculated $y_1$ and $z_1$ values (obtained from the `Animation.SVG` and `parseSVGPath` functions) are converted into the new translation and orientation values for the platform.
 
 The original `Animation.Interpolate` function, which interpolates through the points of the path to create a smooth transition between vertices and returns the normalized object to run the animation, was modified. The changes include:
 
@@ -307,7 +312,7 @@ If you encounter any issues or bugs, please report them by creating an issue on 
 This project includes code from these open source projects:
 
 - **Stewart.js** by Robert Eisele (rawify), licensed under MIT. See https://github.com/rawify/Stewart.js.
-- **hesheytextjs** by James T (techninja), licensed under MIT. See (https://github.com/techninja/hersheytextjs).
+- **hesheytextjs** by James T (techninja), licensed under MIT. See https://github.com/techninja/hersheytextjs.
 
 ## Contact Information
 

@@ -416,22 +416,216 @@ function setupPlatform() {
         const isOriginalAngles = document.getElementById('animationAnglesType');
         const isRemoveRedundant = document.getElementById('redundantRowsCheckbox')
 
+        const calibrationData = {
+            middlePos: [305, 313, 297, 313, 303, 317],
+            amplitude: [186, 186, 186, 186, 186, 186],
+            direction: [1, -1, 1, -1, 1, -1]
+        }
+
         // Options for servo angles text file download
         const options = {
             originalValues: isOriginalAngles.checked,
+            // Options for adapted arduino angles
+            calibrationData: calibrationData,
             removeRedundant: isRemoveRedundant.checked,
-            // Laser activation options for adapted arduino angles
-            leadingZeros: 10, // Zeros at the beginning.
+            leadingZeros: 10, // Zeros at the beginning for laser activation.
             zerosToKeep: 12 // Zeros to keep between laser movements from one shape to another. Minimum 2. Should be an even number.
         }
 
-        const steps = (isRemoveRedundant.checked ? 2600 + options.leadingZeros + options.zerosToKeep * 5 : 2050)
+        const steps = (isRemoveRedundant.checked && !isOriginalAngles.checked ? 2600 + options.leadingZeros + options.zerosToKeep * 5 : 2050)
         const servoAngles = getAnglesOfCurrentAnimation(steps, animation.drawingSize)
         const servos = cloneArray(servoAngles)
 
-        animation.downloadServoAngles(servos, options)
+        downloadServoAngles(servos, options)
 
     })
+
+    function downloadServoAngles(data, options) {
+
+        const calibrationData = options.calibrationData
+        
+        function adaptDataArduino(rawData) {
+    
+          // Apply mathematical operations to map servo angles into real-life servo arduino angles  
+          for (let i = 0; i < rawData.length; i++) {
+            for (let j = 0; j < rawData[i].length; j++) {
+              if (j !== 6) {
+                if (calibrationData.direction[j] === -1) {
+                  rawData[i][j] = Math.floor(calibrationData.middlePos[j] -1 * rawData[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
+                }
+                else {
+                  rawData[i][j] = Math.ceil(calibrationData.middlePos[j] + rawData[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
+                }
+              }
+            }
+          }
+    
+          // Copy first row and set laser value to zero specified number of times to avoid beginning laser activation
+          for (let i = 0; i < options.leadingZeros; i++) {
+            rawData.unshift([...rawData[0]])
+            originalAngles.unshift([...originalAngles[0]])
+            rawData[0][6] = 0
+            originalAngles[0][6] = 0
+          }
+    
+          rawData[options.leadingZeros][6] = 1
+          originalAngles[options.leadingZeros][6] = 1
+    
+          // Remove redundant rows if option is checked (duplicates and when laser activation is off)
+          if (options.removeRedundant) {
+            const indexesToRemove = []
+            for (let i = 0; i < rawData.length-1; i++) {
+              if (i < 0 || i > options.leadingZeros) {
+                if (rawData[i][6] == 0) {
+                  for (let j = 1; j <= Math.round(options.zerosToKeep/2); j++) {
+                    if (rawData[i + j][6] === 0 && rawData[i - j][6] === 0) {
+                      if (j === Math.round(options.zerosToKeep/2)) indexesToRemove.push(i)
+                    }
+                    else {
+                      break
+                    }
+                  }
+                }
+                else if (rawData[i].every((value, index) => value === rawData[i-1][index])) {
+                  indexesToRemove.push(i)
+                }
+    
+              }
+            }
+            rawData = rawData.filter((_, index) => !indexesToRemove.includes(index))
+            originalAngles = originalAngles.filter((_, index) => !indexesToRemove.includes(index))
+            console.log(indexesToRemove.length + ' redundant rows removed.')
+          }
+    
+          // Add column form digital_out, for now all 0x0, but is a prevision for future changes.
+          for (let i = 0; i < rawData.length; i++) {
+            rawData[i].unshift('0x0')
+          }
+          console.log(rawData)
+          return rawData
+        }
+    
+        function addHeaderAndSteps(myData, isAdapted) {
+          let header = []
+    
+          if (isAdapted) {
+            header = ['DigitalOut','DigitalIn (Laser)','Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Step', 'Original Angles']
+    
+            // Put laser column into second position
+            for (let i = 0; i < myData.length; i++) {
+                const laserColumn = myData[i].pop()
+                myData[i].splice(1, 0, laserColumn)
+            }
+    
+            // Add tab + closing bracket at the end of every row
+            for (let i = 0; i < myData.length; i++) {
+                 myData[i][myData[0].length-1] += '\t}'
+            }
+
+            // Add step number (commented)
+            myData.forEach((row, index) => row.push('// ' + (index+1) + '\t' + originalAngles[index].join('\t')));
+          }
+          else {
+                header = ['Step', 'Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Laser on/off'];
+                // Create index column starting from 0
+                myData.forEach((row, index) => row.unshift(index));
+          }
+    
+          // Add header to the data
+          myData.unshift(calibrationData.middlePos, calibrationData.amplitude, calibrationData.direction, header);
+        }
+    
+        function performDownload(tableToDownload, isAdapted) {
+
+          // Convert data to text
+          let text
+    
+          // String manipulation for formatting
+          if (isAdapted) {
+            let order = [' Middle pos:', ' Amplitude:', ' Direction:', '\t']
+            let headerText = '//\t\tCalibration values'
+            for (i=0; i < 4; i++) {
+              headerText += '\n//'+ order[i] +'\t' + tableToDownload.shift().join('\t,\t')
+            }
+            const bodyText = tableToDownload.map(row => row.join('\t,\t')).join('\n{')
+            text = headerText + '\n' + '{' + bodyText
+            const lastComma = text.lastIndexOf(",");
+            text = text.substring(0, lastComma) + text.substring(lastComma + 1)
+          }
+          else {
+            text = tableToDownload.map(row => row.join('\t')).join('\n');
+          }
+    
+          // Create a Blob containing the array data as text
+          const blob = new Blob([text], { type: 'text/plain' });
+    
+          // Create a temporary anchor element
+          const anchor = document.createElement('a');
+          anchor.href = URL.createObjectURL(blob);
+    
+          // Set the file name
+          anchor.download = isAdapted ? 'adaptedServoAngles.txt' : 'servoAngles.txt';
+    
+          // Append the anchor element to the document body
+          document.body.appendChild(anchor);
+    
+          // Trigger a click event on the anchor element
+          anchor.click();
+    
+          // Remove the anchor element from the document body
+          document.body.removeChild(anchor);
+        }
+    
+        // Applying initial modifications to data (remove first steps and offset laser activation by 1 step), and set laser to 0 at last row
+    
+        // Remove first steps (where the pointer moves to starting shape position)
+        let indexToCut = 0
+        for (let i = 0; i < data.length; i++) {
+          if (data[i][6] === 0) {
+            if (data[i+1][6] === 1) {
+              indexToCut = i
+              break;
+            }
+          }
+        }
+        data.splice(0, indexToCut + 1)
+    
+        // For the laser on/off, we offset the value one step to fix activation.
+        let activationArr = []
+        for (let i = 0; i < data.length; i++) {
+          if (i === 0) {
+            activationArr.push(0)
+          }
+          else {
+            activationArr.push(data[i-1][6])
+          }
+        }
+        for (let i = 0; i < data.length; i++) {
+          data[i][6] = activationArr[i]
+        }
+        
+        // Copy last row and set laser value to zero
+        data.push([...data[data.length - 1]]);
+        data[data.length - 1][6] = 0;
+    
+        // Store original angles in a variable for later use
+        let originalAngles = []
+        for (var i = 0; i < data.length; i++) {
+          originalAngles[i] = data[i].slice();
+        }
+    
+        if (!options.originalValues) {
+          data = adaptDataArduino(data)
+          let newData = cloneArray(data)
+          addHeaderAndSteps(newData, !options.originalValues);
+          performDownload(newData, !options.originalValues)
+        }
+        else {
+          addHeaderAndSteps(data, !options.originalValues);
+          performDownload(data, !options.originalValues)
+        }
+    
+    }
 
     function getHighestServoAngles(arr) {
         let servoAngles = arr
