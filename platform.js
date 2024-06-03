@@ -14,8 +14,8 @@
  * Licensed under the MIT License.
  */
 
-// Get the vertices of the "hexagonal" plates, used for both the base and the platform. We have 3 arguments:
-// inner radious, outer radious and the rotation of the plate.
+// Get the vertices of the hexagonal plates used for both the base and the platform. The function takes three arguments:
+// inner radius, outer radius, and the rotation of the plate.
 function getHexPlate(r_i, r_o, rot) {
   // Initialize an empty array to store the vertices of the hexagon: "ret" name standing for "return array"
   var ret = [];
@@ -43,9 +43,10 @@ function getHexPlate(r_i, r_o, rot) {
 function Stewart() {
 }
 
+// Prototype containing inherited functions of Stewart object.
 Stewart.prototype = {
 
-  // Function to initialize the stewart platform
+  // Function to initialize the stewart platform.
   init: function(opts) {
 
     // Set initial parameters for the Stewart platform
