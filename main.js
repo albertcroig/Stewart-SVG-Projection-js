@@ -75,7 +75,7 @@ function setupPlatform() {
                 [platform.wallDistance, 0, animation.drawingSize * 4 + platform.T0[2], 
                 platform.wallDistance*0.9, 0, 0], 
                 platformView: 
-                [-platform.rotationAxisOffset*1.7, platform.rotationAxisOffset*2.2, platform.T0[2]+300, 
+                [-platform.rotationAxisOffset*1.7 + platform.T0[2], platform.rotationAxisOffset*2.2 + + platform.T0[2]*2, platform.T0[2]+300, 
                 0, 0, platform.T0[2]/2], 
             }
 
