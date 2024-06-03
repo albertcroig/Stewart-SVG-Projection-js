@@ -82,7 +82,7 @@ This project focuses on the SVG drawing feature of the original software, removi
 
 A significant addition to the original source code is the graphical interface. Several options to control the animation and platform characteristics have been added, as well as other useful features.
 
-Check the demo on the [live github page](https://albertcroig.github.io/Stewart.js/) to give it a try.
+Check the demo on the [live github page](https://albertcroig.github.io/Stewart-SVG-Projection-js/) to give it a try.
 
 There are three main sections on the browser display.
 
