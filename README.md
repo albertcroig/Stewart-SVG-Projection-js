@@ -10,7 +10,8 @@ Simulate the projection of drawing an SVG onto a wall with a laser attached to a
 - [Changes in Behaviour and Simulation](#changes-in-behaviour-and-simulation)
 - [Display](#display)
 - [Files and Organization](#files-and-organization)
-- [Options](#options)
+- [In-code Customization](#in-code-customization)
+- [Mathematical Description](#mathematical-description-and-code-implementation)
 - [Contribution Guidelines](#contribution-guidelines)
 - [Issue Reporting](#issue-reporting)
 - [Acknowledgements](#acknowledgements)
@@ -28,7 +29,7 @@ The idea is to attach a laser pointer to the platform so that it moves with it, 
 The main goal is to have the laser attached to the platform draw shapes with specific requirements. The process is as follows:
 1. Define the platform parameters (rod length, horn length, base and platform size, servo range, etc.).
 2. Specify the wall distance from the platform, the desired size of the projection, and the center-point of rotation.
-3. Run the simulation to calculate the servo angles and steps. Download the resulting file with the information.
+3. Run the simulation to calculate the servo angles and steps. Download the resulting file with the data.
 4. Use the file with the servo angles on a real Stewart Platform to achieve the desired result.
 
 The primary modification to the source code is the SVG drawing feature. In Robert Eisele's library, an SVG plotter reads SVG paths and transforms them into a series of movements for the platform. However, it originally only drew shapes on the horizontal plane above the platform. To project SVGs onto the wall, several tweaks and implementations have been made.
@@ -37,7 +38,7 @@ The primary modification to the source code is the SVG drawing feature. In Rober
 Follow these steps to install and set up the project on your local machine.
 
 ### Prerequisites
-Before you begin, ensure you have met the following requirements:
+Before beginning, ensure you have met the following requirements:
 
 - You have installed Node.js (v14.x or higher) and npm (v6.x or higher).
 - You have a working internet connection.
@@ -58,36 +59,36 @@ npm install
 ```
 After that, replace the "bezier-js" folder in the "node_modules" directory with the one in the root directory.
 
-## Changes on Behaviour and Simulation
+## Changes in Behaviour and Simulation
 
-This project focuses on the SVG drawing feature of the original software, removing most of the original features (predefined animations, Xbox controller support, etc.). The simulation visualization has been changed to show projections onto the wall and enhance user interaction. The following additions have been made:
+This project focuses on the SVG drawing feature of the original software, removing most of the original features (predefined animations, Xbox controller support, etc.). The simulation visualization has been changed to show projections on the wall and enhance user interaction. The following additions have been made:
 
 **Platform**
-- Labels for the x, y, and z axes (platform and base)
+- Labels for the x, y, and z axes (platform and base).
 - Every servo labeled with its corresponding number.
-- A "ball" attached to a red line from the platform's coordinate origin to represent the center-point of rotation
-- A violet laser pointing towards the wall
+- A "ball" attached to a red line from the platform's coordinate origin to represent the center-point of rotation.
+- A violet laser pointing towards the wall.
 
 **Wall**
-- A light brown spherical wall positioned according to the "wall distance" and scaled according to the "rotation axis offset"
-- The selected SVG is drawn in the center of the wall. Users can toggle the drawing visualization (press spacebar) to see the end result or the drawing process live (press "d"). The former is not recommended on slow or old machines due to high processing demands.
+- A light brown wall positioned according to the "wall distance" and automatically scaled according to the size of the drawing.
+- The selected SVG is drawn in the center of the wall. Users can toggle the drawing visualization (press spacebar) to toggle visibility. To toggle between the end result and the live drawing process, press "d". The former is not recommended on slow or old machines due to high processing demands.
 
 **Simulation**
-- During the animation, the platform moves around the specified center of rotation, using translation and rotation movements to project the drawing onto the wall.
+- During the animation, the platform moves around the specified center of rotation, using translation and rotation movements. Check the [mathematical description](mathematical-description-and-code-implementation) in its corresponding section.
 
 ## Display
 
 ![Stewart-Platform](https://github.com/albertcroig/Stewart.js/blob/development/res/graphical-interface.png?raw=true "Stewart Platform Interface Visualization")
 
-A significant addition to the original source code is the graphical interface. Several options to control the animation and platform characteristics, as well as other useful features, have been added.
+A significant addition to the original source code is the graphical interface. Several options to control the animation and platform characteristics have been added, as well as other useful features.
 
 Check the demo on the [live github page](https://albertcroig.github.io/Stewart.js/) to give it a try.
 
 There are three main sections on the browser display.
 
-1. **Top Section**: Loaded SVGs (clickable to run their corresponding animation) and current servo motor angles (in radians and degrees)
-2. **Left Section**: Simulation of the platform
-3. **Right Section**: Options and functionalities related to the animation and servo angles
+1. **Top Section**: Loaded SVGs (clickable to run their corresponding animation) and current servo motor angles (in radians and degrees).
+2. **Left Section**: Simulation of the platform.
+3. **Right Section**: Options and functionalities related to the animation and servo angles.
 
 ### Available Functions
 ![Use-of-features](https://github.com/albertcroig/Stewart.js/blob/development/res/feature-use.png?raw=true "Demonstration use of some features")
@@ -100,10 +101,10 @@ A small window in the top-right corner shows real-time values of each servo moto
 **Convert Text to SVG**
 
 Enter any text and it will be automatically scaled, positioned and converted to an SVG, and the animation will be run on the simulation side.
-- Two font types: regular font and hand-drawn
-- To force a line break, enter the character "\" between words
-- Press enter or click the "Draw" button to run the animation
-- Once the text is entered, it appears in the Loaded SVGs section for later use
+- Two font types: regular font and hand-drawn.
+- To force a line break, enter the character "\\" between words.
+- Press enter or click the "Draw" button to run the animation.
+- Once the text is entered, it appears in the Loaded SVGs section for later use.
 
 *Note: This functionality does not support accents and some special characters.*
 
@@ -111,11 +112,11 @@ Enter any text and it will be automatically scaled, positioned and converted to 
 
 Apart from the main platform parameters (rod length, horn length, size, etc.) that can be modified within the code, some can be adjusted on the fly. Enter the desired values and click the "Apply Changes" button or press enter. A new animation will start with the updated values.
 
-- Distance to wall: Distance from the origin to the wall's center (in mm)
-- Rotation axis offset: Distance from the origin to the platform's center of rotation (in mm)
-- Drawing size: Size of the drawing projected onto the wall (default is 300 mm x 300 mm)
+- Distance to wall: Distance from the origin to the wall's center (in mm).
+- Rotation axis offset: Distance from the origin to the platform's center of rotation (in mm).
+- Drawing size: Size of the drawing projected onto the wall (default is 300 mm x 300 mm).
   - Max size: Calculates the maximum possible size for the animation without the servos going out of range. *Note: This can take several seconds for complex SVGs due to recursive simulation.*
-- Drawing speed: Speed of the animation (in units per second). Higher speeds reduce precision but only affect visual quality
+- Drawing speed: Speed of the animation (in units per second). Higher speeds reduce precision but only affect visual quality.
 
 **Change Camera Position**
 
@@ -125,11 +126,11 @@ Click buttons to view the simulation from different angles during the animation.
 
 The current animation is either the one running or the last one that ran. Two buttons relate to the servo angles of that animation:
 
-- Download formatted servo angles:  Download a text file with all animation steps and servo angles. By default, the file is formatted as a C++ object with servo angles adapted to Arduino pulses. Additional information and original angles are included as comments for easy integration into a C++ script for an Arduino board
+- Download formatted servo angles:  Download a text file with all animation steps and servo angles. By default, the file is formatted as a C++ object with servo angles adapted to Arduino pulses. Additional information and original angles are included as comments for easy integration into a C++ script for an Arduino board.
   Options:
-    - Original angles: Download only the original servo angles (in radians)
-    - Remove redundant rows: Remove duplicate and transition rows where the laser is off, reducing file size
-- Log highest servo angles: Log the highest angle of each servo for the animation to the browser's console (press F12, then go to the console tab)
+    - Original angles: Download only the original servo angles (in radians).
+    - Remove redundant rows: Remove duplicate and transition rows where the laser is off, reducing file size.
+- Log highest servo angles: Log the highest angle of each servo for the animation to the browser's console (press F12, then go to the console tab).
 
 ## Files and Organization
 
@@ -140,16 +141,21 @@ The original "stewart.js" file has been split into two files: "animation.js" and
 ## In-code Customization
 
 ### Add SVG Paths
-The predefined SVG paths are initialized every time the browser loads. They are stored inside the global variable called `SVGS`. This global variable is an array of objects, and every object represents an SVG, with the following keys:
+The predefined SVG paths are initialized every time the browser loads. They are stored inside the global variable called `SVGS`, which is an array of objects. Each object represents an SVG and has the following keys:
 
 - **path**
 - **box**
 
-Add an object to the array, copy the path and set its corresponding bounding box in the `box` key.
+To add a new SVG path, simply add an object to the SVGS array. Copy the SVG path into the path key and set its corresponding bounding box in the box key. Follow the pattern below:
 
+```
+path: "M ... Z",
+box: [x0, y0, width, height]
+```
+Replace x0, y0, width, and height with the values of your SVG bounding box.
 
 ### Platform Options
-The platform visualization is designed to draw in millimeters. The following options are available in the `initHexagonal` function of the platform object.
+The platform visualization is designed to draw in millimeters. The following options can be passed as an object into the `initHexagonal` function of the platform object. If no key is passed to the function, the default values will be chosen.
 
 + **wallDistance**: Distance from the origin to the wall's center. Default=820
 + **rotationAxisOffset**: Distance from the origin to the platform's center of rotation. Default=250
@@ -168,10 +174,10 @@ The platform visualization is designed to draw in millimeters. The following opt
 Modify the following options in the animation.js file, within the animation object's constructor function:
 - **drawingSize**: Size of the drawing projected onto the wall. Default value is 300, so the size of the drawing window is a square of 300mmx300mm. Default=300
 - **drawingSpeed**: Speed of the animation (in units per second) of the animation. Take in account that, as it gets increased, the drawing of the SVG becomes less precise. However, it's only a visual matter. Default=0.1
-- **realDraw**: Determine if the path drawing is going to start as the end result or as the live draw. Default=false
+- **realDraw**: Determine if the path drawing is going to start as the end result or as the live draw. Default=true
 
 The following next option is located inside the `drawPath` function in the `Animation.prototype`.
-- **steps**: Number of vertices in the path shapes. Increase for better resolution, decrease for better performance. Default=400
+- **steps**: Number of vertices in the path shapes (for end result drawing). Increase for better resolution, decrease for better performance. Default=700
 
 ### Download Servo Angles Options (for Arduino Board)
 
@@ -181,8 +187,105 @@ Each servo has its own calibration values that have to be found in a real life t
 - **amplitude**:
 - **direction**: What is considered positive angles. In this case, it should remain the same for everyone because it is hard coded like that, where the uneven indexes have a mirrored rotation value. Default=[1, -1, 1, -1, 1, -1]
 
-The following option is located inside the `getAnimationAnglesBtn` click event in the main.js script.
-- **steps**: Number of steps to calculate. More steps increase precision (up to a limit). Default=2800 with "remove redundant" option, 2050 without
+The following options are located inside the `getAnimationAnglesBtn` click event in the main.js script.
+
+- **steps**: Number of steps to calculate. More steps increase precision (up to a limit). Default=2600 with "remove redundant" option, 2050 without.
+
+When remove redundant rows option is checked, there are two extra options for better laser control. These are necessary due to the imperfections of the laser activation. It's a way to avoid undesired laser activation.
+- **leadingZeros**: Add steps in the beginning preventing laser from activating before we want it to. Default=10
+- **zerosToKeep**: Keep steps where laser is off (when passing from an SVG closed path shape to another) preventing laser from activating in between. Should be an even number, minimum 2. Default=12
+
+## Mathematical Description and Code Implementation
+
+### Inverse Kinematics
+The mathematical calculations utilized in this project are extensively detailed in Robert Eisele's paper on [Inverse Kinematics of a Stewart Platform](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/). It is highly recommended to review this resource before proceeding. Inverse kinematics is used to determine the necessary servo angles to achieve a desired platform **position** and **orientation** by solving the equations that describe the platform's geometry.
+
+### The Problem
+*The challenge is to determine how the platform must rotate and translate to project an SVG image onto the wall.*
+
+Initially, the SVG plotter configuration was as follows:
+
+<p align="center">
+  <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/starting-point.png?raw=true" width="400">
+</p>
+
+The desired outcome is:
+
+<p align="center">
+<img src="https://github.com/albertcroig/Stewart.js/blob/development/res/desired-result.png?raw=true" width="400">
+</p>  
+
+Given the desired projection size, wall distance, and rotation axis offset, the task is to determine the platform's movements to achieve this projection.
+
+### The solution
+
+**Transpose to Vertical Plane, Translation Only**
+
+The first step was to make the SVG plot on the vertical plane without any projection, simply by changing the axes. Attaching a laser to the platform would allow it to draw the SVG onto the wall. However, the drawing size would be limited to the platform's translation range.
+
+By inspecting the code and SVG parsing functions, I found that swapping some values (changing "x" to "z", "y" to "x", and "z" to "y") and adding a negative sign to a specific equation transformed everything to the vertical plane.
+
+After adjusting the camera position and orientation, the result was:
+
+<p align="center">
+<img src="https://github.com/albertcroig/Stewart.js/blob/development/res/vertical-plane-translation.png?raw=true" width="400">
+</p>  
+
+It's important to note that the SVG drawing is now perpendicular to the "x" axis.
+
+**Calculate the Projection**
+
+With the position for the laser to draw the SVG shape established, the next step was to transform this position into the platform's new translation and rotation values.
+
+Using the platform's coordinate system, we can visualize the problem in both the y-x and x-z planes. The following diagram shows the platform in its zero position, the platform in its "desired position," its rotation axes, and the wall.
+
+<p align="center">
+<img src="https://github.com/albertcroig/Stewart.js/blob/development/res/maths-1.png?raw=true" width="950">
+</p>  
+
+Given:
+- $y_1$: Distance of desired $y$ projection.
+- $z_1$: Distance of desired $z$ projection.
+- $w$: Distance to wall from coordinate origin.
+- $f$: Distance of the rotation axis offset.
+
+Find:
+- $α$: Angle to rotate around z axis.
+- $β$: Angle to rotate around y axis.
+- $x_2$: Distance of desired $x$ translation caused by rotations $α$ and $β$.
+- $y_2$: Distance of desired $y$ translation.
+- $z_2$: Distance of desired $z$ translation.
+- $L$: Laser length extension.  
+
+The angles $\alpha$ and $\beta$ can be determined using the trigonometric function $\tan \theta = \frac{\text{Opposite Side}}{\text{Adjacent Side}}$.
+
+$\alpha = \arcsin\left(\frac{y_1}{f + w}\right)$, $\beta = \arcsin\left(\frac{-z_1}{f + w}\right)$
+
+With these angles, the values of $x_2$, $x_2$ and $x_2$ can be found using the trigonometric functions $\cos \theta = \frac{\text{Adjacent Side}}{\text{Hypothenuse}}$ and $\sin \theta = \frac{\text{Opposite Side}}{\text{Hypothenuse}}$.
+
+$x_2 = f - f \cdot \cos(\alpha) \cdot \cos(\beta)$\
+$y_2 = f \cdot \sin(\alpha)$\
+$z_2 = f \cdot \sin(\beta)$
+
+Finally, the laser length extension $L$ is calculated using:
+
+$(L + f + w) \cdot \cos(\alpha) \cdot \cos(\beta) = f + w$
+
+Solving for $L$:
+
+$L = \frac{f + w}{\cos(\alpha) \cdot \cos(\beta)} - f - w$
+
+**Code implementation**
+
+With the values of each variable known, the final step is to implement this in our code. The pre-calculated \( y_1 \) and \( z_1 \) values (obtained from the `Animation.SVG` and `parseSVGPath` functions) are converted into the new translation and orientation values for the platform.
+
+The original `Animation.Interpolate` function, which interpolates through the points of the path to create a smooth transition between vertices and returns the normalized object to run the animation, was modified. The changes include:
+
+- Adding the `calculateMovements` function to implement the previously discussed equations and return the corresponding position and orientation values for the platform.
+- Implementing orientation interpolation, as the SVG plotter initially only used translation movements.
+- Adding a new `path` function to calculate the drawing path positions of the animation, both in real-time and for the end result.
+
+From there, the functionality of the code remains largely unchanged (with minor tweaks for additional features), where an orientation and translation are set, and the platform is updated with the corresponding values.
 
 ## Contribution Guidelines
 

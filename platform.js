@@ -69,6 +69,8 @@ Stewart.prototype = {
     this.H = [];       // servo horn end to mount the rod
     this.sinBeta = []; // Sin of Pan angle of motors in base plate
     this.cosBeta = []; // Cos of Pan angle of motors in base plate
+
+    this.laser = {}
     
     // Get the legs configuration using the provided function
     var legs = opts.getLegs.call(this);
@@ -94,36 +96,6 @@ Stewart.prototype = {
                 - Math.pow(this.P[0][1] - this.B[0][1], 2))];
     }
 
-  },
-
-  drawPartialSphere: function(p, radius, startAngle, endAngle, color) {
-    p.strokeWeight(0.05)
-    p.fill(color)
-    p.beginShape(p.TRIANGLE_STRIP);
-    for (let phi = startAngle; phi <= endAngle; phi += 0.1) {
-      for (let theta = 0; theta <= p.TWO_PI; theta += 0.1) {
-        let x = radius * p.sin(phi) * p.cos(theta);
-        let y = radius * p.sin(phi) * p.sin(theta);
-        let z = radius * p.cos(phi);
-        p.vertex(x, y, z);
-        
-        x = radius * p.sin(phi + 0.1) * p.cos(theta);
-        y = radius * p.sin(phi + 0.1) * p.sin(theta);
-        z = radius * p.cos(phi + 0.1);
-        p.vertex(x, y, z);
-      }
-      // Add the final vertex to close the shape
-      let x = radius * p.sin(phi) * p.cos(0);
-      let y = radius * p.sin(phi) * p.sin(0);
-      let z = radius * p.cos(phi);
-      p.vertex(x, y, z);
-      
-      x = radius * p.sin(phi + 0.1) * p.cos(0);
-      y = radius * p.sin(phi + 0.1) * p.sin(0);
-      z = radius * p.cos(phi + 0.1);
-      p.vertex(x, y, z);
-    }
-    p.endShape();
   },
 
   // This function is called once from the html script in the p.setup() function.
@@ -264,12 +236,12 @@ Stewart.prototype = {
         p.push()
         p.stroke(238,130,238)
         p.translate(laserPlatformEdge.x, 0);
-        p.line(0, 0, wallDistance-laserPlatformEdge.x, 0);
+        p.line(0, 0, wallDistance - laserPlatformEdge.x + this.laser.extraLaserLength, 0);
         p.pop()
 
         // Draw line to center of rotation
         p.push()
-        p.stroke(255,0,0)
+        p.stroke(0,0,0)
         p.line(0, 0, -rotationAxisOffset, 0);
         p.pop()        
 
@@ -283,11 +255,13 @@ Stewart.prototype = {
       },
       drawWall: function(p) {
 
-        // Drawing spherical wall
+        // Drawing wall
         p.push()
-        p.translate(-rotationAxisOffset,0,this.T0[2])
+        p.fill(221,216,187)
+        p.translate(wallDistance+1,0,this.T0[2])
         p.rotateY(p.PI/2)
-        this.drawPartialSphere(p, (rotationAxisOffset+wallDistance + 1), 0, Math.PI/6, [221, 216, 187])
+        p.rectMode(p.CENTER)
+        p.rect(0,0,animation.drawingSize*1.5,animation.drawingSize*1.5)
         p.pop()
 
         // Drawing floor cube
@@ -411,12 +385,6 @@ Stewart.prototype = {
     // Using a return function to define the statements of draw, not necessary.
     return function(p) {
 
-      // Draw little black sphere to represent rotation axis
-      p.push()
-      p.fill((255,0,0))
-      p.translate(-this.rotationAxisOffset,0,this.T0[2])
-      p.sphere(2)
-      p.pop()
       // Base Frame
       drawFrame(p);
 
@@ -427,9 +395,8 @@ Stewart.prototype = {
 
       // Platform plate
       p.translate(this.translation[0], this.translation[1], this.translation[2] + this.T0[2]);
-      
       p.applyMatrix.apply(p, this.orientation.conjugate().toMatrix4());
-      
+
       this.drawPlatformPlate.call(this, p);
 
       // Platform Frame
@@ -502,7 +469,12 @@ Stewart.prototype = {
   // It's called by the function animation.update() from the animation object. And this function is called constantly because
   // it's located in the draw function in the main html script. 
   // Updates the position of the elements in the system, based on the translation and orientation calculated by the animation object.
-  update: function(translation, orientation) {
+  update: function(translation, orientation, laser) {
+
+    // Update laser length
+    this.laser.laserState = laser.laserState
+    this.laser.extraLaserLength = laser.extraLaserLength
+
 
     var hornLength = this.hornLength;
     var rodLength = this.rodLength;
@@ -562,7 +534,7 @@ Stewart.prototype = {
   // to work with a real prototype, since the only variable we are going to enter to the servos is the value of their rotation.
   // This calculates each of the angles the servos have to rotate to accomplish a specific position of the horn edge (H), 
   // using basic trigonometric functions described in the paper.
-  getServoAngles: function(translation) {
+  getServoAngles: function() {
     var ret = [];
     for (var i = 0; i < this.B.length; i++) {
       ret[i] = Math.asin((this.H[i][2] - this.B[i][2]) / this.hornLength);
@@ -575,15 +547,25 @@ Stewart.prototype = {
       }
     }
  
-    if (translation[3] === 1) {
+    if (this.laser.laserState === 1) {
       ret.push(1)
     }
     else {
       ret.push(0)
     }
-    //ret.push(this.translation[2])
-    
+
+    // //to divide all angles in 2
+    // let dividedArr = ret.map((element, index) => {
+    //   if (index === ret.length - 1) {
+    //       return element; // Keep the last element as it is
+    //   } else {
+    //       return element / 2; // Divide other elements by 2
+    //   }
+    // });
+  
+    // console.log(ret)
     return ret;
+    // return dividedArr
   }
 };
 

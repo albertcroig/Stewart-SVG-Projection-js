@@ -53,7 +53,6 @@ function parseSVGPath(str) {
       case 'M':
         var y = +p.shift();
         var z = +p.shift();
-        //console.log(z)
         if (isRelative) {
           cur.y += y;
           cur.z += z;
@@ -297,7 +296,6 @@ function parseSVGPath(str) {
         throw new Error('Invalid SVG command ' + cmd);
     }
   }
-  //console.log(segments)
   return segments;
 }
 
@@ -313,16 +311,17 @@ function Animation(platform) {
   // Quaternion.ONE is an identity quaternion, indicating no rotation
   this.orientation = Quaternion.ONE;
 
-  // 'this.translation' is a 4-element array representing the translation of the animation in x, y, and z directions. The fourht element represents the state of the laser (1-on, 2-off)
-  this.translation = [0, 0, 0, 0];
+  // 'this.translation' is a 3-element array representing the translation of the animation in x, y, and z directions. The fourht element represents the state of the laser (1-on, 2-off)
+  this.translation = [0, 0, 0];
 
+  this.laser = {laserState: 0, extraLaserLength: 0}
 
   this.drawingSize = 300 // Size of the drawing that will be projected onto the wall (300mmx300mm)
   this.drawingSpeed = 0.1 // Speed of animation (10 units per sec)
 
   this.currentPathPos = [0, 0, 0, 0] // 2D Array of length 4 that stores the drawing path of the animation, used for drawing the path as the animation progresses.
   this.currentPath = [[],[],[],[]]
-  this.realDraw = false
+  this.realDraw = true
   this.stopDrawingPath = false // Boolean variable 
 }
 
@@ -376,7 +375,6 @@ Animation.SVG = function(svg, box, size, speed) {
     // Switch statement to perform certain actions based on command name
     switch (s.cmd) {
       case 'move':
-        //console.log(cur.z)
         move(H, cur.y, cur.z);
         move(H, s.y, s.z);
         move(L, s.y, s.z);
@@ -472,37 +470,40 @@ Animation.Interpolate = function(data, svgPath, box) {
 
   // Get desired y and z coordinates and calculate rotation and translation needed to accomplish them into wall projection
   const calculateMovements = function(x, y, z) {
-    let rotationAxisOffset = platform.rotationAxisOffset
-    let wallDistance = platform.wallDistance
+    let rotationAxisOffset = platform.rotationAxisOffset;
+    let wallDistance = platform.wallDistance;
 
-    let movements = {}
-    let theta, beta
-    let xTrans, yTrans, zTrans
+    let movements = {};
+    let alpha, beta;
+    let xTrans, yTrans, zTrans;
 
-    theta = -Math.asin(z/(rotationAxisOffset + wallDistance))
-    beta = Math.asin(y/(rotationAxisOffset + wallDistance))
+    alpha = Math.atan(y / (rotationAxisOffset + wallDistance));
+    beta = Math.atan(-z / (rotationAxisOffset + wallDistance));
 
-    let laserState = x !== 0 ? 0 : 1
+    let laserState = x !== 0 ? 0 : 1;
+    let extraLaserLength = (rotationAxisOffset + wallDistance) / (Math.cos(alpha) * Math.cos(beta)) - rotationAxisOffset - wallDistance
 
-    xTrans = -(rotationAxisOffset - rotationAxisOffset * Math.cos(theta) * Math.cos(beta))
-    yTrans = rotationAxisOffset * Math.sin(beta)
-    zTrans = -rotationAxisOffset * Math.sin(theta)
-  
+
+    xTrans = -(rotationAxisOffset - rotationAxisOffset * Math.cos(alpha) * Math.cos(beta));
+    yTrans = rotationAxisOffset * Math.sin(alpha);
+    zTrans = -rotationAxisOffset * Math.sin(beta);
+
     movements = {
       x: xTrans,
       y: yTrans,
       z: zTrans,
-      theta: theta,
+      alpha: alpha,
       beta: beta,
-      laserState: laserState
-    }
-    return movements
-  }
+      laserState: laserState,
+      extraLaserLength: extraLaserLength
+    };
+    return movements;
+  };
 
   // Find required position knowing its desired position and its current position, interpolating with scale for smoothness.
   const interpolateWithPrevious = function(previous, desired, scale) {
-    return previous + (desired - previous) * scale
-  }
+    return previous + (desired - previous) * scale;
+  };
 
   var duration = 0; // Initialize duration variable to 0
   for (var i = 1; i < data.length; i++) {  // Add all the durations of the whole animation steps together
@@ -511,61 +512,36 @@ Animation.Interpolate = function(data, svgPath, box) {
 
   return {   // Return the normalized object for animation.
     duration: duration,
-    svg: {svgPath, box},
+    svg: { svgPath, box },
     path: function(pct, addToCurrentPath) {
-
-      const xValue = function(movement) {
-        return (platform.rotationAxisOffset + platform.wallDistance) * (Math.cos(movement.theta) * Math.cos(movement.beta)) - platform.rotationAxisOffset
-      }
 
       var pctStart = 0;  // Variable for starting progress of animation (initialize to 0%)
       for (var i = 1; i < data.length; i++) {  // For every step of the animation
 
         var p = data[i];  // from now on p = current step of animation
         var pctEnd = pctStart + p.t / duration; // calculate the percentage of animation transcurred up until this step
-
         if (pctStart <= pct && pct < pctEnd) {  // Execute code below only for step in selected pct (percentage) range.
-          //console.log(pctStart)
           var scale = (pct - pctStart) / (pctEnd - pctStart); // Variable scale to calculate how far the animation is in selected step. (0 to 1)
           var prev = i === 0 ? data[0] : data[i - 1];  // Previous step, if i = 0 (meaning first step of animation), previous step is same step, otherwise its i-1
 
           // Calculate movements and previous movements according to distance to wall and rotation axis offset.
-          var movements = calculateMovements(p.x, p.y, p.z)
-          var prevMovements = calculateMovements(prev.x, prev.y, prev.z)
+          var movements = calculateMovements(p.x, p.y, p.z);
 
-          if (!this.stopDrawingPath && addToCurrentPath) {
-            this.currentPath[0].push(interpolateWithPrevious(xValue(prevMovements), xValue(movements), scale))                    
-            this.currentPath[1].push(interpolateWithPrevious(prev.y, p.y, scale))
-            this.currentPath[2].push(interpolateWithPrevious(prev.z, p.z, scale))
-            this.currentPath[3].push(movements.laserState)
+          if (!this.stopDrawingPath && addToCurrentPath) {                  
+            this.currentPath[1].push(interpolateWithPrevious(prev.y, p.y, scale));
+            this.currentPath[2].push(interpolateWithPrevious(prev.z, p.z, scale));
+            this.currentPath[3].push(movements.laserState);
           }
-    
-          this.currentPathPos[0] = (interpolateWithPrevious(xValue(prevMovements), xValue(movements), scale))                    
-          this.currentPathPos[1] = (interpolateWithPrevious(prev.y, p.y, scale))
-          this.currentPathPos[2] = (interpolateWithPrevious(prev.z, p.z, scale))
-          this.currentPathPos[3] = (movements.laserState)
-    
+
+          this.currentPathPos[1] = (interpolateWithPrevious(prev.y, p.y, scale));
+          this.currentPathPos[2] = (interpolateWithPrevious(prev.z, p.z, scale));
+          this.currentPathPos[3] = (movements.laserState);
+
           return; // Once the if condition is true, there is no need to continue with the loop, so return.
         }
         pctStart = pctEnd; // Assign the start pct to the end pct for continuing the loop.
       }
-
-      // Set to last element in chain, that isn't considered on the for loop.
-      var lastMovements = calculateMovements(data[data.length-1].x, data[data.length-1].y, data[data.length-1].z)
-
-      if (!this.stopDrawingPath && addToCurrentPath) {
-        this.currentPath[0].push(xValue(lastMovements))
-        this.currentPath[1].push(data[data.length-1].y)
-        this.currentPath[2].push(data[data.length-1].z)
-        this.currentPath[3].push(lastMovements.laserState)
-      }
-
-      this.currentPathPos[0] = (xValue(lastMovements))
-      this.currentPathPos[1] = (data[data.length-1].y)
-      this.currentPathPos[2] = (data[data.length-1].z)
-      this.currentPathPos[3] = (lastMovements.laserState)
-
-    },    
+    },
     fn: function(pct) {
 
       var pctStart = 0;  // Variable for starting progress of animation (initialize to 0%)
@@ -576,38 +552,58 @@ Animation.Interpolate = function(data, svgPath, box) {
         var pctEnd = pctStart + p.t / duration; // calculate the percentage of animation transcurred up until this step
 
         if (pctStart <= pct && pct < pctEnd) {  // Execute code below only for step in selected pct (percentage) range.
-          //console.log(pctStart)
           var scale = (pct - pctStart) / (pctEnd - pctStart); // Variable scale to calculate how far the animation is in selected step. (0 to 1)
           var prev = i === 0 ? data[0] : data[i - 1];  // Previous step, if i = 0 (meaning first step of animation), previous step is same step, otherwise its i-1
 
           // Calculate movements and previous movements according to distance to wall and rotation axis offset.
-          var movements = calculateMovements(p.x, p.y, p.z)
-          var prevMovements = calculateMovements(prev.x, prev.y, prev.z)
+          var movements = calculateMovements(p.x, p.y, p.z);
+          var prevMovements = calculateMovements(prev.x, prev.y, prev.z);
 
           // Set the new location with previous' step location + its difference multiplied by completion progress of step.
-          this.translation[0] = interpolateWithPrevious(prevMovements.x, movements.x, scale)
-          this.translation[1] = interpolateWithPrevious(prevMovements.y, movements.y, scale)
-          this.translation[2] = interpolateWithPrevious(prevMovements.z, movements.z, scale)
-          this.translation[3] = movements.laserState;
+          this.translation[0] = interpolateWithPrevious(prevMovements.x, movements.x, scale);
+          this.translation[1] = interpolateWithPrevious(prevMovements.y, movements.y, scale);
+          this.translation[2] = interpolateWithPrevious(prevMovements.z, movements.z, scale);
+          
+          // this.translation[0] = movements.x;
+          // this.translation[1] = movements.y;
+          // this.translation[2] = movements.z;
       
-          this.orientation = Quaternion.fromAxisAngle([0, 1, 0], prevMovements.theta + (movements.theta - prevMovements.theta) * scale).mul(Quaternion.fromAxisAngle([0, 0, 1], prevMovements.beta + (movements.beta - prevMovements.beta) * scale))
+          // // Interpolate the rotation angles
+          // let interpolatedBeta = interpolateWithPrevious(prevMovements.beta, movements.beta, scale);
+          // let interpolatedAlpha = interpolateWithPrevious(prevMovements.alpha, movements.alpha, scale);
+
+          // // Create quaternions for the interpolated rotations
+          // let rotationY = Quaternion.fromAxisAngle([0, 1, 0], interpolatedBeta);
+          // let rotationZ = Quaternion.fromAxisAngle([0, 0, 1], interpolatedAlpha);
+
+          // Create quaternions for the interpolated rotations
+          let prevRotationY = Quaternion.fromAxisAngle([0, 1, 0], prevMovements.beta).normalize()
+          let currentRotationY = Quaternion.fromAxisAngle([0, 1, 0], movements.beta).normalize()
+          let slerpFunctionY = prevRotationY.slerp(currentRotationY)
+          let rotationY = slerpFunctionY(scale)
+
+          let prevRotationZ = Quaternion.fromAxisAngle([0, 0, 1], prevMovements.alpha).normalize()
+          let currentRotationZ = Quaternion.fromAxisAngle([0, 0, 1], movements.alpha).normalize()
+          let slerpFunctionZ = prevRotationZ.slerp(currentRotationZ)
+          let rotationZ = slerpFunctionZ(scale)
+
+          // Combine the rotations
+          this.orientation = rotationY.mul(rotationZ);
+          // this.orientation = currentRotationY.mul(currentRotationZ);
+
+          this.laser = {
+            laserState: movements.laserState,
+            extraLaserLength: interpolateWithPrevious(prevMovements.extraLaserLength, movements.extraLaserLength, scale)
+          };
+
           return; // Once the if condition is true, there is no need to continue with the loop, so return.
         }
         pctStart = pctEnd; // Assign the start pct to the end pct for continuing the loop.
       }
-
-      // Set to last element in chain, that isn't considered on the for loop.
-      var lastMovements = calculateMovements(data[data.length-1].x, data[data.length-1].y, data[data.length-1].z)
-
-      // For movements
-      this.translation[0] = lastMovements.x;
-      this.translation[1] = lastMovements.y;
-      this.translation[2] = lastMovements.z;
-      this.translation[3] = lastMovements.laserState;
-      this.orientation = Quaternion.fromAxisAngle([0, 1, 0], lastMovements.theta).mul(Quaternion.fromAxisAngle([0, 0, 1], lastMovements.beta))
     },
   };
 };
+
 
 // We use prototype in order to add methods that intrinsically belong to an object.
 // We define this methods ONCE inside the prototype, and every instance of an object will check the prototype
@@ -622,7 +618,7 @@ Animation.prototype = {
   orientation: null,
   pathVisible: true,  // Initialize visible path to true, then it can change depending on user's interaction.
   
-  downloadServoAngles: function(data, originalValues, removeRedundant) {
+  downloadServoAngles: function(data, options) {
 
     const calibrationData = {
       middlePos: [305, 313, 297, 313, 303, 317],
@@ -632,63 +628,59 @@ Animation.prototype = {
     
     function adaptDataArduino(rawData) {
 
-      let dataToAdapt = cloneArray(rawData)
       // Apply mathematical operations to map servo angles into real-life servo arduino angles  
-      for (let i = 0; i < dataToAdapt.length; i++) {
-        for (let j = 0; j < dataToAdapt[i].length; j++) {
+      for (let i = 0; i < rawData.length; i++) {
+        for (let j = 0; j < rawData[i].length; j++) {
           if (j !== 6) {
             if (calibrationData.direction[j] === -1) {
-              dataToAdapt[i][j] = Math.floor(calibrationData.middlePos[j] -1 * dataToAdapt[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
+              rawData[i][j] = Math.floor(calibrationData.middlePos[j] -1 * rawData[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
             }
             else {
-              dataToAdapt[i][j] = Math.ceil(calibrationData.middlePos[j] + dataToAdapt[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
+              rawData[i][j] = Math.ceil(calibrationData.middlePos[j] + rawData[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
             }
           }
         }
       }
 
       // Copy first row and set laser value to zero specified number of times to avoid beginning laser activation
-      const zerosBeginning = 3
 
-      dataToAdapt.unshift(dataToAdapt[0])
-      originalAngles.unshift(originalAngles[0])
-
-      for (let i = 0; i < zerosBeginning; i++) {
-        dataToAdapt[i][6] = 0
-        originalAngles[i][6] = 0
-        if (i === 0) {
-          dataToAdapt.shift()
-        }
+      for (let i = 0; i < options.leadingZeros; i++) {
+        rawData.unshift([...rawData[0]])
+        originalAngles.unshift([...originalAngles[0]])
+        rawData[0][6] = 0
+        originalAngles[0][6] = 0
       }
 
+      rawData[options.leadingZeros][6] = 1
+      originalAngles[options.leadingZeros][6] = 1
+
       // Remove redundant rows if option is checked (duplicates and when laser activation is off)
-      if (removeRedundant) {
+      if (options.removeRedundant) {
         const indexesToRemove = []
-        for (let i = 0; i < dataToAdapt.length-1; i++) {
-          if (i < 0 || i > zerosBeginning) {
-            if (dataToAdapt[i][6] == 0) {
-              let zerosToKeep = 6// Should be an even number
-              for (let j = 1; j <= Math.round(zerosToKeep/2); j++) {
-                if (dataToAdapt[i + j][6] === 0 && dataToAdapt[i - j][6] === 0) {
-                  if (j === Math.round(zerosToKeep/2)) indexesToRemove.push(i)
+        for (let i = 0; i < rawData.length-1; i++) {
+          if (i < 0 || i > options.leadingZeros) {
+            if (rawData[i][6] == 0) {
+              for (let j = 1; j <= Math.round(options.zerosToKeep/2); j++) {
+                if (rawData[i + j][6] === 0 && rawData[i - j][6] === 0) {
+                  if (j === Math.round(options.zerosToKeep/2)) indexesToRemove.push(i)
                 }
                 else {
                   break
                 }
               }
             }
-            else if (dataToAdapt[i].every((value, index) => value === dataToAdapt[i-1][index])) {
+            else if (rawData[i].every((value, index) => value === rawData[i-1][index])) {
               indexesToRemove.push(i)
             }
 
           }
         }
-        dataToAdapt = dataToAdapt.filter((_, index) => !indexesToRemove.includes(index))
+        rawData = rawData.filter((_, index) => !indexesToRemove.includes(index))
         originalAngles = originalAngles.filter((_, index) => !indexesToRemove.includes(index))
         console.log(indexesToRemove.length + ' redundant rows removed.')
       }
 
-      return dataToAdapt
+      return rawData
     }
 
     function addHeaderAndSteps(myData, isAdapted) {
@@ -773,21 +765,18 @@ Animation.prototype = {
     data.splice(0, indexToCut + 1)
 
     // For the laser on/off, we offset the value *one step* so that it gets turned off later.
-    // let activationArr = []
-    // for (let i = 0; i < data.length; i++) {
-    //   if (i === 0) {
-    //     activationArr.push(0)
-    //   }
-    //   else if (i === 1) {
-    //     activationArr.push(data[i][6])
-    //   }
-    //   else {
-    //     activationArr.push(data[i][6])
-    //   }
-    // }
-    // for (let i = 0; i < data.length; i++) {
-    //   data[i][6] = activationArr[i]
-    // }
+    let activationArr = []
+    for (let i = 0; i < data.length; i++) {
+      if (i === 0) {
+        activationArr.push(0)
+      }
+      else {
+        activationArr.push(data[i-1][6])
+      }
+    }
+    for (let i = 0; i < data.length; i++) {
+      data[i][6] = activationArr[i]
+    }
     
     // Copy last row and set laser value to zero
     data.push([...data[data.length - 1]]);
@@ -799,11 +788,18 @@ Animation.prototype = {
       originalAngles[i] = data[i].slice();
     }
 
-    if (!originalValues) {
+   
+    if (!options.originalValues) {
       data = adaptDataArduino(data)
+      let newData = cloneArray(data)
+      addHeaderAndSteps(newData, !options.originalValues);
+      performDownload(newData, !options.originalValues)
     }
-    addHeaderAndSteps(data, !originalValues);
-    performDownload(data, !originalValues)
+    else {
+      addHeaderAndSteps(data, !options.originalValues);
+      performDownload(data, !options.originalValues)
+    }
+
   },
 
   // Draws a red line from the origin of the platform throughout the animation path. 
@@ -817,17 +813,17 @@ Animation.prototype = {
       p.beginShape();         // Tell the program I want to draw a shape with some vertices
       p.noFill();             // Background of shape transparent
       p.stroke(255, 0, 0);    // Contour of shape color red
-      // console.log(pathArr)
-      for (let i=0; i < pathArr[0].length; i++) {
+
+      for (let i=0; i < pathArr[1].length; i++) {
 
         if (pathArr[3][i-1] !== 0) {
           if (isShapeBeginning) {
             p.beginShape();
             if (prevVertex) {
-              p.vertex(pathArr[0][i-1], pathArr[1][i-1], pathArr[2][i-1] + platform.T0[2])
+              p.vertex(platform.wallDistance, pathArr[1][i-1], pathArr[2][i-1] + platform.T0[2])
             }
           }
-          p.vertex(pathArr[0][i], pathArr[1][i], pathArr[2][i] + platform.T0[2])
+          p.vertex(platform.wallDistance, pathArr[1][i], pathArr[2][i] + platform.T0[2])
           isShapeBeginning = false
         }
         else {
@@ -843,7 +839,7 @@ Animation.prototype = {
     }
     else {
       let drawingPath = [[],[],[],[]]
-      const steps = 400
+      const steps = 700
       for (var i = 0; i <= steps; i++) {  // For every vertex, define its position
           this.cur.path.call(this, i / steps, false); 
           drawingPath[0].push(this.currentPathPos[0])
@@ -884,17 +880,16 @@ Animation.prototype = {
     // by much of a difference. So adjust it to 1 and then make corresponding adjustments.
     if (elapsed > 1) {
       elapsed = 1
-      this.stopDrawingPath = true
     }
 
     // Call fn function inside animation object to update this.translation and this.orientation, passing
     // as argument the elapsed variable.
     // Info on call() method: https://www.w3schools.com/js/js_function_call.asp
-    this.cur.fn.call(this, elapsed, p);
-    this.cur.path.call(this, elapsed, p)
+    this.cur.fn.call(this, elapsed);
+    this.cur.path.call(this, elapsed, true)
 
     // Update platform position calling update function and passing on new position and orientation.
-    this.platform.update(this.translation, this.orientation);
+    this.platform.update(this.translation, this.orientation, this.laser);
     
   }
 };
