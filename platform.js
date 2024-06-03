@@ -241,7 +241,7 @@ Stewart.prototype = {
 
         // Draw line to center of rotation
         p.push()
-        p.stroke(255,0,0)
+        p.stroke(0,0,0)
         p.line(0, 0, -rotationAxisOffset, 0);
         p.pop()        
 
@@ -384,13 +384,6 @@ Stewart.prototype = {
 
     // Using a return function to define the statements of draw, not necessary.
     return function(p) {
-
-      // Draw little black sphere to represent rotation axis
-      p.push()
-      p.fill((255,0,0))
-      p.translate(-this.rotationAxisOffset,0,this.T0[2])
-      p.sphere(2)
-      p.pop()
 
       // Base Frame
       drawFrame(p);
