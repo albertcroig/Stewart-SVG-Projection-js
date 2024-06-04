@@ -189,12 +189,14 @@ The following next option is located inside the `drawPath` function in the `Anim
 
 The following options are located inside the `getAnimationAnglesBtn` click event in the main.js script.
 
+- **steps**: Number of steps to calculate. More steps increase precision (up to a limit). Default=2600 with "remove redundant" option, 2050 without.
+
 - **calibrationData**: Each servo has its own calibration values that have to be found in a real life test. Modify the arrays of this object according to your platform servos. Each position of the elements in the array corresponds to the servo number.
   - **middlePos**: 
   - **amplitude**:
   - **direction**: What is considered positive angles. In this case, it should remain the same for everyone because it is hard coded like that, where the uneven indexes have a mirrored rotation value. Default=[1, -1, 1, -1, 1, -1]
 
-- **steps**: Number of steps to calculate. More steps increase precision (up to a limit). Default=2600 with "remove redundant" option, 2050 without.
+- **addDigitalOut**: Add a first column for the digital output for more customization, with all values as default 0x0. Default=true
 
 When remove redundant rows option is checked and original values unchecked, there are two extra options for better laser control. These are necessary due to the imperfections of the laser activation. It's a way to avoid undesired laser activation.
 - **leadingZeros**: Add steps in the beginning preventing laser from activating before we want it to. Default=10
@@ -203,7 +205,7 @@ When remove redundant rows option is checked and original values unchecked, ther
 ## Mathematical Description and Code Implementation
 
 ### Inverse Kinematics
-The mathematical calculations utilized in this project are extensively detailed in Robert Eisele's paper on [Inverse Kinematics of a Stewart Platform](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/). It is highly recommended to review this resource before proceeding. Inverse kinematics is used to determine the necessary servo angles to achieve a desired platform **position** and **orientation** by solving the equations that describe the platform's geometry.
+The mathematical calculations utilized in this project to achieve the inverse kinematics are extensively detailed in [Robert Eisele's paper](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/). It is highly recommended to review this resource before proceeding. Inverse kinematics is used to determine the necessary servo angles to achieve a desired platform **position** and **orientation** by solving the equations that describe the platform's geometry.
 
 ### The Problem
 *The challenge is to determine how the platform must rotate and translate to project an SVG image onto the wall.*
@@ -271,6 +273,8 @@ With these angles, the values of $x_2$, $x_2$ and $x_2$ can be found using the t
 $x_2 = f - f \cdot \cos(\alpha) \cdot \cos(\beta)$\
 $y_2 = f \cdot \sin(\alpha)$\
 $z_2 = f \cdot \sin(\beta)$
+
+The point for the platform to translate to will be $(-x_2,y_2,-z_2)$
 
 Finally, the laser length extension $L$ is calculated using:
 
