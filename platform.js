@@ -118,12 +118,12 @@ Stewart.prototype = {
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_operator
     var platformTurn = opts.platformTurn === undefined ? false : opts.platformTurn;
 
-    var rodLength = opts.rodLength || 130;          // 13 cm length of the rod connected to servo
+    var rodLength = opts.rodLength || 135;          // 13 cm length of the rod connected to servo
     var hornLength = opts.hornLength || 40;         // 4 cm length of servo
     var hornDirection = opts.hornDirection || 0;    // 0 beta angle of servo
 
-    var shaftDistance = opts.shaftDistance || 45/2;   // 4.5cm Distance between servos fixing points on base on each side
-    var anchorDistance = opts.anchorDistance || 45/2; // 4cm Distance between servos fixing points on platform on each side
+    var shaftDistance = opts.shaftDistance || 40/2;   // 4cm Distance between servos fixing points on base on each side
+    var anchorDistance = opts.anchorDistance || 45/2; // 4.5cm Distance between servos fixing points on platform on each side
 
     // Generate points for the hexagonal base plate and platform plate
     var baseInts = getHexPlate(baseRadius, baseRadiusOuter, 0);  // Base vertices

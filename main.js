@@ -416,28 +416,30 @@ function setupPlatform() {
         const isOriginalAngles = document.getElementById('animationAnglesType');
         const isRemoveRedundant = document.getElementById('redundantRowsCheckbox')
 
-        const calibrationData = {
-            middlePos: [305, 313, 297, 313, 303, 317],
-            amplitude: [186, 186, 186, 186, 186, 186],
-            direction: [1, -1, 1, -1, 1, -1]
-        }
-
         // Options for servo angles text file download
         const options = {
+            steps: {
+              original: 52,   // Number of steps when remove redundant rows is not activated, and for original angles
+              withRemoveRedundant: 2600 // Number of steps when remove redundant rows is activated, and adapted angles
+            },
             originalValues: isOriginalAngles.checked,
             // Options for adapted arduino angles
-            calibrationData: calibrationData,
+            calibrationData: {
+              middlePos: [381, 395, 379, 396, 382, 404],
+              amplitude: [234, 234, 234, 234, 234, 234],
+              direction: [1, -1, 1, -1, 1, -1]
+            },
+            addDigitalOut: false, // Add column in the beginning with digital output value, as a prevision for more customization.
             removeRedundant: isRemoveRedundant.checked,
             leadingZeros: 10, // Zeros at the beginning for laser activation.
-            zerosToKeep: 12 // Zeros to keep between laser movements from one shape to another. Minimum 2. Should be an even number.
+            zerosToKeep: 12, // Zeros to keep between laser movements from one shape to another. Minimum 2. Should be an even number.
         }
 
-        const steps = (isRemoveRedundant.checked && !isOriginalAngles.checked ? 2600 + options.leadingZeros + options.zerosToKeep * 5 : 2050)
+        const steps = (isRemoveRedundant.checked && !isOriginalAngles.checked ? options.steps.withRemoveRedundant + options.leadingZeros + options.zerosToKeep * 5 : options.steps.original)
         const servoAngles = getAnglesOfCurrentAnimation(steps, animation.drawingSize)
         const servos = cloneArray(servoAngles)
 
         downloadServoAngles(servos, options)
-
     })
 
     function downloadServoAngles(data, options) {
@@ -460,19 +462,19 @@ function setupPlatform() {
             }
           }
     
-          // Copy first row and set laser value to zero specified number of times to avoid beginning laser activation
-          for (let i = 0; i < options.leadingZeros; i++) {
-            rawData.unshift([...rawData[0]])
-            originalAngles.unshift([...originalAngles[0]])
-            rawData[0][6] = 0
-            originalAngles[0][6] = 0
-          }
-    
-          rawData[options.leadingZeros][6] = 1
-          originalAngles[options.leadingZeros][6] = 1
-    
           // Remove redundant rows if option is checked (duplicates and when laser activation is off)
           if (options.removeRedundant) {
+
+            // Copy first row and set laser value to zero specified number of times to avoid beginning laser activation
+            for (let i = 0; i < options.leadingZeros; i++) {
+              rawData.unshift([...rawData[0]])
+              originalAngles.unshift([...originalAngles[0]])
+              rawData[0][6] = 0
+              originalAngles[0][6] = 0
+            }
+            rawData[options.leadingZeros][6] = 1
+            originalAngles[options.leadingZeros][6] = 1
+
             const indexesToRemove = []
             for (let i = 0; i < rawData.length-1; i++) {
               if (i < 0 || i > options.leadingZeros) {
@@ -498,10 +500,12 @@ function setupPlatform() {
           }
     
           // Add column form digital_out, for now all 0x0, but is a prevision for future changes.
-          for (let i = 0; i < rawData.length; i++) {
-            rawData[i].unshift('0x0')
+          if (options.addDigitalOut) {
+            for (let i = 0; i < rawData.length; i++) {
+              rawData[i].unshift('0x0')
+            }
           }
-          console.log(rawData)
+
           return rawData
         }
     
@@ -509,12 +513,18 @@ function setupPlatform() {
           let header = []
     
           if (isAdapted) {
-            header = ['DigitalOut','DigitalIn (Laser)','Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Step', 'Original Angles']
-    
-            // Put laser column into second position
+            if (options.addDigitalOut) {
+              header = ['DigitalOut','DigitalIn (Laser)','Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Step', 'Original Angles']
+            }
+            else {
+              header = ['DigitalIn (Laser)','Servo 0', 'Servo 1', 'Servo 2', 'Servo 3', 'Servo 4', 'Servo 5', 'Step', 'Original Angles']
+            }
+            
+            // Put laser column into first/second position, depending on digitalout existence.
+            let laserColIndex = options.addDigitalOut ? 1 : 0;
             for (let i = 0; i < myData.length; i++) {
                 const laserColumn = myData[i].pop()
-                myData[i].splice(1, 0, laserColumn)
+                myData[i].splice(laserColIndex, 0, laserColumn)
             }
     
             // Add tab + closing bracket at the end of every row
