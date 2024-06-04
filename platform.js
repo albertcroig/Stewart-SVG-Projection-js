@@ -109,10 +109,10 @@ Stewart.prototype = {
       opts = {};
 
     // Define parameters for the hexagonal configuration
-    var baseRadius = opts.baseRadius || 196/2; // 10cm
+    var baseRadius = opts.baseRadius || 100.8; // 10cm
     var baseRadiusOuter = opts.baseRadiusOuter || 140; // 14cm
-    var platformRadius = opts.platformRadius || 221.64/2; // 221.64/2cm
-    var platformRadiusOuter = opts.platformRadiusOuter || 150.11/2; // 150.11/2cm
+    var platformRadius = opts.platformRadius || 107.1; // 221.64/2cm
+    var platformRadiusOuter = opts.platformRadiusOuter || 73; // 150.11/2cm
 
     // If opts.platformTurn is undefined, set platformTurn to true; otherwise, set it to the value of opts.platformTurn
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_operator
