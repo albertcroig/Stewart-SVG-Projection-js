@@ -330,11 +330,14 @@ function Animation(platform) {
 // The purpose of this function is to take an SVG path string and convert it into a series of 3D animation
 // steps. The animation steps are then returned for further use. Check parseSVGPath() at line 44 for parsing SVG path to individual
 // segments for animation. 
-Animation.SVG = function(svg, box, size, speed) {
+Animation.SVG = function(svgData, size, speed) {
 
   const PERSEC = speed;  
   const L = 0;         // Lower value for the x-coordinate
   const H = 10;    // Higher value for the x-coordinate
+
+  const svg = svgData.path
+  const box = svgData.box
 
   const SCREEN_SIZE = size;
 
@@ -460,13 +463,13 @@ Animation.SVG = function(svg, box, size, speed) {
     }
   }
 
-  return Animation.Interpolate(ret, svg, box);
+  return Animation.Interpolate(ret, svgData);
 };
 
 // This function is called by Animation.SVG function.
 // It creates the "normalized" animation type object that needs to be passed as argument to the _start function. This
 // takes as argument the array that stores the animation steps, created by the Animation.SVG function.
-Animation.Interpolate = function(data, svgPath, box) {
+Animation.Interpolate = function(data, svgData) {
 
   // Get desired y and z coordinates and calculate rotation and translation needed to accomplish them into wall projection
   const calculateMovements = function(x, y, z) {
@@ -512,7 +515,7 @@ Animation.Interpolate = function(data, svgPath, box) {
 
   return {   // Return the normalized object for animation.
     duration: duration,
-    svg: { svgPath, box },
+    svgData: svgData,
     path: function(pct, addToCurrentPath) {
 
       var pctStart = 0;  // Variable for starting progress of animation (initialize to 0%)

@@ -134,7 +134,7 @@ Stewart.prototype = {
     var servoRangeVisible = opts.servoRangeVisible === undefined ? false : opts.servoRangeVisible;
     
     // Offset of rotation axis and wall distance (from center of platform).
-    var rotationAxisOffset = (opts.rotationAxisOffset !== undefined) ? opts.rotationAxisOffset : 250;
+    var rotationAxisOffset = (opts.rotationAxisOffset !== undefined) ? opts.rotationAxisOffset : 150;
     
     var wallDistance = (opts.wallDistance !== undefined) ? opts.wallDistance : 820;
     var laserPlatformEdge = {};

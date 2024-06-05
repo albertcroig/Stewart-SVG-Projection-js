@@ -946,10 +946,10 @@ function drawTextToSVG(font) {
     textToDrawInput.value = ""
 
     const svgPath = createSVGPathFromHershey(inputValue, boundingBox, font)
-    //console.log(svgPath)
-    SVGS.push({path: svgPath, box: boundingBox})
+    const svgObject = {name: inputValue, path: svgPath, box: boundingBox}
+    SVGS.push(svgObject)
     createSVGImage(SVGS.length-1, $images, svgPath, boundingBox)
-    animation._start(Animation.SVG(svgPath, boundingBox, animation.drawingSize, animation.drawingSpeed))
+    animation._start(Animation.SVG(svgObject, animation.drawingSize, animation.drawingSpeed))
     animation.currentPath = [[],[],[],[]]
     animation.stopDrawingPath = false
 }
