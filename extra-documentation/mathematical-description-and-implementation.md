@@ -72,7 +72,7 @@ $x_2 = f - f \cdot \cos(\alpha) \cdot \cos(\beta)$\
 $y_2 = f \cdot \sin(\alpha)$\
 $z_2 = f \cdot \sin(\beta)$
 
-The point for the platform to translate to will be $(-x_2,y_2,-z_2)$
+As deduced from the graphical representation, the point for the platform to translate to will be $(-x_2,y_2,-z_2)$
 
 Finally, the laser length extension $L$ is calculated using:
 
@@ -84,12 +84,12 @@ $L = \frac{f + w}{\cos(\alpha) \cdot \cos(\beta)} - f - w$
 
 ### Code implementation
 
-With the values of each variable known, the final step is to implement this in our code. The pre-calculated $y_1$ and $z_1$ values (obtained from the `Animation.SVG` and `parseSVGPath` functions) are converted into the new translation and orientation values for the platform.
+With the values of each variable known, the final step is to implement this in our code. The pre-calculated $y_1$ and $z_1$ values (obtained from the `Animation.SVG` and `parseSVGPath` functions) have to be converted into the new translation and orientation values for the platform.
 
 The original `Animation.Interpolate` function, which interpolates through the points of the path to create a smooth transition between vertices and returns the normalized object to run the animation, was modified. The changes include:
 
 - Adding the `calculateMovements` function to implement the previously discussed equations and return the corresponding position and orientation values for the platform.
 - Implementing orientation interpolation, as the SVG plotter initially only used translation movements.
-- Adding a new `path` function to calculate the drawing path positions of the animation, both in real-time and for the end result.
+- Adding a new `path` function to calculate the drawing path positions of the animation. Both in real-time and for the end result. A very similar approach to the platform's translation calculation was used to get the drawing path.
 
 From there, the functionality of the code remains largely unchanged (with minor tweaks for additional features), where an orientation and translation are set, and the platform is updated with the corresponding values.
