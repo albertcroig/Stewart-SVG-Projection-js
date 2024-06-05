@@ -109,21 +109,21 @@ Stewart.prototype = {
       opts = {};
 
     // Define parameters for the hexagonal configuration
-    var baseRadius = opts.baseRadius || 196/2; // 10cm
+    var baseRadius = opts.baseRadius || 100.8; // 10cm
     var baseRadiusOuter = opts.baseRadiusOuter || 140; // 14cm
-    var platformRadius = opts.platformRadius || 221.64/2; // 221.64/2cm
-    var platformRadiusOuter = opts.platformRadiusOuter || 150.11/2; // 150.11/2cm
+    var platformRadius = opts.platformRadius || 107.1; // 221.64/2cm
+    var platformRadiusOuter = opts.platformRadiusOuter || 73; // 150.11/2cm
 
     // If opts.platformTurn is undefined, set platformTurn to true; otherwise, set it to the value of opts.platformTurn
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_operator
     var platformTurn = opts.platformTurn === undefined ? false : opts.platformTurn;
 
-    var rodLength = opts.rodLength || 130;          // 13 cm length of the rod connected to servo
+    var rodLength = opts.rodLength || 135;          // 13 cm length of the rod connected to servo
     var hornLength = opts.hornLength || 40;         // 4 cm length of servo
     var hornDirection = opts.hornDirection || 0;    // 0 beta angle of servo
 
-    var shaftDistance = opts.shaftDistance || 45/2;   // 4.5cm Distance between servos fixing points on base on each side
-    var anchorDistance = opts.anchorDistance || 45/2; // 4cm Distance between servos fixing points on platform on each side
+    var shaftDistance = opts.shaftDistance || 40/2;   // 4cm Distance between servos fixing points on base on each side
+    var anchorDistance = opts.anchorDistance || 45/2; // 4.5cm Distance between servos fixing points on platform on each side
 
     // Generate points for the hexagonal base plate and platform plate
     var baseInts = getHexPlate(baseRadius, baseRadiusOuter, 0);  // Base vertices
@@ -134,7 +134,7 @@ Stewart.prototype = {
     var servoRangeVisible = opts.servoRangeVisible === undefined ? false : opts.servoRangeVisible;
     
     // Offset of rotation axis and wall distance (from center of platform).
-    var rotationAxisOffset = (opts.rotationAxisOffset !== undefined) ? opts.rotationAxisOffset : 250;
+    var rotationAxisOffset = (opts.rotationAxisOffset !== undefined) ? opts.rotationAxisOffset : 150;
     
     var wallDistance = (opts.wallDistance !== undefined) ? opts.wallDistance : 820;
     var laserPlatformEdge = {};

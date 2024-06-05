@@ -11,7 +11,6 @@ Simulate the projection of drawing an SVG onto a wall with a laser attached to a
 - [Display](#display)
 - [Files and Organization](#files-and-organization)
 - [In-code Customization](#in-code-customization)
-- [Mathematical Description and Code Implementation](#mathematical-description-and-code-implementation)
 - [Contribution Guidelines](#contribution-guidelines)
 - [Issue Reporting](#issue-reporting)
 - [Acknowledgements](#acknowledgements)
@@ -32,7 +31,7 @@ The main goal is to have the laser attached to the platform draw shapes with spe
 3. Run the simulation to calculate the servo angles and steps. Download the resulting file with the data.
 4. Use the file with the servo angles on a real Stewart Platform to achieve the desired result.
 
-The primary modification to the source code is the SVG drawing feature. In Robert Eisele's library, an SVG plotter reads SVG paths and transforms them into a series of movements for the platform. However, it originally only drew shapes on the horizontal plane above the platform. To project SVGs onto the wall, several tweaks and implementations have been made.
+The primary modification to the source code is the SVG drawing feature. In Robert Eisele's library, an SVG plotter reads SVG paths and transforms them into a series of movements for the platform. However, it originally only drew shapes on the horizontal plane above the platform. To project SVGs onto the wall, several tweaks and implementations have been made. Check out the [mathematical description and code implementation]() to see how it was done.
 
 ## Installation
 Follow these steps to install and set up the project on your local machine.
@@ -164,7 +163,7 @@ Replace x0, y0, width, and height with the values of your SVG bounding box.
 The platform visualization is designed to draw in millimeters. The following options can be passed as an object into the `initHexagonal` function of the platform object. If no key is passed to the function, the default values will be chosen.
 
 + **wallDistance**: Distance from the origin to the wall's center. Default=820
-+ **rotationAxisOffset**: Distance from the origin to the platform's center of rotation. Default=250
++ **rotationAxisOffset**: Distance from the origin to the platform's center of rotation. The closer it is to the platform's coordinate origin, the larger the maximum size of the drawing. Default=150
 
 - **rodLength**: The length of the rod attached to the servo horn and the platform. Default=130
 - **hornLength**: The length of the servo horn attached to the motor shaft and the rod. Default=40
@@ -175,6 +174,8 @@ The platform visualization is designed to draw in millimeters. The following opt
 - **platformRadius + platformRadiusOuter**: When a hexagonal stewart platform is used, the `platformRadiusOuter` is used to draw the platform plate in accordance to the [description](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/).
 - **shaftDistance + ankerDistance**: Indicates the distance from the middle of a side to attach the rod ankers. Default=22.5
 - **platformTurn**: A boolean for hexagonal platforms to indicate if the platform shall look into the same direction as the base plate. Default=false
+
+If you want to take this to a real-life Stewart Platform, check out my pdf file about [real-life platform documentation]() to know further about how to measure the platform's dimensions.
 
 ### Animation Options
 Modify the following options in the animation.js file, within the animation object's constructor function:
@@ -189,108 +190,20 @@ The following next option is located inside the `drawPath` function in the `Anim
 
 The following options are located inside the `getAnimationAnglesBtn` click event in the main.js script.
 
+- **steps**: Number of steps to calculate. More steps increase precision (up to a limit). Default=2500 with "remove redundant" option, 2050 without.
+
 - **calibrationData**: Each servo has its own calibration values that have to be found in a real life test. Modify the arrays of this object according to your platform servos. Each position of the elements in the array corresponds to the servo number.
   - **middlePos**: 
   - **amplitude**:
   - **direction**: What is considered positive angles. In this case, it should remain the same for everyone because it is hard coded like that, where the uneven indexes have a mirrored rotation value. Default=[1, -1, 1, -1, 1, -1]
 
-- **steps**: Number of steps to calculate. More steps increase precision (up to a limit). Default=2600 with "remove redundant" option, 2050 without.
+Check out [my real-life platform documentation file]() to know further about the calibration data.
+
+- **addDigitalOut**: Add a first column for the digital output for more customization, with all values as default 0x0. Default=true
 
 When remove redundant rows option is checked and original values unchecked, there are two extra options for better laser control. These are necessary due to the imperfections of the laser activation. It's a way to avoid undesired laser activation.
 - **leadingZeros**: Add steps in the beginning preventing laser from activating before we want it to. Default=10
 - **zerosToKeep**: Keep steps where laser is off (when passing from an SVG closed path shape to another) preventing laser from activating in between. Should be an even number, minimum 2. Default=12
-
-## Mathematical Description and Code Implementation
-
-### Inverse Kinematics
-The mathematical calculations utilized in this project are extensively detailed in Robert Eisele's paper on [Inverse Kinematics of a Stewart Platform](https://raw.org/research/inverse-kinematics-of-a-stewart-platform/). It is highly recommended to review this resource before proceeding. Inverse kinematics is used to determine the necessary servo angles to achieve a desired platform **position** and **orientation** by solving the equations that describe the platform's geometry.
-
-### The Problem
-*The challenge is to determine how the platform must rotate and translate to project an SVG image onto the wall.*
-
-Initially, the SVG plotter configuration was as follows:
-
-<p align="center">
-  <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/starting-point.png?raw=true" width="400">
-</p>
-
-The desired outcome is:
-
-<p align="center">
-<img src="https://github.com/albertcroig/Stewart.js/blob/development/res/desired-result.png?raw=true" width="400">
-</p>  
-
-Given the desired projection size, wall distance, and rotation axis offset, the task is to determine the platform's movements to achieve this projection.
-
-### The Solution
-
-**Transpose to Vertical Plane, Translation Only**
-
-The first step was to make the SVG plot on the vertical plane without any projection, simply by changing the axes. Attaching a laser to the platform would allow it to draw the SVG onto the wall. However, the drawing size would be limited to the platform's translation range.
-
-By inspecting the code and SVG parsing functions, I found that swapping some values (changing "x" to "z", "y" to "x", and "z" to "y") and adding a negative sign to a specific equation transformed everything to the vertical plane.
-
-After adjusting the camera position and orientation, the result was:
-
-<p align="center">
-<img src="https://github.com/albertcroig/Stewart.js/blob/development/res/vertical-plane-translation.png?raw=true" width="400">
-</p>  
-
-It's important to note that the SVG drawing is now perpendicular to the "x" axis.
-
-**Calculate the Projection**
-
-With the position for the laser to draw the SVG shape established, the next step was to transform this position into the platform's new translation and rotation values.
-
-Using the platform's coordinate system, we can visualize the problem in both the y-x and x-z planes. The following diagram shows the platform in its zero position, the platform in its "desired position", its rotation axes and the wall.
-
-<p align="center">
-<img src="https://github.com/albertcroig/Stewart.js/blob/development/res/maths-1.png?raw=true" width="950">
-</p>  
-
-Given:
-- $y_1$: Distance of desired $y$ projection.
-- $z_1$: Distance of desired $z$ projection.
-- $w$: Distance to wall from coordinate origin.
-- $f$: Distance of the rotation axis offset.
-
-Find:
-- $α$: Angle to rotate around z axis.
-- $β$: Angle to rotate around y axis.
-- $x_2$: Distance of desired $x$ translation caused by rotations $α$ and $β$.
-- $y_2$: Distance of desired $y$ translation.
-- $z_2$: Distance of desired $z$ translation.
-- $L$: Laser length extension.  
-
-The angles $\alpha$ and $\beta$ can be determined using the trigonometric function $\tan \theta = \frac{\text{Opposite Side}}{\text{Adjacent Side}}$.
-
-$\alpha = \arcsin\left(\frac{y_1}{f + w}\right)$, $\beta = \arcsin\left(\frac{-z_1}{f + w}\right)$
-
-With these angles, the values of $x_2$, $x_2$ and $x_2$ can be found using the trigonometric functions $\cos \theta = \frac{\text{Adjacent Side}}{\text{Hypothenuse}}$ and $\sin \theta = \frac{\text{Opposite Side}}{\text{Hypothenuse}}$.
-
-$x_2 = f - f \cdot \cos(\alpha) \cdot \cos(\beta)$\
-$y_2 = f \cdot \sin(\alpha)$\
-$z_2 = f \cdot \sin(\beta)$
-
-Finally, the laser length extension $L$ is calculated using:
-
-$(L + f + w) \cdot \cos(\alpha) \cdot \cos(\beta) = f + w$
-
-Solving for $L$:
-
-$L = \frac{f + w}{\cos(\alpha) \cdot \cos(\beta)} - f - w$
-
-**Code implementation**
-
-With the values of each variable known, the final step is to implement this in our code. The pre-calculated $y_1$ and $z_1$ values (obtained from the `Animation.SVG` and `parseSVGPath` functions) are converted into the new translation and orientation values for the platform.
-
-The original `Animation.Interpolate` function, which interpolates through the points of the path to create a smooth transition between vertices and returns the normalized object to run the animation, was modified. The changes include:
-
-- Adding the `calculateMovements` function to implement the previously discussed equations and return the corresponding position and orientation values for the platform.
-- Implementing orientation interpolation, as the SVG plotter initially only used translation movements.
-- Adding a new `path` function to calculate the drawing path positions of the animation, both in real-time and for the end result.
-
-From there, the functionality of the code remains largely unchanged (with minor tweaks for additional features), where an orientation and translation are set, and the platform is updated with the corresponding values.
 
 ## Contribution Guidelines
 
@@ -302,6 +215,12 @@ I welcome contributions! Please follow these steps to contribute:
 4. Commit your changes (`git commit -m 'Add new feature'`).
 5. Push to the branch (`git push origin feature-branch`).
 6. Open a pull request.
+
+### Issues detected / Improvement ideas
+
+- More efficient way to calculate animation max size (With mathematics instead of recursive)
+- Center of rotation moves a bit (specially when the size of the drawing is large), probably cause of the interpolation. Center of rotation should be fixed in space.
+
 
 ## Issue Reporting
 
