@@ -468,7 +468,7 @@ function setupPlatform() {
               slope: [2.608, 2.608, 2.608, 2.608, 2.608, 2.608],
               direction: [1, -1, 1, -1, 1, -1]
             },
-            addDigitalOut: false, // Add column in the beginning with digital output value, as a prevision for more customization.
+            addDigitalOut: true, // Add column in the beginning with digital output value, as a prevision for more customization.
             removeRedundant: isRemoveRedundant.checked,
             leadingZeros: 14, // Zeros at the beginning for laser activation.
             zerosToKeep: 20, // Zeros to keep between laser movements from one shape to another. Minimum 2. Should be an even number.
@@ -495,15 +495,15 @@ function setupPlatform() {
                 const b = calibrationData.middlePos[j]
                 const m = calibrationData.slope[j]
                 if (calibrationData.direction[j] === -1) {
-                  rawData[i][j] = Math.floor(-angleDegrees * m + b)
+                  rawData[i][j] = Math.floor(-(angleDegrees) * m + b)
                 }
                 else {
-                  rawData[i][j] = Math.ceil(angleDegrees * m + b)
+                  rawData[i][j] = Math.ceil((angleDegrees) * m + b)
                 }
               }
             }
           }
-    
+          
           // Remove redundant rows if option is checked (duplicates and when laser activation is off)
           if (options.removeRedundant) {
 
@@ -581,7 +581,7 @@ function setupPlatform() {
             });
             
             // Add header to the data
-            myData.unshift([''],[''],calibrationData.middlePos, calibrationData.amplitude, calibrationData.direction, [''], ['----- Servo angles -----'], header);
+            myData.unshift([''],[''],calibrationData.middlePos, calibrationData.slope, calibrationData.direction, [''], ['----- Servo angles -----'], header);
         
           }
           else {
@@ -600,10 +600,9 @@ function setupPlatform() {
     
           // String manipulation for formatting
           if (isAdapted) {
-            let order = [' PWM Frequency: 60.0 Hz', ' Library: PCA9685', ' Middle pos:', ' Amplitude:', ' Direction:', '', '', '']
+            let order = [' PWM Frequency: 60.0 Hz', ' Library: PCA9685', ' Middle pos:', ' Slope:', ' Direction:', '', '', '']
             let headerText = '//\t ----- ' + 'Animation data' + ' -----\n// Name: ' + data.info.name + '\n// Distance to wall: ' + data.info.distanceToWall + ' mm\n// Rotation axis offset: ' + data.info.rotationAxisOffset + ' mm\n// Drawing size: ' + data.info.drawingSize + " mm x " + data.info.drawingSize + " mm\n// Number of steps: " + numberOfSteps + '\n//\n//\t ----- Calibration values -----'
             for (i=0; i < order.length; i++) {
-              console.table(tableToDownload)
               headerText += '\n//'+ order[i] +'\t' + tableToDownload.shift().join('\t,\t')
             }
             const bodyText = tableToDownload.map(row => row.join('\t,\t')).join('\n{')
