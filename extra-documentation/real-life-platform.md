@@ -56,7 +56,7 @@ The measurement of the rest of the platform's parameters is straightforward, as 
 However, here's a quick guide on how to measure them:
 
 <p align="center">
-  <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/measure-platform-params.jpg?raw=true" width="800">
+  <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/measure-platform-params.jpg?raw=true" width="500">
 </p>
 
 For detailed instructions on how to set these parameters in the code, refer to the platform options section in the [README](/README.md) file.
@@ -68,7 +68,7 @@ Servo motors do not recognize angles as an input; they are controlled through pu
 With a measuring tool and COSMOS software, every servo can be tested to obtain the function that relates both parameters. Here's an example of one of the servos:
 
 <p align="center">
-  <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/servo-pulse-to-angle-graph.jpg?raw=true" width="800">
+  <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/servo-pulse-to-angle-graph.jpg?raw=true" width="500">
 </p>
 
 We confirmed that the relationship is linear, and from these points, we extrapolated the function through linear regression.
@@ -91,7 +91,7 @@ Once we have the slope and the intercept, the final step is to calibrate the mid
 
 3) **Repeat for All Servos**: Perform the above steps for all servos.
 
-After determining the slope (m), intercept (b), and middle position pulse (mp) for each servo, input these values into the corresponding calibration object in your code. This ensures that the simulation accurately translates the angles into the correct pulse widths for the servos.
+After determining the slope, intercept, and middle position pulse for each servo, input these values into the corresponding calibration object in your code. This ensures that the simulation accurately translates the angles into the correct pulse widths for the servos.
 
 ## Issues that remain unsolved to this date
 
