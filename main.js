@@ -465,7 +465,7 @@ function setupPlatform() {
             // Options for adapted arduino angles
             calibrationData: {
               middlePos: [381, 395, 379, 396, 382, 404],
-              amplitude: [229, 234, 238, 225, 234, 239],
+              slope: [2.608, 2.608, 2.608, 2.608, 2.608, 2.608],
               direction: [1, -1, 1, -1, 1, -1]
             },
             addDigitalOut: false, // Add column in the beginning with digital output value, as a prevision for more customization.
@@ -491,11 +491,14 @@ function setupPlatform() {
           for (let i = 0; i < rawData.length; i++) {
             for (let j = 0; j < rawData[i].length; j++) {
               if (j !== 6) {
+                const angleDegrees = rawData[i][j] * 180 / Math.PI
+                const b = calibrationData.middlePos[j]
+                const m = calibrationData.slope[j]
                 if (calibrationData.direction[j] === -1) {
-                  rawData[i][j] = Math.floor(calibrationData.middlePos[j] -1 * rawData[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
+                  rawData[i][j] = Math.floor(-angleDegrees * m + b)
                 }
                 else {
-                  rawData[i][j] = Math.ceil(calibrationData.middlePos[j] + rawData[i][j] * calibrationData.amplitude[j] * 2 / Math.PI)
+                  rawData[i][j] = Math.ceil(angleDegrees * m + b)
                 }
               }
             }
@@ -538,13 +541,13 @@ function setupPlatform() {
             console.log(indexesToRemove.length + ' redundant rows removed.')
           }
     
-          // Add column form digital_out, for now all 0x0, but is a prevision for future changes.
+          // Add column for digital_out, for now all 0x0, but is a prevision for future changes.
           if (options.addDigitalOut) {
             for (let i = 0; i < rawData.length; i++) {
               rawData[i].unshift('0x0')
             }
           }
-
+          console.table(rawData)
           return rawData
         }
     
@@ -600,6 +603,7 @@ function setupPlatform() {
             let order = [' PWM Frequency: 60.0 Hz', ' Library: PCA9685', ' Middle pos:', ' Amplitude:', ' Direction:', '', '', '']
             let headerText = '//\t ----- ' + 'Animation data' + ' -----\n// Name: ' + data.info.name + '\n// Distance to wall: ' + data.info.distanceToWall + ' mm\n// Rotation axis offset: ' + data.info.rotationAxisOffset + ' mm\n// Drawing size: ' + data.info.drawingSize + " mm x " + data.info.drawingSize + " mm\n// Number of steps: " + numberOfSteps + '\n//\n//\t ----- Calibration values -----'
             for (i=0; i < order.length; i++) {
+              console.table(tableToDownload)
               headerText += '\n//'+ order[i] +'\t' + tableToDownload.shift().join('\t,\t')
             }
             const bodyText = tableToDownload.map(row => row.join('\t,\t')).join('\n{')
