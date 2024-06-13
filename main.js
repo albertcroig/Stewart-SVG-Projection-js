@@ -217,7 +217,7 @@ function setupPlatform() {
           box: { x: 0, y: 0, width: 512, height: 512 }
         },  {
           name: 'Square test',
-          path: "M 0,0 v 512 h 512 v -512 h -512 ",
+          path: "M 0,0 v 512 h 512 v -512 h -512 M 256 256 ",
           box: { x: 0, y: 0, width: 512, height: 512 }
         },  {
           name: 'Square inside square test',
