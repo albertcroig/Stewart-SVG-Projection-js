@@ -7,7 +7,7 @@ To achieve the expected results, we need two key things:
 - **Proper calibration of the servos:** This aligns their pulses with the actual angles.
 
 ## How to Correctly Measure the Platform's Parameters
-As described in the platform options section of the [README file](/README.md) file, several parameters are essential to the platform's integrity. In the software, these parameters virtually recreate the simplest version of the platform. However, for the real-life platform, it can be challenging to obtain accurate measurements.
+As described in the platform options section of the [README file](/README.md), several parameters are essential to the platform's integrity. In the software, these parameters virtually recreate the simplest version of the platform. However, for the real-life platform, it can be challenging to obtain accurate measurements.
 
 To understand the differences, refer to the following pictures showing a platform with the same dimensions both in real life and in the simulation:
 
