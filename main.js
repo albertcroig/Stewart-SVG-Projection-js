@@ -464,11 +464,11 @@ function setupPlatform() {
             originalValues: isOriginalAngles.checked,
             // Options for adapted arduino angles
             calibrationData: {
-              middlePos: [381, 395, 379, 396, 382, 404],
-              slope: [2.608, 2.608, 2.608, 2.608, 2.608, 2.608],
+              middlePos: [376, 383, 367, 426, 365, 392],
+              slope: [2.576, 2.496, 2.591, 2.532, 2.547, 2.543],
               direction: [1, -1, 1, -1, 1, -1]
             },
-            addDigitalOut: true, // Add column in the beginning with digital output value, as a prevision for more customization.
+            addDigitalOut: false, // Add column in the beginning with digital output value, as a prevision for more customization.
             removeRedundant: isRemoveRedundant.checked,
             leadingZeros: 14, // Zeros at the beginning for laser activation.
             zerosToKeep: 20, // Zeros to keep between laser movements from one shape to another. Minimum 2. Should be an even number.
@@ -495,7 +495,7 @@ function setupPlatform() {
                 const b = calibrationData.middlePos[j]
                 const m = calibrationData.slope[j]
                 if (calibrationData.direction[j] === -1) {
-                  rawData[i][j] = Math.floor(-(angleDegrees) * m + b)
+                  rawData[i][j] = Math.floor(-1 * (angleDegrees) * m + b)
                 }
                 else {
                   rawData[i][j] = Math.ceil((angleDegrees) * m + b)
