@@ -17,36 +17,46 @@
  */
 
 
-let selectedFont = 'sans1Stroke'
+// Initial font selection
+let selectedFont = 'sans1Stroke';
 
+// Get the font selector element and add an event listener to it
 const selectElement = document.getElementById("fontSelector");
 selectElement.addEventListener('change', function(event) {
-    selectedFont = event.target.value
-})
+    // Update the selected font when a new option is selected
+    selectedFont = event.target.value;
+});
 
-// When change parameters button is pressed execute this function to change parameters corresponding to inputs.
+// Add event listener to the button that changes parameters
 drawTextBtn.addEventListener('click', function() {
-    drawTextToSVG(selectedFont)
-})
+    // Call the function to draw text to SVG with the selected font
+    drawTextToSVG(selectedFont);
+});
 
-// When enter key is pressed inside of any of the input fields, also execute the function
+// Get the text input field and add event listeners for focus and blur
 var textToDrawInput = document.getElementById('textToDrawInput');
 
 textToDrawInput.addEventListener('focus', function() {
-    isInputFocused = true
+    // Set flag to true when input field is focused
+    isInputFocused = true;
 });     
 textToDrawInput.addEventListener('blur', function() {
-    isInputFocused = false
+    // Set flag to false when input field loses focus
+    isInputFocused = false;
 });
 
+// Add event listener for keydown events in the input field
 textToDrawInput.addEventListener('keydown', function(event) {
+    // Check if the pressed key is Enter (key code 13)
     if (event.keyCode === 13) {
-        drawTextToSVG(selectedFont)
+        // Call the function to draw text to SVG with the selected font
+        drawTextToSVG(selectedFont);
     }
 });
 
+// Function to create SVG path from Hershey font data
 function createSVGPathFromHershey(text, boundingBox, font) {
-
+    // Function to find the bounding box of a given SVG path
     function findBoundingBox(path) {
         const svgNamespace = "http://www.w3.org/2000/svg";
         const svgElement = document.createElementNS(svgNamespace, "svg");
@@ -57,11 +67,12 @@ function createSVGPathFromHershey(text, boundingBox, font) {
         pathElement.setAttribute("d", path);
         svgElement.appendChild(pathElement);
 
-        const bbox = pathElement.getBBox()
+        const bbox = pathElement.getBBox();
         svgElement.removeChild(pathElement);
-        return bbox
+        return bbox;
     }
 
+    // Array to store fonts as SVG path for each of the letters
     const fonts = {
         sans1Stroke: [
             {
@@ -829,80 +840,88 @@ function createSVGPathFromHershey(text, boundingBox, font) {
         ]
     }
 
+    // Array to store svg paths of each letter
     let svgPaths = []
 
+    // Loop through each character in the text
     for (i = 0; i < text.length; i++) {
-        
+        // Check if the character is a backslash
         if (text[i] === '\\') {
-            svgPaths.push({path: 'lineChange', separation: 0})
-        }
+            // Add a line change path with zero separation
+            svgPaths.push({path: 'lineChange', separation: 0});
+        } 
+        // Check if the character is a space
         else if (text[i] === ' ') {
-            svgPaths.push({path: 'M 0 10', separation: 6})
-        }
+            // Add a space path with a separation of 6 units
+            svgPaths.push({path: 'M 0 10', separation: 6});
+        } 
+        // For other characters
         else {
-            //console.log(fonts[font][text[i].charCodeAt(0)-33]['d'])
+            // Add the corresponding SVG path and separation based on the Hershey font data
             svgPaths.push({
                 path: fonts[font][text[i].charCodeAt(0)-33]['d'],
-                separation: parseInt(fonts[font][text[i].charCodeAt(0)-33]['o'], 10)     
-            })       
+                separation: parseInt(fonts[font][text[i].charCodeAt(0)-33]['o'], 10)
+            });
         }
     }
 
-    const combinedPath = [];
-    const goToNextLineFrom = 16;
-    const yOffset = 30;
+    // Variables for line and character positioning
+    const combinedPath = []; // Array to store the combined SVG path
+    const goToNextLineFrom = 16; // Number of characters before starting a new line
+    const yOffset = 30; // Vertical offset for new lines
 
-    let currentXOffset = 0;
-    let currentYOffset = 0;
-    let characterCount = 0;
-    let isCurrentCharSpace = false;
-    let isChangingLine = false
+    let currentXOffset = 0; // Current horizontal offset
+    let currentYOffset = 0; // Current vertical offset
+    let characterCount = 0; // Count of characters processed in the current line
+    let isCurrentCharSpace = false; // Flag to check if the current character is a space
+    let isChangingLine = false; // Flag to check if a new line is being started
 
+    // Process each path element in the SVG paths array
     svgPaths.forEach((element) => {
+        let path = element['path'];
+        const xOffset = element['separation'] * 1.68; // Calculate the horizontal separation
+        const pathAsArray = path.match(/[a-z]|[-+]?([0-9]*\.[0-9]+|[0-9]+)/ig); // Split path into commands and coordinates
 
-        let path = element['path']
-        const xOffset = element['separation'] * 1.68
-        const pathAsArray = path.match(/[a-z]|[-+]?([0-9]*\.[0-9]+|[0-9]+)/ig); 
+        characterCount += 1; // Increment the character count
+        isCurrentCharSpace = path == 'M 0 10' ? true : false; // Check if the path is a space
+        isChangingLine = path == 'lineChange' ? true : false; // Check if the path indicates a line change
 
-        characterCount += 1;
-        isCurrentCharSpace = path == 'M 0 10' ? true : false
-        isChangingLine = path == 'lineChange' ? true: false
+        // Check if a new line should be started
         if ((characterCount >= goToNextLineFrom && isCurrentCharSpace) || isChangingLine) {
-            characterCount = 0
-            currentYOffset += yOffset
-            currentXOffset = 0
-            isChangingLine = true
+            characterCount = 0; // Reset character count
+            currentYOffset += yOffset; // Move to the next line vertically
+            currentXOffset = 0; // Reset horizontal offset
+            isChangingLine = true; // Set flag to indicate line change
         }
 
+        // If not changing lines, adjust the path coordinates
         if (!isChangingLine) {
-            let currentTerm = 0
+            let currentTerm = 0; // Term index for x (0) and y (1) coordinates
             for (let i = 0; i < pathAsArray.length; i++) {
-                if (pathAsArray[i] === 'M' || pathAsArray[i] === 'L' ) {
-                    currentTerm = 0
-                }
-                else {
+                if (pathAsArray[i] === 'M' || pathAsArray[i] === 'L') {
+                    currentTerm = 0; // Reset term index for move (M) and line (L) commands
+                } else {
                     if (currentTerm == 0) {
-                        let value = parseFloat(pathAsArray[i])
-                        pathAsArray[i] = value + parseFloat(currentXOffset)
-                        currentTerm = 1
-                        // console.log('Changing x value from ' + value + ' to ' + pathAsArray[i])
-                    }
-                    else {
-                        let value = parseFloat(pathAsArray[i])
-                        pathAsArray[i] = value + parseFloat(currentYOffset)
-                        currentTerm = 0
+                        let value = parseFloat(pathAsArray[i]);
+                        pathAsArray[i] = value + parseFloat(currentXOffset); // Adjust x coordinate
+                        currentTerm = 1; // Move to y coordinate
+                    } else {
+                        let value = parseFloat(pathAsArray[i]);
+                        pathAsArray[i] = value + parseFloat(currentYOffset); // Adjust y coordinate
+                        currentTerm = 0; // Move back to x coordinate
                     }
                 }
             }
-            const translatedPath = pathAsArray.join(" ")
-            currentXOffset += xOffset;
-            isChangingLine = false
-            combinedPath.push(translatedPath)
+            const translatedPath = pathAsArray.join(" "); // Join the adjusted path commands and coordinates
+            currentXOffset += xOffset; // Update the current horizontal offset
+            isChangingLine = false; // Reset line change flag
+            combinedPath.push(translatedPath); // Add the translated path to the combined path
         }
     });
 
+    // Combine all path segments into a single path
     let fullPath = combinedPath.join(" ");
-    const currentBBox = findBoundingBox(fullPath)
+    const currentBBox = findBoundingBox(fullPath); // Get the bounding box of the combined path
 
     // Calculate scale factors for x and y dimensions
     const scaleX = boundingBox.width / currentBBox.width;
@@ -915,41 +934,43 @@ function createSVGPathFromHershey(text, boundingBox, font) {
     const translateX = boundingBox.x - (currentBBox.x * scale) + (boundingBox.width - (currentBBox.width * scale)) / 2;
     const translateY = boundingBox.y - (currentBBox.y * scale) + (boundingBox.height - (currentBBox.height * scale)) / 2;
 
+    // Adjust the path with scaling and translation
     const fullPathAsArray = fullPath.match(/[a-z]|[-+]?([0-9]*\.[0-9]+|[0-9]+)/ig); 
 
-    let currentTerm = 0
+    let currentTerm = 0;
     for (let i = 0; i < fullPathAsArray.length; i++) {
-        if (fullPathAsArray[i] === 'M' || fullPathAsArray[i] === 'L' ) {
-            currentTerm = 0
-        }
-        else {
+        if (fullPathAsArray[i] === 'M' || fullPathAsArray[i] === 'L') {
+            currentTerm = 0;
+        } else {
             if (currentTerm == 0) {
-                let value = parseFloat(fullPathAsArray[i])
-                fullPathAsArray[i] = parseFloat((value*scale + translateX).toFixed(3))
-                currentTerm = 1
-            }
-            else {
-                let value = parseFloat(fullPathAsArray[i])
-                fullPathAsArray[i] = parseFloat((value*scale + translateY).toFixed(3))
-                currentTerm = 0
+                let value = parseFloat(fullPathAsArray[i]);
+                fullPathAsArray[i] = parseFloat((value * scale + translateX).toFixed(3)); // Scale and translate x coordinate
+                currentTerm = 1;
+            } else {
+                let value = parseFloat(fullPathAsArray[i]);
+                fullPathAsArray[i] = parseFloat((value * scale + translateY).toFixed(3)); // Scale and translate y coordinate
+                currentTerm = 0;
             }
         }
     }
 
-    const transformedPath = fullPathAsArray.join(" ")
-    return transformedPath
+    // Return the transformed SVG path
+    const transformedPath = fullPathAsArray.join(" ");
+    return transformedPath;
 }
 
+// Function to draw text to SVG element
 function drawTextToSVG(font) {
-    const inputValue = textToDrawInput.value
-    const boundingBox = { x: 0, y: 0, width: 512, height: 512 }
-    textToDrawInput.value = ""
+    const inputValue = textToDrawInput.value;
+    const boundingBox = { x: 0, y: 0, width: 512, height: 512 };
+    textToDrawInput.value = "";
 
-    const svgPath = createSVGPathFromHershey(inputValue, boundingBox, font)
-    const svgObject = {name: inputValue, path: svgPath, box: boundingBox}
-    SVGS.push(svgObject)
-    createSVGImage(SVGS.length-1, $images, svgPath, boundingBox)
-    animation._start(Animation.SVG(svgObject, animation.drawingSize, animation.drawingSpeed))
-    animation.currentPath = [[],[],[],[]]
-    animation.stopDrawingPath = false
+    // Create SVG path from the input text
+    const svgPath = createSVGPathFromHershey(inputValue, boundingBox, font);
+    const svgObject = { name: inputValue, path: svgPath, box: boundingBox };
+    SVGS.push(svgObject); // Add the SVG object to the SVGS array
+    createSVGImage(SVGS.length - 1, $images, svgPath, boundingBox); // Create the SVG image
+    animation._start(Animation.SVG(svgObject, animation.drawingSize, animation.drawingSpeed)); // Start the animation
+    animation.currentPath = [[], [], [], []]; // Reset the current path for animation
+    animation.stopDrawingPath = false; // Reset the stop drawing flag
 }
