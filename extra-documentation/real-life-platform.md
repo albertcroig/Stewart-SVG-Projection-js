@@ -70,17 +70,12 @@ Servo motors do not recognize angles as an input; they are controlled through pu
 1) **Disassemble servos:** If you have the platform already assembled, you will need to disassemble the servos from it, in order to properly calibrate them.
 
 2) **Prepare calibration tool:** Attach the servo to the calibration tool and start the measurements.
-*The calibration tool used is nothing more than a protractor with a hole in the midde attached to a wooden rod (broad enough so that the servo will stay in the middle). Then the servo is placed under the tool and finally secured by a gripper.*
-
-Here's a descriptive image of the tool:
+*The calibration tool used is nothing more than a protractor with a hole in the midde attached to a wooden rod (broad enough so that the servo will stay in the middle). Then the servo is placed under the tool and finally secured by a gripper.* Here's a descriptive image of the tool:
 <p align="center">
-  <img src="https://github.com/albertcroig/Stewart.js/blob/master/res/calibration-tool.jpeg?raw=true" width="500">
+  <img src="https://github.com/albertcroig/Stewart.js/blob/master/res/calibration-tool.JPEG?raw=true" width="300">
 </p>
 
-3) **Take measurements:** With the servo connected to COSMOS software, control the servo from the software and write down at least 5 values of the angle shown in the protractor and the pulse shown in the software. 
-*Check the template [excel file](/extra-documentation/Servo-Calibration.xlsx) and type in the values for your own calibration.*
-
-When typing all the values, the servo can be represented with a function like the following:
+3) **Take measurements:** With the servo connected to COSMOS software, control the servo from the software and write down at least 5 values of the angle shown in the protractor and the pulse shown in the software. *Check the template [excel file](/extra-documentation/Servo_Calibration.xlsx) and type in the values for your own calibration.* When typing all the values, the servo can be represented with a function like the following:
 <p align="center">
   <img src="https://github.com/albertcroig/Stewart.js/blob/master/res/servo-pulse-to-angle-graph.jpg?raw=true" width="500">
 </p>
