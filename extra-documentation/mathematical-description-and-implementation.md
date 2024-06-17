@@ -20,9 +20,9 @@ The desired outcome is:
 <img src="https://github.com/albertcroig/Stewart.js/blob/master/res/desired-result.png?raw=true" width="400">
 </p>  
 
-Given the desired projection size, wall distance, and rotation axis offset, the task is to determine the platform's movements to achieve this projection. Like so:
+Given the desired projection size, wall distance, and rotation axis offset, the task is to determine the platform's movements to achieve this projection, as follows:
 <p align="center">
-<img src="https://github.com/albertcroig/Stewart.js/blob/master/res/desired-result-parameters.png?raw=true" width="400">
+<img src="https://github.com/albertcroig/Stewart.js/blob/master/res/desired-result-parameters.png?raw=true" width="950">
 </p>  
 
 
@@ -48,7 +48,7 @@ With the position for the laser to draw the SVG shape established, the next step
 
 In other words, having the drawing's 2D coordinates, we need to find the platform's center 3D coordinates and its rotation:
 <p align="center">
-<img src="https://github.com/albertcroig/Stewart.js/blob/master/res/desired-result-projection.png?raw=true" width="400">
+<img src="https://github.com/albertcroig/Stewart.js/blob/master/res/desired-result-projection.png?raw=true" width="900">
 </p>  
 
 Using the platform's coordinate system, we can visualize the problem in both the y-x and x-z planes. The following diagram shows the platform in its zero position, the platform in its "desired position", its rotation axes and the wall.
