@@ -22,7 +22,7 @@ The desired outcome is:
 
 Given the desired projection size, wall distance, and rotation axis offset, the task is to determine the platform's movements to achieve this projection, as follows:
 <p align="center">
-<img src="https://github.com/albertcroig/Stewart.js/blob/master/res/desired-result-parameters.png?raw=true" width="950">
+<img src="https://github.com/albertcroig/Stewart.js/blob/master/res/desired-result-parameters.png?raw=true" width="800">
 </p>  
 
 
