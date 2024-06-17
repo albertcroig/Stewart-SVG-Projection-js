@@ -11,13 +11,13 @@ The mathematical calculations utilized in this project to achieve the inverse ki
 Initially, the SVG plotter configuration was as follows:
 
 <p align="center">
-  <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/starting-point.png?raw=true" width="400">
+  <img src="https://github.com/albertcroig/Stewart.js/blob/master/res/starting-point.png?raw=true" width="400">
 </p>
 
 The desired outcome is:
 
 <p align="center">
-<img src="https://github.com/albertcroig/Stewart.js/blob/development/res/desired-result.png?raw=true" width="400">
+<img src="https://github.com/albertcroig/Stewart.js/blob/master/res/desired-result.png?raw=true" width="400">
 </p>  
 
 Given the desired projection size, wall distance, and rotation axis offset, the task is to determine the platform's movements to achieve this projection.
@@ -33,7 +33,7 @@ By inspecting the code and SVG parsing functions, I found that swapping some val
 After adjusting the camera position and orientation, the result was:
 
 <p align="center">
-<img src="https://github.com/albertcroig/Stewart.js/blob/development/res/vertical-plane-translation.png?raw=true" width="400">
+<img src="https://github.com/albertcroig/Stewart.js/blob/master/res/vertical-plane-translation.png?raw=true" width="400">
 </p>  
 
 It's important to note that the SVG drawing is now perpendicular to the "x" axis.
@@ -45,7 +45,7 @@ With the position for the laser to draw the SVG shape established, the next step
 Using the platform's coordinate system, we can visualize the problem in both the y-x and x-z planes. The following diagram shows the platform in its zero position, the platform in its "desired position", its rotation axes and the wall.
 
 <p align="center">
-<img src="https://github.com/albertcroig/Stewart.js/blob/development/res/maths-1.png?raw=true" width="950">
+<img src="https://github.com/albertcroig/Stewart.js/blob/master/res/maths-1.png?raw=true" width="950">
 </p>  
 
 Given:

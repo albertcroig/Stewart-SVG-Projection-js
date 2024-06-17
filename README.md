@@ -77,7 +77,7 @@ This project focuses on the SVG drawing feature of the original software, removi
 
 ## Display
 
-![Stewart-Platform](https://github.com/albertcroig/Stewart.js/blob/development/res/graphical-interface.png?raw=true "Stewart Platform Interface Visualization")
+![Stewart-Platform](https://github.com/albertcroig/Stewart.js/blob/master/res/graphical-interface.png?raw=true "Stewart Platform Interface Visualization")
 
 A significant addition to the original source code is the graphical interface. Several options to control the animation and platform characteristics have been added, as well as other useful features.
 
@@ -90,7 +90,7 @@ There are three main sections on the browser display.
 3. **Right Section**: Options and functionalities related to the animation and servo angles.
 
 ### Available Functions
-![Use-of-features](https://github.com/albertcroig/Stewart.js/blob/development/res/feature-use.png?raw=true "Demonstration use of some features")
+![Use-of-features](https://github.com/albertcroig/Stewart.js/blob/master/res/feature-use.png?raw=true "Demonstration use of some features")
 Screenshot demonstrating the use of the following features: camera angles, text to svg, tweak parameters.
 
 **Live Display of Servo Angles and Laser State**
