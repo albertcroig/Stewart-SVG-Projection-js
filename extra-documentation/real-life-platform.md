@@ -12,7 +12,7 @@ As described in the platform options section of the [README file](/README.md), s
 To understand the differences, refer to the following pictures showing a platform with the same dimensions both in real life and in the simulation:
 
 <p align="center">
-  <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/platform-comparison.jpg?raw=true" width="800">
+  <img src="https://github.com/albertcroig/Stewart.js/blob/master/res/platform-comparison.jpg?raw=true" width="800">
 </p>
 
 ### Radii of Platform and Base
@@ -24,7 +24,7 @@ In the simulation, it's easy to see that the anchor points (both on the base and
 Thus, the circles to find for the real platform are:
 
 <p align="center">
-  <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/radii.jpg?raw=true" width="800">
+  <img src="https://github.com/albertcroig/Stewart.js/blob/master/res/radii.jpg?raw=true" width="800">
 </p>
 
 Both the base and the platform are defined by two radii: one for the 'inner' triangle and another for the 'outer' triangle, together forming their characteristic hexagonal shape.
@@ -44,7 +44,7 @@ To measure it in real life, use a caliper to get the lengths between two anchor 
 The following picture shows how this can be done with the example Stewart Platform:
 
 <p align="center">
-  <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/radii-autocad.png?raw=true" width="800">
+  <img src="https://github.com/albertcroig/Stewart.js/blob/master/res/radii-autocad.png?raw=true" width="800">
 </p>
 
 Now that we have the radii, it's important to input them correctly into the code to ensure the simulated platform's configuration matches the real platform's. Depending on how we construct the platform, we may need to switch the values of `platformRadius` and `outerPlatformRadius`, as well as toggle `platformTurn`.
@@ -56,7 +56,7 @@ The measurement of the rest of the platform's parameters is straightforward, as 
 However, here's a quick guide on how to measure them:
 
 <p align="center">
-  <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/measure-platform-params.jpg?raw=true" width="500">
+  <img src="https://github.com/albertcroig/Stewart.js/blob/master/res/measure-platform-params.jpg?raw=true" width="500">
 </p>
 
 For detailed instructions on how to set these parameters in the code, refer to the platform options section in the [README](/README.md) file.
@@ -65,33 +65,51 @@ For detailed instructions on how to set these parameters in the code, refer to t
 
 Servo motors do not recognize angles as an input; they are controlled through pulses. Fortunately, the relationship between the angles and the pulses is linear.
 
-With a measuring tool and COSMOS software, every servo can be tested to obtain the function that relates both parameters. Here's an example of one of the servos:
+### 1. Get the slope
 
+1) **Disassemble servos:** If you have the platform already assembled, you will need to disassemble the servos from it, in order to properly calibrate them.
+
+2) **Prepare calibration tool:** Attach the servo to the calibration tool and start the measurements.
+*The calibration tool used is nothing more than a protractor with a hole in the midde attached to a wooden rod (broad enough so that the servo will stay in the middle). Then the servo is placed under the tool and finally secured by a gripper.*
+
+Here's a descriptive image of the tool:
 <p align="center">
-  <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/servo-pulse-to-angle-graph.jpg?raw=true" width="500">
+  <img src="https://github.com/albertcroig/Stewart.js/blob/master/res/calibration-tool.jpeg?raw=true" width="500">
 </p>
 
-We confirmed that the relationship is linear, and from these points, we extrapolated the function through linear regression.
+3) **Take measurements:** With the servo connected to COSMOS software, control the servo from the software and write down at least 5 values of the angle shown in the protractor and the pulse shown in the software. 
+*Check the template [excel file](/extra-documentation/Servo-Calibration.xlsx) and type in the values for your own calibration.*
 
-### Calibration Process
-
-Once we have the slope and the intercept, the final step is to calibrate the middle position for each servo. Here’s how to do it:
-
-1) **Measure the Servo Axes Height:** Use a vertical ruler to measure the height of the (horizontal) servo axes. After measuring it, stick a tape into it to have keep the reference.
-
+When typing all the values, the servo can be represented with a function like the following:
 <p align="center">
-  <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/step-1-calibration.jpg?raw=true" width="300">
+  <img src="https://github.com/albertcroig/Stewart.js/blob/master/res/servo-pulse-to-angle-graph.jpg?raw=true" width="500">
 </p>
 
-2) **Adjust the Servo:** Move the servo with COSMOS so that the end of the servo arm extension (at the M3 screw head) is at the same height. Measure the back of the servo arms, not the top of the bolts. When the bolts are not perfectly orthogonally inserted (thread insert not perpendicular to the servo arm extension), significant deviations can be measured.
+5) **Annotate the slope**: From these points, the relationship between the pulse and the angle can be found through linear regression. We'll only need the annotate slope (m) of the function.
+
+6) **Repeat for All Servos**: Perform the above steps for all servos.
+
+### 2. Get the Middle Point
+
+Once we have the slope of each servo, the final step is to calibrate their middle position. Here’s how to do it:
+
+1) **Reassemble the Stewart Platform:** Put each of the servos in their corresponding position, keeping in mind that they need to be as centered as possible.
+
+2) **Measure the Servo Axes Height:** Use a vertical ruler to measure the height of the (horizontal) servo axes. After measuring it, stick a tape into it to have keep the reference.
 
 <p align="center">
-  <img src="https://github.com/albertcroig/Stewart.js/blob/development/res/step-2-calibration.jpg?raw=true" width="300">
+  <img src="https://github.com/albertcroig/Stewart.js/blob/master/res/step-1-calibration.jpg?raw=true" width="300">
 </p>
 
-3) **Repeat for All Servos**: Perform the above steps for all servos.
+3) **Adjust the Servo:** Move the servo with COSMOS so that the end of the servo arm extension (at the M3 screw head) is at the same height. Measure the back of the servo arms, not the top of the bolts. When the bolts are not perfectly orthogonally inserted (thread insert not perpendicular to the servo arm extension), significant deviations can be measured.
 
-After determining the slope, intercept, and middle position pulse for each servo, input these values into the corresponding calibration object in your code. This ensures that the simulation accurately translates the angles into the correct pulse widths for the servos.
+<p align="center">
+  <img src="https://github.com/albertcroig/Stewart.js/blob/master/res/step-2-calibration.jpg?raw=true" width="300">
+</p>
+
+4) **Repeat for All Servos**: Perform the above steps for all servos.
+
+After determining the slope and middle position pulse for each servo, input these values into the corresponding calibration object in your code. This ensures that the simulation accurately translates the angles into the correct pulse widths for the servos.
 
 ## Issues that remain unsolved to this date
 
