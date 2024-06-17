@@ -20,9 +20,11 @@ The desired outcome is:
 <img src="https://github.com/albertcroig/Stewart.js/blob/master/res/desired-result.png?raw=true" width="400">
 </p>  
 
-Given the desired projection size, wall distance, and rotation axis offset, the task is to determine the platform's movements to achieve this projection, as follows:
+Given the desired **drawing size**, **wall distance**, and **rotation axis offset**, the task is to determine the platform's movements to achieve this projection.
+
+Check the following image to see what each of the parameters stand for:
 <p align="center">
-<img src="https://github.com/albertcroig/Stewart.js/blob/master/res/desired-result-parameters.png?raw=true" width="800">
+<img src="https://github.com/albertcroig/Stewart.js/blob/master/res/desired-result-parameters.png?raw=true" width="600">
 </p>  
 
 
