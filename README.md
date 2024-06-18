@@ -196,7 +196,7 @@ The following next option is located inside the `drawPath` function in the `Anim
 
 The following options are located inside the `getAnimationAnglesBtn` click event in the main.js script.
 
-- **steps**: Number of steps to calculate. More steps increase precision (up to a limit). Default=2500 with "remove redundant" option, 2050 without.
+- **steps**: Number of steps to calculate. More steps increase precision (up to a limit). Default=2400 with "remove redundant" option, 2050 without.
 
 - **calibrationData**: Each servo has its own calibration values that have to be found in a real life test. Modify the arrays of this object according to your platform servos. Each position of the elements in the array corresponds to the servo number.
   - **middlePos**: 
