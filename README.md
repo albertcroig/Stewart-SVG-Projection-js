@@ -70,7 +70,7 @@ This project focuses on the SVG drawing feature of the original software, removi
 
 **Wall**
 - A light brown wall positioned according to the "wall distance" and automatically scaled according to the size of the drawing.
-- The selected SVG is drawn in the center of the wall. Users can toggle the drawing visualization (press spacebar) to toggle visibility. To toggle between the end result and the live drawing process, press "d". The former is not recommended on slow or old machines due to high processing demands.
+- The selected SVG is drawn in the center of the wall. Users can toggle the drawing visualization (press spacebar) to toggle visibility. To toggle between the end result and the live drawing process, press "d". The former is not recommended on slow or old machines due to high processing demands and doesn't work well on high speeds (>0.3).
 
 **Simulation**
 - During the animation, the platform moves around the specified center of rotation, using translation and rotation movements. Check the [mathematical description file](/extra-documentation/mathematical-description-and-implementation.md) for more information.
