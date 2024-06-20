@@ -484,7 +484,8 @@ Animation.Interpolate = function(data, svgData) {
     beta = Math.atan(-z / (rotationAxisOffset + wallDistance));
 
     let laserState = x !== 0 ? 0 : 1;
-    let extraLaserLength = (rotationAxisOffset + wallDistance) / (Math.cos(alpha) * Math.cos(beta)) - rotationAxisOffset - wallDistance
+    let extraLaserLength = (rotationAxisOffset + wallDistance) / 
+                           (Math.cos(alpha) * Math.cos(beta)) - rotationAxisOffset - wallDistance
 
 
     xTrans = -(rotationAxisOffset - rotationAxisOffset * Math.cos(alpha) * Math.cos(beta));

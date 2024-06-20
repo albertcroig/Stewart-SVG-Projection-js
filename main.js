@@ -459,7 +459,7 @@ function setupPlatform() {
         const options = {
             steps: {
               original: 2050,   // Number of steps when remove redundant rows is not activated, and for original angles
-              withRemoveRedundant: 2500 // Number of steps when remove redundant rows is activated, and adapted angles
+              withRemoveRedundant: 1600 // Number of steps when remove redundant rows is activated, and adapted angles
             },
             originalValues: isOriginalAngles.checked,
             // Options for adapted arduino angles
@@ -470,8 +470,8 @@ function setupPlatform() {
             },
             addDigitalOut: false, // Add column in the beginning with digital output value, as a prevision for more customization.
             removeRedundant: isRemoveRedundant.checked,
-            leadingZeros: 14, // Zeros at the beginning for laser activation.
-            zerosToKeep: 20, // Zeros to keep between laser movements from one shape to another. Minimum 2. Should be an even number.
+            leadingZeros: 10, // Zeros at the beginning for laser activation.
+            zerosToKeep: 12, // Zeros to keep between laser movements from one shape to another. Minimum 2. Should be an even number.
         }
 
         const steps = (isRemoveRedundant.checked && !isOriginalAngles.checked ? options.steps.withRemoveRedundant + options.leadingZeros + options.zerosToKeep * 5 : options.steps.original)

@@ -47,8 +47,8 @@ Before beginning, ensure you have met the following requirements:
 Open any command line interface (like Git Bash), navigate to your desired directory, and run:
 
 ```
-git clone https://github.com/albertcroig/Stewart.js.git
-cd Stewart.js
+git clone https://github.com/albertcroig/Stewart-SVG-Projection-js.git
+cd Stewart-SVG-Projection-js
 ```
 
 ### Install Dependencies
@@ -70,7 +70,7 @@ This project focuses on the SVG drawing feature of the original software, removi
 
 **Wall**
 - A light brown wall positioned according to the "wall distance" and automatically scaled according to the size of the drawing.
-- The selected SVG is drawn in the center of the wall. Users can toggle the drawing visualization (press spacebar) to toggle visibility. To toggle between the end result and the live drawing process, press "d". The former is not recommended on slow or old machines due to high processing demands.
+- The selected SVG is drawn in the center of the wall. Users can toggle the drawing visualization (press spacebar) to toggle visibility. To toggle between the end result and the live drawing process, press "d". The former is not recommended on slow or old machines due to high processing demands and doesn't work well on high speeds (>0.3).
 
 **Simulation**
 - During the animation, the platform moves around the specified center of rotation, using translation and rotation movements. Check the [mathematical description file](/extra-documentation/mathematical-description-and-implementation.md) for more information.
@@ -196,7 +196,7 @@ The following next option is located inside the `drawPath` function in the `Anim
 
 The following options are located inside the `getAnimationAnglesBtn` click event in the main.js script.
 
-- **steps**: Number of steps to calculate. More steps increase precision (up to a limit). Default=2500 with "remove redundant" option, 2050 without.
+- **steps**: Number of steps to calculate. More steps increase precision (up to a limit). Default=2400 with "remove redundant" option, 2050 without.
 
 - **calibrationData**: Each servo has its own calibration values that have to be found in a real life test. Modify the arrays of this object according to your platform servos. Each position of the elements in the array corresponds to the servo number.
   - **middlePos**: 
