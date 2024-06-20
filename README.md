@@ -48,7 +48,7 @@ Open any command line interface (like Git Bash), navigate to your desired direct
 
 ```
 git clone https://github.com/albertcroig/Stewart-SVG-Projection-js.git
-cd Stewart.js
+cd Stewart-SVG-Projection-js
 ```
 
 ### Install Dependencies
