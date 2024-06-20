@@ -459,7 +459,7 @@ function setupPlatform() {
         const options = {
             steps: {
               original: 2050,   // Number of steps when remove redundant rows is not activated, and for original angles
-              withRemoveRedundant: 2400 // Number of steps when remove redundant rows is activated, and adapted angles
+              withRemoveRedundant: 1600 // Number of steps when remove redundant rows is activated, and adapted angles
             },
             originalValues: isOriginalAngles.checked,
             // Options for adapted arduino angles
