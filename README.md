@@ -47,7 +47,7 @@ Before beginning, ensure you have met the following requirements:
 Open any command line interface (like Git Bash), navigate to your desired directory, and run:
 
 ```
-git clone https://github.com/albertcroig/Stewart.js.git
+git clone https://github.com/albertcroig/Stewart-SVG-Projection-js.git
 cd Stewart.js
 ```
 
