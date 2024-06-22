@@ -464,7 +464,7 @@ function setupPlatform() {
             originalValues: isOriginalAngles.checked,
             // Options for adapted arduino angles
             calibrationData: {
-              middlePos: [376, 383, 367, 426, 365, 392],
+              middlePos: [376, 383, 367, 384, 365, 392],
               slope: [2.576, 2.496, 2.591, 2.532, 2.547, 2.543],
               direction: [1, -1, 1, -1, 1, -1]
             },
