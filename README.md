@@ -199,8 +199,8 @@ The following options are located inside the `getAnimationAnglesBtn` click event
 - **steps**: Number of steps to calculate. More steps increase precision (up to a limit). Default=2400 with "remove redundant" option, 2050 without.
 
 - **calibrationData**: Each servo has its own calibration values that have to be found in a real life test. Modify the arrays of this object according to your platform servos. Each position of the elements in the array corresponds to the servo number.
-  - **middlePos**: 
-  - **amplitude**:
+  - **slope**: Value of the slope of the linear function relating servo pulses and servo angles.
+  - **middlePoint**: Value of the pulse once the servo is assembled in the platform and is in its middle position.
   - **direction**: What is considered positive angles. In this case, it should remain the same for everyone because it is hard coded like that, where the uneven indexes have a mirrored rotation value. Default=[1, -1, 1, -1, 1, -1]
 
 Check out [my real-life platform documentation file]() to know further about the calibration data.
